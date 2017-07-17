@@ -3,341 +3,341 @@
         "ABCD": {
             "device_type": "DigitalBoard",
             "connection_type": "OKFPGA",
-            "servername": "yesr10_okfpga",
-            "address": "Sr2 dev.",
+            "servername": "krbjila_okfpga",
+            "address": "KRbDigi01",
             "channels": [
                 {
                     "loc": ["A", 0],
-                    "name": "3D MOT AOM",
+                    "name": "MOT Shutter",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["A", 1],
-                    "name": "3D MOT Shutter",
+                    "name": "Rb OP/Probe AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 2],
-                    "name": "HR Abs. AOM",
+                    "name": "Rb OP/Probe Shutter",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["A", 3],
-                    "name": "HR Abs. Shutter",
+                    "name": "Rb OP/Repump Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 4],
-                    "name": "LR Abs. AOM",
+                    "name": "Rb Repump AOM",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["A", 5],
-                    "name": "LR H Abs. Shutter",
+                    "name": "K OP/Probe AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 6],
-                    "name": "LR V Abs. Shutter",
+                    "name": "K OP/Probe Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 7],
-                    "name": "2D MOT Shutter",
+                    "name": "K OP/Repump AOM",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["A", 8],
-                    "name": "Zeeman Shutter",
+                    "name": "K OP/Repump Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 9],
-                    "name": "AH Enable",
+                    "name": "K D1 AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 10],
-                    "name": "AH Bottom Enable",
+                    "name": "K D1 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 11],
-                    "name": "V Camera Trig.",
+                    "name": "TTL A11",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 12],
-                    "name": "H Camera Trig.",
+                    "name": "TTL A12",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 13],
-                    "name": "LR V Camera Trig.",
+                    "name": "TTL A13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 14],
-                    "name": "TTLA14",
+                    "name": "OP Coil Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 15],
-                    "name": "Gage Trig.",
+                    "name": "LIAD Switch",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["B", 0],
-                    "name": "Clock Detune",
+                    "name": "Trig. Cart",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 1],
-                    "name": "Clock Center/Sweep",
+                    "name": "Trig. Stage",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 2],
-                    "name": "Beta Phase",
+                    "name": "TTL B2",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 3],
-                    "name": "Spin Pol. LC Wave",
+                    "name": "X-Y Shims",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 4],
-                    "name": "HODT AOM",
+                    "name": "Z Shim",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 5],
-                    "name": "VODT AOM",
+                    "name": "TTL B5",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 6],
-                    "name": "HODT Shutter",
+                    "name": "uWave Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 7],
-                    "name": "VODT Shutter",
+                    "name": "uWave Amp.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 8],
-                    "name": "MOT V Shutter",
+                    "name": "uWave Mux.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 9],
-                    "name": "813 H1 AOM",
+                    "name": "Trig. uWave Sweep",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 10],
-                    "name": "813 H2 AOM",
+                    "name": "K RF Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 11],
-                    "name": "813 V AOM",
+                    "name": "K RF DDS Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 12],
-                    "name": "M2 Shutter",
+                    "name": "K RF Mux.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 13],
-                    "name": "813 H1 Shutter",
+                    "name": "TTL B13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 14],
-                    "name": "813 H2 Shutter",
+                    "name": "M2 AOM Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 15],
-                    "name": "813 V Shutter",
+                    "name": "M2 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 0],
-                    "name": "Broken!C00",
+                    "name": "TBeam AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 1],
-                    "name": "RM Gain Switch",
+                    "name": "TBeam Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 2],
-                    "name": "STIRAP P Switch",
+                    "name": "H OT AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 3],
-                    "name": "STIRAP P Trigger",
+                    "name": "H OT Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 4],
-                    "name": "STIRAP S Shutter",
+                    "name": "V OT AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 5],
-                    "name": "STIRAP S Switch",
+                    "name": "V OT Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 6],
-                    "name": "STIRAP S Trigger",
+                    "name": "V LATT AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 7],
-                    "name": "V Clock Switch",
+                    "name": "V LATT Shutter",
                     "mode": "manual",
                     "manual_output": 1,
                     "invert": 1
                 },
                 {
                     "loc": ["C", 8],
-                    "name": "Clock Servo Enable",
-                    "mode": "manual",
-                    "manual_output": 1,
+                    "name": "LATT1 AOM",
+                    "mode": "auto",
+                    "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 9],
-                    "name": "TTLC09",
+                    "name": "LATT1 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 10],
-                    "name": "TTLC10",
+                    "name": "LATT2 AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 11],
-                    "name": "TTLC11",
+                    "name": "LATT2 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 12],
-                    "name": "Troubleshoot",
+                    "name": "Red H OT AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 13],
-                    "name": "SrQ Comb Shutter",
-                    "mode": "manual",
+                    "name": "Red H OT Shutter",
+                    "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 14],
-                    "name": "Sr1 Comb Shutter",
+                    "name": "TTL C14",
                     "mode": "manual",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 15],
-                    "name": "ODT Servo Enable",
+                    "name": "TTL C15",
                     "mode": "manual",
                     "manual_output": 1,
                     "invert": 0
@@ -345,107 +345,107 @@
     
                 {
                     "loc": ["D", 0],
-                    "name": "Alpha AOM",
+                    "name": "Scope Trig. 1",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 1],
-                    "name": "Alpha Shutter",
+                    "name": "Scope Trig. 2",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["D", 2],
-                    "name": "Beta AOM",
+                    "name": "Kinetics Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 3],
-                    "name": "Beta Shutter",
+                    "name": "Kinetics Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["D", 4],
-                    "name": "Spin Pol. AOM",
+                    "name": "Side Imaging Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["D", 5],
-                    "name": "Spin Pol. Shutter",
+                    "name": "Pixelfly Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["D", 6],
-                    "name": "679 AOM",
+                    "name": "Pixelfly Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 7],
-                    "name": "707 AOM",
+                    "name": "Axial Imaging Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 8],
-                    "name": "Repump Shutter",
+                    "name": "TTL D8",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 1
+                    "invert": 0
                 },
                 {
                     "loc": ["D", 9],
-                    "name": "RM FM Trigger",
+                    "name": "TTL D9",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 10],
-                    "name": "TTLD10",
+                    "name": "TTL D10",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 11],
-                    "name": "TTLD11",
+                    "name": "TTL D11",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 12],
-                    "name": "TTLD12",
+                    "name": "TTL D12",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 13],
-                    "name": "TTLD13",
+                    "name": "TTL D13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 14],
-                    "name": "AOSense Heater Enable",
-                    "mode": "manual",
-                    "manual_output": 1,
+                    "name": "TTL D14",
+                    "mode": "auto",
+                    "manual_output": 0,
                     "invert": 0
                 },
                 {
@@ -460,164 +460,53 @@
         "E": {
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
-            "servername": "yesr10_okfpga",
-            "address": "sr2 dac1",
+            "servername": "krbjila_okfpga",
+            "address": "KRbAnlg01",
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "Alpha Intensity", 
+                    "name": "QTrap Current", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "Beta Intensity", 
+                    "name": "QTrap Voltage", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "X Comp. Coil", 
+                    "name": "Bias Field Current", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "Y Comp. Coil", 
+                    "name": "Bias Field Voltage", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "Z Comp. Coil", 
+                    "name": "Grad. Coils", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "MOT Coil", 
+                    "name": "MOT U/D Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "HODT Intensity", 
+                    "name": "MOT SW/NE Shim", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "VODT Intensity", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                }
-            ]
-        },
-        "F": {
-            "device_type": "AnalogBoard",
-            "connection_type": "OKFPGA",
-            "servername": "yesr10_okfpga",
-            "address": "srq analog 2",
-            "channels": [
-                {
-                    "loc": 0, 
-                    "name": "Beta FM", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 1, 
-                    "name": "813 H1 Intensity", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 2, 
-                    "name": "813 H2 Intensity", 
-                    "mode": "auto",
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 3, 
-                    "name": "813 V Intensity", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 4, 
-                    "name": "Clock Intensity", 
-                    "mode": "auto",
-                    "manual_output": 0.0
-                },
-                {   "loc": 5, 
-                    "name": "813H Mixer", 
-                    "mode": "manual", 
-                    "manual_output": -2.0
-                },
-                {
-                    "loc": 6, 
-                    "name": "813V Mixer", 
-                    "mode": "manual",
-                    "manual_output": -2.0
-                },
-                {
-                    "loc": 7, 
-                    "name": "Spin Pol. Intensity", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                }
-            ]
-        },
-        "G": {
-            "device_type": "AnalogBoard",
-            "connection_type": "OKFPGA",
-            "servername": "yesr10_okfpga",
-            "address": "srq analog 3",
-            "channels": [
-                {
-                    "loc": 0, 
-                    "name": "DACG00", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 1, 
-                    "name": "Clock AOM Phase", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 2, 
-                    "name": "DACG02", 
-                    "mode": "auto",
-                    "manual_output": 0.0,
-                    "voltage_range": [0, 5]
-                },
-                {
-                    "loc": 3, 
-                    "name": "813H2 pzt H", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 4, 
-                    "name": "813H2 pzt V", 
-                    "mode": "auto",
-                    "manual_output": 0.0
-                },
-                {   "loc": 5, 
-                    "name": "DACG05", 
-                    "mode": "auto", 
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 6, 
-                    "name": "DACG06", 
-                    "mode": "auto",
-                    "manual_output": 0.0
-                },
-                {
-                    "loc": 7, 
-                    "name": "DACG07", 
+                    "name": "MOT SE/NW Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }

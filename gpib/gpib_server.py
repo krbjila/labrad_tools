@@ -31,15 +31,16 @@ class GPIBServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         """ fill self.interfaces with available connections """
-        rm = visa.ResourceManager()
+        """ Modified to use python visa """
+	rm = visa.ResourceManager('@py')
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
             if address.startswith('GPIB'):
-                inst = rm.get_instrument(address)
+                inst = rm.open_resource(address)
                 inst.write_termination = ''
-                inst.clear()
+                #inst.clear()
                 self.interfaces[address] = inst
                 print 'connected to GPIB device ' + address
         for addr in deletions:

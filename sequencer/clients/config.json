@@ -2,7 +2,7 @@
     "sequencer_servername": "sequencer",
     "conductor_servername": "conductor",
     "timing_channel": "Trigger@D15",
-    "sequence_directory": "Z:\\SrQ\\data\\{}\\sequences\\",
+    "sequence_directory": "/home/bialkali/data/{}/sequences/",
     "time_format": "%Y%m%d",
     "sequencer_update_id": 689223,
     "conductor_update_id": 689222,

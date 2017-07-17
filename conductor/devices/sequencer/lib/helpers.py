@@ -4,7 +4,7 @@ import os
 from datetime import date, timedelta
 from itertools import chain
 
-SEQUENCE_DIRECTORY = 'Z:\\SrQ\\data\\{}\\sequences\\'
+SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 
 def value_to_sequence(value):
     if type(value).__name__ == 'list':

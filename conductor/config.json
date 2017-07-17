@@ -1,5 +1,5 @@
 {
-    "data_directory": "Z:\\SrQ\\data\\{}\\",
+    "data_directory": "/home/bialkali/data/{}/",
     "time_format": "%Y%m%d",
     "default_values_path": "./default_values.json",
     "registry_directory": ["", "Servers", "conductor", "parameters"],
@@ -7,11 +7,8 @@
         "sequencer": {
             "sequence": {}
         },
-        "clock_aom": {
+        "antenna": {
             "frequency": {}
-        },
-        "influxdb": {
-            "client": {}
         },
         "time": {
             "timestamp": {}
