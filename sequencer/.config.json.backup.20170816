@@ -387,7 +387,7 @@
                 },
                 {
                     "loc": ["D", 6],
-                    "name": "TTL D6",
+                    "name": "Pixelfly Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -401,21 +401,21 @@
                 },
                 {
                     "loc": ["D", 8],
-                    "name": "Conf. Gray. Mol",
+                    "name": "TTL D8",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 9],
-                    "name": "Trig. Evap.",
+                    "name": "TTL D9",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 10],
-                    "name": "Conf. Rb ARP1",
+                    "name": "TTL D10",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0

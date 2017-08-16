@@ -90,13 +90,13 @@ class SequencerServer(DeviceServer):
 #			if device.sequencer_type == 'digital':
 #				yield device.start_sequence()
 
-		# start KRbDigi02 before KRbDigi01
-		for device in self.devices.values():
-			if device.address != 'KRbDigi01' and device.sequencer_type == 'digital':
-				yield device.start_sequence()
-		for device in self.devices.values():
-			if device.address == 'KRbDigi01':
-				yield device.start_sequence()
+         # start KRbDigi02 before KRbDigi01
+        for device in self.devices.values():
+            if device.address != 'KRbDigi01' and device.sequencer_type == 'digital':
+                yield device.start_sequence()
+        for device in self.devices.values():
+            if device.address == 'KRbDigi01':
+                yield device.start_sequence()
 
     @setting(12, channel_id='s', mode='s')
     def channel_mode(self, c, channel_id, mode=None):
