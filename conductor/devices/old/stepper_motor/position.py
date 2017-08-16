@@ -1,12 +1,9 @@
-import sys
-sys.path.append('../')
-from generic_device.generic_parameter import GenericParameter
-
 from twisted.internet.defer import inlineCallbacks
 from labrad.wrappers import connectAsync
 
+from conductor_device.conductor_parameter import ConductorParameter
 
-class Position(GenericParameter):
+class Position(ConductorParameter):
     priority = 1
     def __init__(self, config):
         super(Position, self).__init__(config)

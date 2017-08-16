@@ -41,8 +41,6 @@ class AD9854(object):
     def initialize(self):
         yield self.set_frequency(self.frequency)
         yield self.set_amplitude(self.amplitude)
-        yield self.set_frequency(self.frequency)
-        yield self.set_amplitude(self.amplitude)
     
     @inlineCallbacks
     def set_state(self, state):

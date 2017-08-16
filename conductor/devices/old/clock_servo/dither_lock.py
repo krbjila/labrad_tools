@@ -1,13 +1,11 @@
-import sys
 import json
 from twisted.internet.defer import inlineCallbacks
 from labrad.wrappers import connectAsync
 
-sys.path.append('../')
-from generic_device.generic_parameter import GenericParameter
+from devices.conductor_device.conductor_parameter import ConductorParameter
 from lib.pid import Dither, DitherPIID
 
-class DitherLock(GenericParameter):
+class DitherLock(ConductorParameter):
     priority = 9
 #    value_type = 'list'
     def __init__(self, config):

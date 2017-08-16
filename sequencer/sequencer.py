@@ -81,9 +81,22 @@ class SequencerServer(DeviceServer):
         for device in self.devices.values():
             if device.sequencer_type == 'analog':
                 yield device.start_sequence()
-        for device in self.devices.values():
-            if device.sequencer_type == 'digital':
-                yield device.start_sequence()
+
+#		# removed KM 08/11/2017
+#		# we need to take care to start KRbDigi02 before KRbDigi01
+#		# else there's no time for Digi02 to get set up before being triggered
+#		# and see ~2 ms timing jitter between the boards      
+#		for device in self.devices.values():
+#			if device.sequencer_type == 'digital':
+#				yield device.start_sequence()
+
+		# start KRbDigi02 before KRbDigi01
+		for device in self.devices.values():
+			if device.address != 'KRbDigi01' and device.sequencer_type == 'digital':
+				yield device.start_sequence()
+		for device in self.devices.values():
+			if device.address == 'KRbDigi01':
+				yield device.start_sequence()
 
     @setting(12, channel_id='s', mode='s')
     def channel_mode(self, c, channel_id, mode=None):

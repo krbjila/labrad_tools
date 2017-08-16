@@ -94,7 +94,6 @@ class DigitalArray(QtGui.QWidget):
         for c in self.columns[:num_to_show]:
             c.setLogic(sequence)
 
-
 class NameBox(QtGui.QLabel):
     clicked = QtCore.pyqtSignal()
     def __init__(self, nameloc):

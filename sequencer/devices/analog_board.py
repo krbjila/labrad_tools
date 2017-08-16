@@ -10,7 +10,7 @@ VOLTAGE_RANGE = (-10., 10.)
 DAC_BITS = 16
 
 def time_to_ticks(clk, time):
-    return int(clk*time)
+    return max(int(abs(clk*time)), 1)
 
 def voltage_to_signed(voltage):
     voltage_span = float(max(VOLTAGE_RANGE) - min(VOLTAGE_RANGE))

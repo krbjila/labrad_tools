@@ -18,20 +18,41 @@ timeout = 20
 
 import json
 import os
-import time
 
 from collections import deque
 from copy import deepcopy
+from time import time, strftime
 
-from labrad.server import LabradServer, setting, Signal
+from labrad.server import LabradServer
+from labrad.server import setting
+from labrad.server import Signal
+from labrad.wrappers import connectAsync
 from twisted.internet.reactor import callLater
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import returnValue
 from twisted.internet.threads import deferToThread
 
-from lib.helpers import *
+from lib.helpers import import_parameter
+from lib.helpers import remaining_points
+from lib.exceptions import ParameterAlreadyRegistered
+from lib.exceptions import ParameterNotImported
+from lib.exceptions import ParameterNotRegistered
 
+# TODO remote save parameter files locally
+# TODO get available parameters
 
 class ConductorServer(LabradServer):
+    """ coordinate setting and saving experiment parameters.
+    
+    parameters are classes defined in ./devices/...
+        parameters hold values representing real world attributes.
+        typically send/receive data to/from hardware.
+        see ./devices/conductor_device/conductor_parameter.py for documentation
+    
+    experiments specify parameter values to be iterated over 
+        and a filename for saving data.
+    """
+
     name = 'conductor'
     parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
 
@@ -46,6 +67,7 @@ class ConductorServer(LabradServer):
         LabradServer.__init__(self)
     
     def load_config(self, path=None):
+        """ set instance attributes defined in json config """
         if path is not None:
             self.config_path = path
         with open(self.config_path, 'r') as infile:
@@ -54,105 +76,179 @@ class ConductorServer(LabradServer):
                 setattr(self, key, value)
 
     def initServer(self):
-        callLater(.1, self.register_parameters, None, self.default_parameters)
+        # register default parameters after connected to labrad
+        callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
 
-    @setting(2, config='s', generic_parameter='b', value_type='s', returns='b')
-    def register_parameters(self, c, config, generic_parameter=False, value_type=None):
-        """ create device parameter according to config
-        config = {
-            device_name: {
-                parameter_name: {
-                    parameter_config...
-                }
-        }
-
-        will look through devices subdir.
-        if no suitable parameter is found and generic_parameter is True, 
-        a generic parameter will be created for holding values.
+    @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
+    def register_parameters(self, c, parameters, generic_parameter=False, value_type=None):
+        """ 
+        load parameters into conductor
+        
+        parameters are defined in conductor/devices/device_name/parameter_name.py
+        view defined parameters with conductor.available_parameters
+        
+        Args:
+            parameters: json.dumps(...) of
+                {
+                    device_name: {
+                        parameter_name: {
+                            parameter_config
+                        }
+                }.
+                device_name: string e.g. "dds1"
+                parameter_name: string e.g. "frequency"
+                parameter_config: passed to parameter's __init__
+            generic_parameter: bool. If true and no defined parameter is found,
+                will create generic_parameter for holding values.AA
+            value_type: string. e.g. "single", "list", "data"
+        Returns:
+            bool. true if no errors.
         """
-        if type(config).__name__ == 'str':
-            config = json.loads(config)
-        for device_name, device_parameters in config.items():
-            if not self.parameters.get(device_name):
-                self.parameters[device_name] = {}
+        for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_config in device_parameters.items():
-                Parameter = import_parameter(device_name, parameter_name, 
-                                             generic_parameter)
+                yield self.register_parameter(device_name, parameter_name, 
+                        parameter_config, generic_parameter, value_type)
+
+        returnValue(True)
+    
+    @inlineCallbacks
+    def register_parameter(self, device_name, parameter_name, parameter_config,
+                           generic_parameter, value_type):
+        """ populate self.parameters with specified parameter
+
+        look in ./devices/ for specified parameter
+        if no suitable parameter is found and generic_parameter is True, 
+        create generic parameter for holding values.
+
+        Args:
+            device_name: string e.g. "dds1"
+            parameter_name: string e.g. "frequency"
+            parameter_config: passed to parameter's __init__
+            generic_parameter: bool. specifies whether or not to use 
+                devices/conductor_device/conductor_parameter.py if 
+                devices/device_name/parameter_name.py is not found.
+            value_type: string. e.g. "single", "list", "data"
+        Returns:
+            None
+        Raises:
+            ParameterAlreadyRegistered: if specified parameter is already in 
+                self.parameters
+            ParameterNotImported: if import of specified parameter fails.
+        """
+      
+        if not self.parameters.get(device_name):
+            self.parameters[device_name] = {}
+
+        if self.parameters[device_name].get(parameter_name):
+            raise ParameterAlreadyRegistered(device_name, parameter_name)
+        else:
+            Parameter = import_parameter(device_name, parameter_name, 
+                                         generic_parameter)
+            if not Parameter:
+                raise ParameterNotImported(device_name, parameter_name)
+            else:
                 parameter = Parameter(parameter_config)
                 parameter.device_name = device_name
                 parameter.name = parameter_name
                 if value_type is not None:
                     parameter.value_type = value_type
-                self.parameters[device_name][parameter_name] = parameter
+                self.parameters[device_name][parameter_name] = parameter              
                 yield parameter.initialize()
                 yield self.update_parameter(parameter)
-        returnValue(True)
 
-    @setting(3, config='s', returns='b')
-    def remove_parameters(self, c, config):
-        """ remove specified device_parameter
+    @setting(3, parameters='s', returns='b')
+    def remove_parameters(self, c, parameters):
+        """ 
+        remove specified parameters
 
-        config = {
-            device_name: parameter_name,
-        }
+        Args:
+            parameters: json dumped string [json.dumps(...)] of dict
+                {
+                    device_name: {
+                        parameter_name: None
+                    }
+                }
         """
-        for device_name, parameter_name in json.loads(config).items():
-            device = self.parameters.get(device_name)
-            if device:
-                parameter = device.get(parameter_name)
-                if not parameter:
-                    message = '{} {} is not an active parameter\
-                              '.format(device_name, parameter_name)
-                    raise Exception(message)
-            else:
-                message = '{} is not an active device'.format(device_name, 
-                                                              parameter_name)
-                raise Exception(message)
-            yield self.remove_parameter(parameter)
+        for device_name, device_parameters in json.loads(parameters).items():
+            for parameter_name, _ in device_parameters.items():
+                yield self.remove_parameter(device_name, parameter_name)
         returnValue(True)
     
     @inlineCallbacks
-    def remove_parameter(self, parameter):
-        device = self.parameters[parameter.device_name]
-        del device[parameter.name]
-        if not device:
-            del self.parameters[parameter.device_name]
-        try:
-            yield parameter.stop()
-        except:
-            print '{} {} was improperly removed from available devices.'.format(
-                                                    device_name, parameter_name)
+    def remove_parameter(self, device_name, parameter_name):
+        """ remove specified parameter from self.parameters
 
-    @setting(4, config='s', generic_parameter='b', value_type='s', returns='b')
-    def set_parameter_values(self, c, config, generic_parameter=False, value_type=None):
-        for device_name, device_parameters in json.loads(config).items():
-            if not self.parameters.get(device_name):
-                self.parameters[device_name] = {}
+        Args:
+            device_name: string e.g. "dds1"
+            parameter_name: string e.g. "frequency"
+        Returns:
+            None
+        Raises:
+            ParameterNotRegistered: if specified parameter not in self.parameters
+        """
+        try:
+            parameter = self.parameters[device_name][parameter_name]
+        except:
+            raise ParameterNotRegistered(device_name, parameter_name)
+        del self.parameters[device_name][parameter_name]
+        if not self.parameters[device_name]:
+            del self.parameters[device_name]
+        yield parameter.stop()
+
+    @setting(4, parameters='s', generic_parameter='b', returns='b')
+    def set_parameter_values(self, c, parameters, generic_parameter=False, 
+                             value_type=None):
+        """  set specified parameter values
+
+        parameters = {
+            device_name: {
+                parameter_name: value
+            }
+        }
+        """
+        for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
-                parameter = self.parameters[device_name].get(parameter_name)
-#                if not parameter and not generic_parameter:
-#                    print "{} {} is not an active parameter".format(
-#                           device_name, parameter_name)
-#                else:
-#                    if not parameter:
-#                        config = {device_name: {parameter_name: {}}}
-#                        yield self.register_parameters(c, config, 
-#                                                       generic_parameter)
-#                    parameter = self.parameters[device_name].get(parameter_name)
-#                    parameter.value = parameter_value
-                if not parameter:
-                    if parameter_name[0] == '*':
-                        generic_parameter = True
-                    config = {device_name: {parameter_name: {}}}
-                    yield self.register_parameters(c, config, 
-                                                   generic_parameter,
-                                                   value_type)
-                parameter = self.parameters[device_name].get(parameter_name)
-                parameter.value = parameter_value
+                yield self.set_parameter_value(device_name, parameter_name, 
+                                               parameter_value, 
+                                               generic_parameter, value_type)
         returnValue(True)
+
+    @inlineCallbacks
+    def set_parameter_value(self, device_name, parameter_name, parameter_value,
+                            generic_parameter=False, value_type=None):
+        """ assign parameter value to specified parameter.value
+
+        register parameter if not already in self.parameters
+
+        Args:
+            device_name: string e.g. "dds1"
+            parameter_name: string e.g. "frequency"
+            parameter_value: anything e.g. 20e6
+        Returns:
+            None
+        Raises:
+            ParameterNotImported: if import of specified parameter fails.
+        """
+        try:
+            self.parameters[device_name][parameter_name]
+        except KeyError:
+            if parameter_name[0] == '*':
+                generic_parameter = True
+            yield self.register_parameter(device_name, parameter_name, {}, 
+                                          generic_parameter, value_type)
+
+        self.parameters[device_name][parameter_name].value = parameter_value
 
     @setting(5, parameters='s', use_registry='b', returns='s')
     def get_parameter_values(self, c, parameters=None, use_registry=False):
+        """ get specified parameter values
+
+        parameters = {
+            device_name: {
+                parameter_name: None
+            }
+        }
+        """
         if parameters is None:
             parameters = {dn: dp.keys() for dn, dp in self.parameters.items()}
         else:
@@ -172,10 +268,19 @@ class ConductorServer(LabradServer):
     def get_parameter_value(self, device_name, parameter_name, use_registry=False):
         message = None
         try:
-            parameter = self.parameters[device_name][parameter_name]
-            value = parameter.value
+            try: 
+                parameter = self.parameters[device_name][parameter_name]
+                value = parameter.value
+            except:
+                parameters_filename = self.parameters_directory + 'current_parameters.json'
+                with open(parameters_filename, 'r') as infile:
+                    old_parameters = json.load(infile)
+                    value = old_parameters[device_name][parameter_name]
+                    yield self.set_parameter_value(device_name, parameter_name, value, True)
         except:
             if use_registry:
+                print 'looking in registry for parameter {}'.format(device_name + parameter_name)
+                print 'this feature will be depreciated'
                 try: 
                     yield self.client.registry.cd(self.registry_directory
                                                   + [device_name])
@@ -223,9 +328,19 @@ class ConductorServer(LabradServer):
     @setting(10, returns='b')
     def stop_experiment(self, c):
         # replace parameter value lists with single value.
+#        for device_name, device_parameters in self.parameters.items():
+#            for parameter_name, parameter in device_parameters.items():
+#                parameter.value = parameter.value
+#        self.data = {}
+#        self.data_path = None
+#        return True
+
+        # replace parameter value lists with single value.
         for device_name, device_parameters in self.parameters.items():
             for parameter_name, parameter in device_parameters.items():
                 parameter.value = parameter.value
+                if parameter_name == 'sequence':
+                    parameter.value = [parameter.default_sequence]
         self.data = {}
         self.data_path = None
         return True
@@ -256,7 +371,7 @@ class ConductorServer(LabradServer):
                 self.data = {}
 
                 # determine data path
-                timestr = time.strftime('%Y%m%d')
+                timestr = strftime('%Y%m%d')
                 data_directory = self.data_directory.format(timestr)
                 data_path = lambda i: str(data_directory 
                                           + experiment['name'] 
@@ -315,10 +430,11 @@ class ConductorServer(LabradServer):
         try:
             yield parameter.update()
         except Exception, e:
+            # remove parameter is update failed.
             print e
             print 'could not update {}\'s {}. removing parameter'.format(
                     parameter.device_name, parameter.name)
-            self.remove_parameter(parameter)
+            yield self.remove_parameter(parameter.device_name, parameter.name)
     
     def save_parameters(self):
         # save data to disk
@@ -346,30 +462,52 @@ class ConductorServer(LabradServer):
 
     @inlineCallbacks
     def stopServer(self):
+        parameters_filename = self.parameters_directory + 'current_parameters.json'
+        if os.path.isfile(parameters_filename):
+            with open(parameters_filename, 'r') as infile:
+                old_parameters = json.load(infile)
+        else:
+            old_parameters = {}
+        parameters = deepcopy(old_parameters)
         for device_name, device_parameters in self.parameters.items():
-            yield self.client.registry.cd(self.registry_directory)
-            devices = yield self.client.registry.dir()
-            if device_name not in devices:
-                yield self.client.registry.mkdir(device_name)
-            yield self.client.registry.cd(device_name)
+            if not parameters.get(device_name):
+                parameters[device_name] = {}
             for parameter_name, parameter in device_parameters.items():
-                value = parameter.value
-                try:
-                    yield self.client.registry.set(parameter_name, value)
-                except:
-                    pass
+                parameters[device_name][parameter_name] = parameter.value
+        
+        parameters_filename = self.parameters_directory + 'current_parameters.json'
+        with open(parameters_filename, 'w') as outfile:
+            json.dump(parameters, outfile)
 
+        parameters_filename = self.parameters_directory + '{}.json'.format(
+                                  strftime(self.time_format))
+        with open(parameters_filename, 'w') as outfile:
+            json.dump(parameters, outfile)
+
+#        for device_name, device_parameters in self.parameters.items():
+#            yield self.client.registry.cd(self.registry_directory)
+#            devices = yield self.client.registry.dir()
+#            if device_name not in devices:
+#                yield self.client.registry.mkdir(device_name)
+#            yield self.client.registry.cd(device_name)
+#            for parameter_name, parameter in device_parameters.items():
+#                value = parameter.value
+#                try:
+#                    yield self.client.registry.set(parameter_name, value)
+#                except:
+#                    pass
+#
     @setting(15)
     def advance(self, c, delay=0):
         if delay:
             callLater(delay, self.advance, c)
         else:
-            tick = time.time()
+            ti = time()
             yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
-            tock = time.time()
+            tf = time()
             if self.do_print_delay:
-                print 'delay', tock-tick
+                print 'delay', tf-ti
 
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):

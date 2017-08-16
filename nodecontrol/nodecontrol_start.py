@@ -17,6 +17,7 @@ for node in node_dict.keys():
                 try:
                     cxn.servers[node].start(server)
                     if server == 'rf':
+                        cxn = labrad.connect()
                         cxn.servers[node].restart(server)
                 except Exception as e:
                     print 'error with ' + server

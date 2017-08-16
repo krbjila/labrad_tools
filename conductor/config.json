@@ -5,10 +5,26 @@
     "registry_directory": ["", "Servers", "conductor", "parameters"],
     "default_parameters": {
         "sequencer": {
-            "sequence": {}
+            "sequence": {
+                "sequence_directory": "/home/bialkali/data/{}/sequences/",
+                "default_sequence": "default"
+	    }
         },
-        "antenna": {
-            "frequency": {}
+        "evapE8257D": {
+                "enable": {}
+        },
+        "grayE8257D": {
+                "enable": {
+                    "default_gray": 1
+                }
+        },
+        "arp33220A": {
+                "frequency": {
+                    "default_frequency": 100
+                },
+                "amplitude": {
+                    "default_amplitude": 1
+                }
         },
         "time": {
             "timestamp": {}

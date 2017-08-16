@@ -6,9 +6,12 @@ from twisted.internet.threads import deferToThread
 class SocketConnection(object):
     @inlineCallbacks
     def initialize(self, device):
-        yield None
         self.connection = socket.create_connection(
                 (device.servername, int(device.address)), timeout=5)
+        try:
+            yield self.recv(1024)
+        except socket.timeout:
+            pass
 
     @inlineCallbacks 
     def send(self, value):

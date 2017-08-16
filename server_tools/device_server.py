@@ -42,10 +42,11 @@ class DeviceWrapper(object):
         for key, value in config.items():
             setattr(self, key, value)
         self.connection_name = self.servername + ' - ' + self.address
-    
+
     @inlineCallbacks 
     def initialize(self):
         yield None
+
 
 class DeviceServer(LabradServer):
     def __init__(self, config_path='./config.json'):
@@ -59,16 +60,17 @@ class DeviceServer(LabradServer):
 #            add_quick_setting(self, 10 + i, setting, arg_type)
 
     def load_config(self, path=None):
+        self.config = lambda: None
         if path is not None:
             self.config_path = path
         with open(self.config_path, 'r') as infile:
             config = json.load(infile)
             for key, value in config.items():
-                setattr(self, key, value)
+                setattr(self.config, key, value)
 
     @inlineCallbacks
     def initServer(self):
-        for name, config in self.devices.items():
+        for name, config in self.config.devices.items():
             yield self.initialize_device(name, config)
 
     @inlineCallbacks 
@@ -105,15 +107,19 @@ class DeviceServer(LabradServer):
     def get_device_list(self, c):
         return self.devices.keys()
     
-    @setting(1, name='s', returns='s')
+    @setting(1, name='s', returns=['s', ''])
     def select_device(self, c, name):
         if name not in self.devices.keys():
-            message = '{} is not the name of a configured device'.format(name)
-            raise Exception(message)
-        
+            try: 
+                yield self.reload_config(c, name)
+            except:
+                message = '{} is not the name of a configured device'.format(
+                           name)
+                raise Exception(message)
+                returnValue(None)
         c['name'] = name
         device = self.get_device(c)
-        return json.dumps(device.__dict__, default=lambda x: None)
+        returnValue(json.dumps(device.__dict__, default=lambda x: None))
     
     @setting(3, returns='b')
     def reinit_connection(self, c):
@@ -129,8 +135,14 @@ class DeviceServer(LabradServer):
                   for p in device.update_parameters}}
         yield self.update(json.dumps(update))
 
-    @setting(5)
-    def reload_config(self, c):
+    @setting(5, names=['*s', 's'])
+    def reload_config(self, c, names=None):
         self.load_config()
-        for name, config in self.devices.items():
-           yield self.initialize_device(name, config)
+        if names is None:
+            names = self.config.devices
+        elif type(names).__name__ != 'list':
+            names = [names]
+        for name in names:
+            device = self.config.devices.get(name)
+            if device:
+                yield self.initialize_device(name, device)

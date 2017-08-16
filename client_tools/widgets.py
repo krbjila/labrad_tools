@@ -2,7 +2,6 @@ from PyQt4 import QtGui, QtCore, Qt
 import numpy as np
 
 class SuperSpinBox(QtGui.QLineEdit):
-    """ it really is! """
     def __init__(self, display_range, units, num_decimals=1, significant_figures=3):# num_decimals, display_factor=1):
         super(SuperSpinBox, self).__init__()
         self.display_range = display_range
@@ -98,7 +97,8 @@ class SuperSpinBox(QtGui.QLineEdit):
 class NeatSpinBox(QtGui.QLineEdit):
     def __init__(self):
         super(NeatSpinBox, self).__init__()
-        self.display(1)
+        self.display(0, True)
+        self.setText('')
     
     def keyPressEvent(self, c):
         super(NeatSpinBox, self).keyPressEvent(c)
@@ -107,33 +107,35 @@ class NeatSpinBox(QtGui.QLineEdit):
         if c.key() == QtCore.Qt.Key_Down:
             self.step(up=0)
 
-    def display(self, value):
-        # keep previously displayed value
-        text = self.text()
-       
-        # position, from left, of cursor
-        cursorPosition = self.cursorPosition() 
-    
-        #position, from left, of decimal
-        try:
-            decimalPosition = len(text.split('.')[0]) +1
-        except IndexError:
-            decimalPosition = len(text)+1
-       
-        # how far is the cursor from the decimal point
-        relPosition = decimalPosition - cursorPosition 
-       
-        # cursor immedeately on either side of decimal is equivalent
-        if cursorPosition < decimalPosition: 
-            relPosition -= 1
-        
-        self.setText(str(value))
-        # place cursor in previous place 
-        decimalPosition = len(self.text().split('.')[0]) +1
-        cursorPosition = decimalPosition - relPosition
-        if relPosition >= 0:
-            cursorPosition -= 1
-        self.setCursorPosition(cursorPosition)
+    def display(self, value, overwrite=False):
+        print self.hasFocus()
+        if overwrite or not self.hasFocus():
+            # keep previously displayed value
+            text = self.text()
+            
+            # position, from left, of cursor
+            cursorPosition = self.cursorPosition() 
+            
+            #position, from left, of decimal
+            try:
+                decimalPosition = len(text.split('.')[0]) +1
+            except IndexError:
+                decimalPosition = len(text)+1
+            
+            # how far is the cursor from the decimal point
+            relPosition = decimalPosition - cursorPosition 
+            
+            # cursor immedeately on either side of decimal is equivalent
+            if cursorPosition < decimalPosition: 
+                relPosition -= 1
+            
+            self.setText(str(value))
+            # place cursor in previous place 
+            decimalPosition = len(self.text().split('.')[0]) +1
+            cursorPosition = decimalPosition - relPosition
+            if relPosition >= 0:
+                cursorPosition -= 1
+            self.setCursorPosition(cursorPosition)
 
     def step(self, up):
         """ if we press the up (down) key, increment (decrement) the digit to the left of the cursor by one"""
@@ -162,21 +164,66 @@ class NeatSpinBox(QtGui.QLineEdit):
 
         # if we press the up (down) key, increase (decrease) the digit to the left of the cursor by one
         if up: 
-            self.display(value + step_size)
+            self.display(value + step_size, True)
         else:
-            self.display(value - step_size)
+            self.display(value - step_size, True)
 
         self.returnPressed.emit()
 
     def value(self):
         return float(self.text().split(' ')[0])
         
+class IntSpinBox(QtGui.QLineEdit):
+    def __init__(self, displayRange):
+        self.displayRange = displayRange
+        super(IntSpinBox, self).__init__()
+        self.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.display(0, True)
+    
+    def keyPressEvent(self, c):
+        super(IntSpinBox, self).keyPressEvent(c)
+        if c.key() == QtCore.Qt.Key_Up:
+            self.step(up=1)
+        if c.key() == QtCore.Qt.Key_Down:
+            self.step(up=0)
+
+    def display(self, value, overwrite=False):
+        if overwrite or not self.hasFocus():
+            # position, from right, of cursor
+            cursorPositionR = len(self.text()) - self.cursorPosition() 
+            value = sorted([min(self.displayRange), value, max(self.displayRange)])[1]
+            self.setText(str(int(value)))
+            # place cursor in previous place 
+            self.setCursorPosition(len(self.text()) - cursorPositionR)
+
+    def step(self, up):
+        """ if we press the up (down) key, increment (decrement) the digit to the left of the cursor by one"""
+        # keep previously displayed value
+        text = self.text().split(' ')[0] 
+        value = int(text)
+
+        # position, from right, of cursor
+        cursorPositionR = len(self.text()) - self.cursorPosition() 
+    
+        # step by one in the digit to the left of cursor
+        step_size = 10.**cursorPositionR
+
+        # if we press the up (down) key, increase (decrease) the digit to the left of the cursor by one
+        if up: 
+            self.display(value + step_size, True)
+        else:
+            self.display(value - step_size, True)
+
+        self.returnPressed.emit()
+
+    def value(self):
+        return float(self.text().split(' ')[0])
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
     import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
-    widget = SuperSpinBox([-100, 100], [(0, 'na'), (-3, 'naa')], 3)
+    widget = IntSpinBox([-100, 100])
     widget.show()
     reactor.run()

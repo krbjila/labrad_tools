@@ -48,6 +48,7 @@ class OKFPGAServer(HardwareInterfaceServer):
             tmp = ok.FrontPanel()
             tmp.OpenBySerial(serial)
             device_id = tmp.GetDeviceID()
+            print(device_id)
             tmp.LoadDefaultPLLConfiguration()
             self.interfaces[device_id] = tmp
 

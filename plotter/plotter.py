@@ -31,8 +31,6 @@ from twisted.internet.reactor import callLater
 from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
 
-SEP = os.path.sep
-
 def save_and_close(fig):
     fig.savefig('figure.svg')
     plt.close(fig)
@@ -54,7 +52,7 @@ class PlotterServer(LabradServer):
             data = self.data
             path = data['plotter_path']
             function_name = data['plotter_function']
-            module_name = path.split(SEP)[-1].strip('.py')
+            module_name = os.path.split(path)[-1].strip('.py')
             module = imp.load_source(module_name, path)
             function = getattr(module, function_name)
             try:

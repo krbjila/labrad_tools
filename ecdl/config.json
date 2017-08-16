@@ -7,7 +7,7 @@
             "address": "COM12",
             "diode_current_range": [10.0, 165.0],
             "piezo_voltage_range": [0.0, 125.0],
-            "default_current": 134.0
+            "default_current": 121.3
         }
     }
 }

@@ -1,0 +1,23 @@
+{
+    "data_directory": "Z:\\SrQ\\data\\{}\\",
+    "parameters_directory": "Z:\\SrQ\\data\\parameters\\",
+    "time_format": "%Y%m%d",
+    "registry_directory": ["", "Servers", "conductor", "parameters"],
+    "default_parameters": {
+        "sequencer": {
+            "sequence": {
+                "sequence_directory": "Z:\\SrQ\\data\\sequences\\{}\\",
+                "default_sequence": "all_off"
+            }
+        },
+        "clock_aom": {
+            "frequency": {}
+        },
+        "influxdb": {
+            "client": {}
+        },
+        "time": {
+            "timestamp": {}
+        }
+    }
+}

@@ -3,12 +3,17 @@ import numpy as np
 import sys
 
 from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
+from PyQt4.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
 
 sys.path.append('../../client_tools')
 from connection import connection
 from widgets import SuperSpinBox
+
+class ParameterLabel(QtGui.QLabel):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, x):
+        self.clicked.emit()
 
 class ECDLControl(QtGui.QGroupBox):
     def __init__(self, config, reactor, cxn=None):
@@ -73,12 +78,14 @@ class ECDLControl(QtGui.QGroupBox):
                                   0, 0, 1, 1, QtCore.Qt.AlignHCenter)
         if 'piezo_voltage' in self.update_parameters:
             row += 1
-            self.layout.addWidget(QtGui.QLabel('Piezo Voltage: '), 
+            self.piezo_voltage_label = ParameterLabel('Piezo Voltage: ')
+            self.layout.addWidget(self.piezo_voltage_label, 
                                   row, 0, 1, 1, QtCore.Qt.AlignRight)
             self.layout.addWidget(self.piezo_voltage_box, row, 1)
         if 'diode_current' in self.update_parameters:
             row += 1
-            self.layout.addWidget(QtGui.QLabel('Diode Current: '), 
+            self.diode_current_label = ParameterLabel('Diode Current: ')
+            self.layout.addWidget(self.diode_current_label, 
                                   row, 0, 1, 1, QtCore.Qt.AlignRight)
             self.layout.addWidget(self.diode_current_box, row, 1)
 
@@ -101,6 +108,11 @@ class ECDLControl(QtGui.QGroupBox):
         self.state_button.released.connect(self.onNewState)
         self.piezo_voltage_box.returnPressed.connect(self.onNewPiezoVoltage)
         self.diode_current_box.returnPressed.connect(self.onNewDiodeCurrent)
+
+        if 'piezo_voltage' in self.update_parameters:
+            self.piezo_voltage_label.clicked.connect(self.requestValues)
+        if 'diode_current' in self.update_parameters:
+            self.diode_current_label.clicked.connect(self.requestValues)
         
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.writeValues)

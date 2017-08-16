@@ -6,6 +6,12 @@
             "servername": "128.138.107.135",
             "address": "39933"
         },
+        "srq_m2_sprout": {
+            "device_type": "Solstis",
+            "connection_type": "Socket",
+            "servername": "128.138.107.141",
+            "address": "39933"
+        },
         "sr1_m2": {
             "device_type": "Solstis",
             "connection_type": "Socket",

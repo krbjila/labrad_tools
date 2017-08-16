@@ -1,20 +1,14 @@
-import imp
 import json
-import os
-import sys
 
-import mpld3
 from labrad.wrappers import connectAsync
 from twisted.internet.defer import inlineCallbacks
 
 from matplotlib import pyplot as plt
 
-sys.path.append('../')
-from generic_device.generic_parameter import GenericParameter
+from conductor_device.conductor_parameter import ConductorParameter
 
-class Plot(GenericParameter):
+class Plot(ConductorParameter):
     priority = 1
-#    value_type = 'once'
 
     @inlineCallbacks
     def initialize(self):

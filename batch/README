@@ -1,0 +1,6 @@
+1-start_node_win.bat:
+    starts local node server.
+    local node server is used to start/manage other labrad servers.
+2-start_servers.bat:
+    start all servers configured in labrad_tools/nodecontrol/config.
+    for each node, the local node server must be running.

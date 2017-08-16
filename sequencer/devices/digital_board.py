@@ -3,7 +3,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
 
-T_TRIG = 10e-6
+# T_TRIG = 10e-6
+T_TRIG = 0
 T_END = 1e0
 TRIGGER_CHANNEL = 'Trigger@D15'
 
@@ -51,7 +52,8 @@ class DigitalBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-        self.bitfile = 'digital_sequencer.bit'
+     	# # removed KM 08/10/2017
+	# self.bitfile = 'digital_sequencer.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -67,12 +69,22 @@ class DigitalBoard(DeviceWrapper):
         """ non-defaults"""
         for key, value in config.items():
             setattr(self, key, value)
-        
+
+	# added KM 08/10/2017	
+	if self.address == 'KRbDigi01':	
+		self.bitfile = 'digital_sequencer.bit'
+	else:
+		self.bitfile = 'digital_sequencer_triggered.bit'
+
         for c in self.channels:
             c['board_name'] = self.name
             wrapper = DigitalChannel(c)
             row, column = wrapper.rowcol
-            channel_wrappers[(ord(row)%32-1)*16 + column] = wrapper
+	    if row < 'E':
+                channel_wrappers[(ord(row)%32-1)*16 + column] = wrapper
+	    else:
+		#If the row does not start at 'A', indexing is wrong. Change so index starts at 'A' (thus the -4)
+                channel_wrappers[((ord(row)-4)%32-1)*16 + column] = wrapper
         self.channels = channel_wrappers
 
         for c in self.channels:
@@ -107,16 +119,17 @@ class DigitalBoard(DeviceWrapper):
 
     def make_sequence_bytes(self, sequence):
         # make sure trigger happens on first run
-        for c in self.channels:
-            s = {'dt': T_TRIG, 'out': sequence[c.key][0]['out']}
-            sequence[c.key].insert(0, s)
+	if self.address == 'KRbDigi01':        
+		for c in self.channels:
+		    s = {'dt': T_TRIG, 'out': sequence[c.key][0]['out']}
+		    sequence[c.key].insert(0, s)
 
-        # trigger other boards
-        for s in sequence[TRIGGER_CHANNEL]:
-            s['out'] = False
-        sequence[TRIGGER_CHANNEL][0]['out'] = True
-        # allow for analog's ramp to zero, last item will not be written
-        sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
+		# trigger other boards
+		for s in sequence[TRIGGER_CHANNEL]:
+		    s['out'] = False
+		sequence[TRIGGER_CHANNEL][0]['out'] = True
+		# allow for analog's ramp to zero, last item will not be written
+		sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
 
         for c in self.channels:
             total_ticks = 0

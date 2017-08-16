@@ -25,8 +25,7 @@ class ParameterRow(QtGui.QWidget):
         self.nameBox.setFixedSize(self.boxWidth, self.boxHeight)
         self.valueBox = NeatSpinBox()
         self.valueBox.setFixedSize(self.boxWidth, self.boxHeight)
-        self.valueBox.display(0)
-
+#        self.valueBox.display(0)
 
         self.layout = QtGui.QHBoxLayout()
         self.layout.addWidget(self.nameBox)
@@ -102,7 +101,6 @@ class ParameterControl(QtGui.QGroupBox):
     @inlineCallbacks
     def do_update(self):
             server = yield self.cxn.get_server(self.servername)
-#            parameters_json = yield server.get_current_sequence_parameters()
             parameters_json = yield server.get_parameter_values()
             parameters = json.loads(parameters_json)[self.device]
             for pr in self.parameterRows:
@@ -116,7 +114,6 @@ class ParameterControl(QtGui.QGroupBox):
             name = str(parameterRow.nameBox.text())
             value = float(parameterRow.valueBox.value())
             server = yield self.cxn.get_server(self.servername)
-            #yield server.update_sequence_parameters(json.dumps({name: value}))
             yield server.set_parameter_values(json.dumps({self.device: {name: value}}))
             parameterRow.valueBox.display(value)
         return wv

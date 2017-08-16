@@ -1,24 +1,13 @@
 node_dict = {
-    'node yesr9': [
-        'gpib',
-    ],
-    'node yesr10': [
-        'okfpga',
-    ],
-    'node yesr20': [
-        'gpib',
-        'serial',
-        'okfpga',
-        'rf',
-        'current_controller',
-        'ecdl',
-        'spectrum_analyzer',
-#        'msquared_comb_lock',
+    'node krbjila': [
+	# start hardware interfaces first
+        'gpib', 
+        # 'serial',
+       	'okfpga',
+	# start device servers next
+        # 'rf',
         'sequencer',
-        'conductor',
+	# start conductor last
+        'conductor', 
     ],
-#    'node yesr5': [
-#        'msquared',
-#        'serial',
-#    ],
 }

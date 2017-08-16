@@ -1,18 +1,19 @@
 {
-    "data_directory": "Z:\\SrQ\\data\\{}\\",
+    "data_directory": "/home/bialkali/data/{}/",
     "time_format": "%Y%m%d",
     "default_values_path": "./default_values.json",
     "registry_directory": ["", "Servers", "conductor", "parameters"],
     "default_parameters": {
         "sequencer": {
-            "sequence": {}
+            "sequence": {
+                "sequence_directory": "/home/bialkali/data/{}/sequences/",
+                "default_sequence": "todaytest"
+	    }
         },
-        "influxdb": {
-            "client": {}
+        "antenna": {
+            "frequency": {}
         },
-        "gage": {
-            "frac": {},
-            "tot": {},
+        "time": {
             "timestamp": {}
         }
     }

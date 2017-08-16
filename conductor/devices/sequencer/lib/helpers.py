@@ -3,22 +3,31 @@ import os
 
 from datetime import date, timedelta
 from itertools import chain
+from time import strftime
 
 SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 
-def value_to_sequence(value):
-    if type(value).__name__ == 'list':
-        return combine_sequences([read_sequence_file(v) for v in value])
+def value_to_sequence(sequence):
+    if type(sequence.value).__name__ == 'list':
+        try: 
+            return combine_sequences([
+                read_sequence_file(sequence.sequence_directory, v) 
+                for v in sequence.value
+            ])
+        except Exception, e:
+            print e
+            return read_sequence_file(sequence.sequence_directory, 'all_off')
     else:
         return value
 
-def read_sequence_file(filename):
+
+def read_sequence_file(sequence_directory, filename):
     if type(filename).__name__ == 'dict':
         return filename
     if not os.path.exists(filename):
         for i in range(365):
             day = date.today() - timedelta(i)
-            path = SEQUENCE_DIRECTORY.format(day.strftime('%Y%m%d')) + filename
+            path = sequence_directory.format(day.strftime('%Y%m%d')) + filename
             if os.path.exists(path):
                 filename = path
                 break

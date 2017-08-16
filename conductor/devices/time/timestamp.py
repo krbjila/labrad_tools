@@ -1,14 +1,11 @@
-import sys
 import time
 
 from twisted.internet.defer import inlineCallbacks
 from labrad.wrappers import connectAsync
 
-sys.path.append('../')
-from generic_device.generic_parameter import GenericParameter
+from conductor_device.conductor_parameter import ConductorParameter
 
-
-class Timestamp(GenericParameter):
+class Timestamp(ConductorParameter):
     value_type = 'data'
     priority = 1
 
