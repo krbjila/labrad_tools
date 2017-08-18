@@ -11,7 +11,13 @@
 	    }
         },
         "E8257D": {
-                "enable": {"default_enable": 0}
+                "enable": {
+                    "defaults": {
+                       "0": {"frequency": 6834.7, "amplitude": -19},
+			"1": {},
+                        "2": {"frequency": 6898, "amplitude": 10}
+                    }
+                }
         },
         "arp33220A": {
                 "frequency": {
