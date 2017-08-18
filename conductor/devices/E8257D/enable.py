@@ -65,7 +65,9 @@ class Enable(ConductorParameter):
                     newstate = yield int(self.trigger.read(bytes_waiting)[-1])
 
                     if self.state != newstate:
-                        # update state and clear the buffer
+                        # turn off rf output
+                        yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
+                        # update the state and clear the serial buffer
                         self.state = newstate
                         yield self.trigger.reset_input_buffer()
                             
@@ -78,14 +80,26 @@ class Enable(ConductorParameter):
                                     to_run['f'] = params[u'frequency']
                                 if u'amplitude' in params:                   
                                     to_run['a'] = params[u'amplitude']
-                                if u'trajectory' in params:
-                                    to_run['t'] = params[u'trajectory']
-                       
+                                if u'evap' in params:
+                                    print 'poo'
+                                    to_run['e'] = params[u'evap']
+                                    print to_run['e']
+                        
+                        # turn on the output
+                        yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
+
                         # now, execute the parameters
                         # first, check if an evap trajectory is set up
-                        if 't' in to_run:
-                            # for now, pass
-                            pass
+                        if 'e' in to_run:
+                            if to_run['e']:
+                                print 'poop'
+                                self.evap = evaporation()
+                                self.cmds = []
+                                for k in range(self.evap.points):
+                                    self.cmds.append('FREQ {:0.2f}kHz; VOLT {:0.2f}dbm'.format(self.evap.trajectory[k], self.evap.amps[k]))
+                                for k in self.cmds:
+                                    self.cxn.krbjila_gpib.write(k)
+                                    yield sleep(self.evap.dt)
                         # if not, then just setting a single frequency and/or amplitude
                         elif ('f' in to_run) or ('a' in to_run):
                             if 'f' in to_run:
@@ -95,27 +109,8 @@ class Enable(ConductorParameter):
                         # if no parameters found, just configure as default
                         else:
                             yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
-                            yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm')
-                                
+                            yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm') 
                             
-#                            # if nothing, run default (gray molasses)
-#                            if self.state == 0:
-#                                f = self.value.trig0.frequency
-#                                a = self.value.trig
-#                                yield self.cxn.krbjila_gpib.write('FREQ ' + f + ' MHz')
-#                                yield self.cxn.krbjila_gpib.write('POW:AMPL ' + a + 'dbm')
-#                            # if only D08 high, do evaporation
-#                            if self.state == 1:
-#                                yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
-#                                yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm')
-#                            # if only D09 high, set up low field ARP
-#                            if self.state == 2:
-#                                yield self.cxn.krbjila_gpib.write('FREQ 6898MHz')
-#                                yield self.cxn.krbjila_gpib.write('POW:AMPL 10dbm')
-#                            # if only D10 high, set up high field ARP
-#                            if self.state == 4:
-#                                yield self.cxn.krbjila_gpib.write('FREQ 8030MHz')
-#                                yield self.cxn.krbjila_gpib.write('POW:AMPL 10dbm')
             # once the while loop has terminated, close the serial connection
             self.trigger.close()
         # if not enabled, output the default (gray molasses)
