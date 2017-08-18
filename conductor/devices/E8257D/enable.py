@@ -24,7 +24,9 @@ class Enable(ConductorParameter):
     def __init__(self, config={}):
         super(Enable, self).__init__(config)
         self.value = 0
-        self.state = 0
+        # ensure that the rf turns on at the beginning of the sequence
+        # i.e., ensure that self.state changes at beginning of the sequence
+        self.state = -1
 
         for k in serial.tools.list_ports.comports():
            try:
@@ -115,6 +117,7 @@ class Enable(ConductorParameter):
             self.trigger.close()
         # if not enabled, output the default (gray molasses)
         else:
+            yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
             yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
             yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm')
 
