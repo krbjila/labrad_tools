@@ -341,6 +341,9 @@ class ConductorServer(LabradServer):
                 parameter.value = parameter.value
                 if parameter_name == 'sequence':
                     parameter.value = [parameter.default_sequence]
+                #LDM added following two lines 2017.08.16
+                if parameter_name == 'enable':
+                    parameter.value = [parameter.default_enable]
         self.data = {}
         self.data_path = None
         return True
@@ -428,7 +431,9 @@ class ConductorServer(LabradServer):
     def update_parameter(self, parameter):
         """ have device update parameter value """
         try:
-            yield parameter.update()
+            fart = yield parameter.update()
+            if fart:
+                raise Exception('fart is ' + str(fart))
         except Exception, e:
             # remove parameter is update failed.
             print e

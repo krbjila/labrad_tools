@@ -10,13 +10,8 @@
                 "default_sequence": "default"
 	    }
         },
-        "evapE8257D": {
-                "enable": {}
-        },
-        "grayE8257D": {
-                "enable": {
-                    "default_gray": 1
-                }
+        "E8257D": {
+                "enable": {"default_enable": 0}
         },
         "arp33220A": {
                 "frequency": {
