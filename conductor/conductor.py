@@ -55,6 +55,8 @@ class ConductorServer(LabradServer):
 
     name = 'conductor'
     parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
+    experiment_started = Signal(696969, 'signal: experiment started', 'b')
+    experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}
@@ -346,6 +348,8 @@ class ConductorServer(LabradServer):
                     parameter.value = 0
         self.data = {}
         self.data_path = None
+        # send signal that the experiment has been stopped
+        self.experiment_stopped(True)
         return True
 
     @setting(13, returns='s')
@@ -355,6 +359,8 @@ class ConductorServer(LabradServer):
     @inlineCallbacks
     def advance_experiment(self):
         if len(self.experiment_queue):
+            # send signal that experiment has started
+            self.experiment_started(True)
             # get next experiment from queue and keep a copy
             experiment = self.experiment_queue.popleft()
             experiment_copy = deepcopy(experiment)
@@ -393,6 +399,8 @@ class ConductorServer(LabradServer):
             self.data = {}
             if self.data_path:
                 print 'experiment queue is empty'
+            # signal that experiment has stopped
+            self.experiment_stopped(True)
             self.data_path = None
             returnValue(False)
 

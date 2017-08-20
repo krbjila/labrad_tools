@@ -47,7 +47,6 @@ class SerialServer(HardwareInterfaceServer):
             else:
                 try:
                     ser = Serial(address)
-                    ser.setTimeout(0)
                     ser.close()
                     self.interfaces[address] = ser
                     print '{} available'.format(address)
@@ -101,8 +100,8 @@ class SerialServer(HardwareInterfaceServer):
     @setting(7, timeout='v', returns='v')
     def timeout(self, c, timeout=None):
         if timeout is not None:
-            self.call_if_available('setTimeout', c, timeout)
-        timeout = self.call_if_available('getTimeout', c)
+            self.call_if_available('timeout', c, timeout)
+        timeout = self.call_if_available('timeout', c)
         return timeout
 
     @setting(8, rts='b', returns='s')
@@ -144,6 +143,15 @@ class SerialServer(HardwareInterfaceServer):
     def read_lines(self, c, n_bytes=1000L):
         ans = self.call_if_available('readlines', c, n_bytes)
         return [a.strip() for a in ans]
+
+    @setting(15, returns='v')
+    def in_waiting(self, c):
+        ans = self.call_if_available('in_waiting', c)
+        return ans
+
+    @setting(16)
+    def reset_input_buffer(self, c):
+        self.call_if_available('reset_input_buffer', c)
 
 __server__ = SerialServer()
 

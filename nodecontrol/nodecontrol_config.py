@@ -2,8 +2,8 @@ node_dict = {
     'node krbjila': [
 	# start hardware interfaces first
         'gpib', 
-        # 'serial',
        	'okfpga',
+        'arduino',
 	# start device servers next
         # 'rf',
         'sequencer',

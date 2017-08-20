@@ -12,6 +12,7 @@
         },
         "E8257D": {
                 "enable": {
+                    "default_enable": 1,
                     "defaults": {
                        "0": {"frequency": 6834.7, "amplitude": -19},
 			"1": {"evap": 1},

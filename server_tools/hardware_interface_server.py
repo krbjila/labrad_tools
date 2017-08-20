@@ -20,9 +20,13 @@ class HardwareInterfaceServer(LabradServer):
             ans = getattr(interface, f)(*args, **kwargs)
             return ans
         except:
-            self.refresh_available_interfaces()
-            interface = self.get_interface(c)
-            return getattr(interface, f)(*args, **kwargs)
+            try:
+                self.refresh_available_interfaces()
+                interface = self.get_interface(c)
+                return getattr(interface, f)(*args, **kwargs)
+            except:
+                self.interface = self.get_interface(c)
+                return getattr(interface, f)
 
     def get_interface(self, c):
         if 'address' not in c:

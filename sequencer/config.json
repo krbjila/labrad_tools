@@ -155,7 +155,7 @@
                 },
                 {
                     "loc": ["B", 5],
-                    "name": "TTL B5",
+                    "name": "Rb Dark Molasses Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -401,21 +401,21 @@
                 },
                 {
                     "loc": ["D", 8],
-                    "name": "Conf. Gray. Mol",
+                    "name": "Trigger RF Evap",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 9],
-                    "name": "Trig. Evap.",
+                    "name": "Trigger Rb ARP 1",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 10],
-                    "name": "Conf. Rb ARP1",
+                    "name": "Trigger Rb ARP 2",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
