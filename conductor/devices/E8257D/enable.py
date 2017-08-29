@@ -82,7 +82,7 @@ class Enable(ConductorParameter):
                         self.evap = evaporation()
                         self.cmds = []
                         for k in range(self.evap.points):
-                            self.cmds.append('FREQ {:0.2f}kHz; POW:AMPL {:0.2f}dbm'.format(self.evap.trajectory[k], self.evap.amps[k]))
+                            self.cmds.append('FREQ {:0.2f}MHz; POW:AMPL {:0.2f}dbm'.format(self.evap.trajectory[k], self.evap.amps[k]))
     
                         yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
                         for k in self.cmds:

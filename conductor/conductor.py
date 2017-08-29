@@ -348,8 +348,6 @@ class ConductorServer(LabradServer):
                     parameter.value = 0
         self.data = {}
         self.data_path = None
-        # send signal that the experiment has been stopped
-        self.experiment_stopped(True)
         return True
 
     @setting(13, returns='s')

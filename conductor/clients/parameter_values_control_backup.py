@@ -2,8 +2,6 @@ import json
 import numpy as np
 import sys
 
-import variables_config
-
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
@@ -70,12 +68,6 @@ class ParameterControl(QtGui.QGroupBox):
         yield None
 
     def populateGUI(self):
-        # added KM 08/28/17
-        # initialize default variables and values from variables_config.py
-        default_variables = variables_config.variables_dict
-        if self.numRows < len(default_variables):
-            self.numRows = len(default_variables)
-
         self.parameterRows = [ParameterRow(self.configuration) 
                 for i in range(self.numRows)]
 
@@ -85,13 +77,6 @@ class ParameterControl(QtGui.QGroupBox):
         self.layout.setSpacing(1)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
-        # added KM 08/28/17
-        # initialize default variables and values from variables_config.py
-        variables = default_variables.keys()
-        for i in range(len(variables)):
-            self.parameterRows[i].nameBox.setText(variables[i])
-            self.parameterRows[i].valueBox.display(default_variables[variables[i]])
-
         self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
         self.setLayout(self.layout)
 
