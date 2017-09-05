@@ -108,7 +108,7 @@ class NeatSpinBox(QtGui.QLineEdit):
             self.step(up=0)
 
     def display(self, value, overwrite=False):
-        print self.hasFocus()
+#        print self.hasFocus()
         if overwrite or not self.hasFocus():
             # keep previously displayed value
             text = self.text()

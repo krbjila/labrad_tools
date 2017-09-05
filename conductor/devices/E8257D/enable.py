@@ -87,6 +87,8 @@ class Enable(ConductorParameter):
                         yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
                         for k in self.cmds:
                             self.cxn.krbjila_gpib.write(k)
+                            # removed "yield" below KM 08/30/17
+                            # was tripping over itself at end of evap
                             yield sleep(self.evap.dt)
                 # if not, then just setting a single frequency and/or amplitude
                 elif ('f' in to_run) or ('a' in to_run):

@@ -33,7 +33,7 @@ class ParameterRow(QtGui.QWidget):
         self.layout.addWidget(self.nameBox)
         self.layout.addWidget(self.valueBox)
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 0, 10, 0)
         self.setLayout(self.layout)
 
 class ParameterControl(QtGui.QGroupBox):
@@ -91,6 +91,8 @@ class ParameterControl(QtGui.QGroupBox):
         for i in range(len(variables)):
             self.parameterRows[i].nameBox.setText(variables[i])
             self.parameterRows[i].valueBox.display(default_variables[variables[i]])
+            # write the parameters to conductor
+            self.forceWriteValue(self.parameterRows[i])
 
         self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
         self.setLayout(self.layout)
@@ -133,6 +135,17 @@ class ParameterControl(QtGui.QGroupBox):
             parameterRow.valueBox.display(value)
         return wv
 
+    # There is some kind of subtlety with functions that are defined as
+    # Qt slots (responses to a Qt signal). Had to redefine this function
+    # to be able to call it directly in the code
+    @inlineCallbacks
+    def forceWriteValue(self, parameterRow):
+        name = str(parameterRow.nameBox.text())
+        value = float(parameterRow.valueBox.value())
+        server = yield self.cxn.get_server(self.servername)
+        yield server.set_parameter_values(json.dumps({self.device: {name: value}}))
+        parameterRow.valueBox.display(value)
+
     @inlineCallbacks	
     def reinit(self): 
         self.setDisabled(False)
@@ -156,7 +169,7 @@ class ControlConfig(object):
         self.updateTime = 100 # [ms]
         self.boxWidth = 80
         self.boxHeight = 20
-        self.numRows = 10
+        self.numRows = 15
         self.device = 'sequencer'
 
 if __name__ == '__main__':

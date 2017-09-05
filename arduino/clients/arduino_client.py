@@ -12,9 +12,9 @@ from twisted.internet.defer import inlineCallbacks
 
 SEP = os.path.sep
 
-class ArduinoControl(QtGui.QWidget):
+class ArduinoClient(QtGui.QWidget):
     def __init__(self, reactor, parent=None):
-        super(ArduinoControl, self).__init__(parent)
+        super(ArduinoClient, self).__init__(parent)
         self.reactor = reactor
         self.alive = True
         self.state = -1
@@ -141,6 +141,6 @@ if  __name__ == '__main__':
     import qt4reactor
     qt4reactor.install()
     from twisted.internet import reactor
-    widget = ArduinoControl(reactor)
+    widget = ArduinoClient(reactor)
     widget.show()
     reactor.run()

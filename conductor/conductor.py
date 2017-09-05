@@ -348,6 +348,7 @@ class ConductorServer(LabradServer):
                     parameter.value = 0
         self.data = {}
         self.data_path = None
+        self.experiment_stopped(True)
         return True
 
     @setting(13, returns='s')
@@ -357,8 +358,8 @@ class ConductorServer(LabradServer):
     @inlineCallbacks
     def advance_experiment(self):
         if len(self.experiment_queue):
-            # send signal that experiment has started
-            self.experiment_started(True)
+            # send signal that experiment has stopped
+            self.experiment_stopped(True)
             # get next experiment from queue and keep a copy
             experiment = self.experiment_queue.popleft()
             experiment_copy = deepcopy(experiment)
@@ -366,7 +367,8 @@ class ConductorServer(LabradServer):
             parameter_values = experiment.get('parameter_values')
             if parameter_values:
                 yield self.set_parameter_values(None, json.dumps(parameter_values))
-
+            # signal that experiment has started again
+            self.experiment_started(True)
             # if this experiment should loop, append to begining of queue
             if experiment.get('loop'):
                 # now we require appending data
