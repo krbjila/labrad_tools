@@ -16,6 +16,7 @@ from helpers import merge_dicts, get_sequence_parameters, substitute_sequence_pa
 sys.path.append('../')
 from devices.lib.analog_ramps import RampMaker
 
+
 class ParameterWidget(QtGui.QWidget):
     def __init__(self, ramp_type, ramp):
         """

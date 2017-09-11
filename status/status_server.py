@@ -26,15 +26,13 @@ import serial.tools.list_ports
 
 import subprocess
 
+# Does nothing at the moment...
 class StatusServer(LabradServer):
     """ Status of running widgets """
     name = '%LABRADNODE%_status'
     
     def __init__(self):
         LabradServer.__init__(self)
-        self.startClients()
-
-    def startClients(self): 
 
 __server__ = StatusServer()
 

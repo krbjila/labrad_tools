@@ -57,6 +57,7 @@ class ConductorServer(LabradServer):
     parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
     experiment_started = Signal(696969, 'signal: experiment started', 'b')
     experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
+    parameter_removed = Signal(696971, 'signal: parameter removed', 's')
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}
@@ -67,6 +68,10 @@ class ConductorServer(LabradServer):
 
         self.load_config(config_path)
         LabradServer.__init__(self)
+        
+        # added KM 09/10/2017
+        self.advance_dict = {}
+        self.advance_counter = 0
     
     def load_config(self, path=None):
         """ set instance attributes defined in json config """
@@ -196,6 +201,8 @@ class ConductorServer(LabradServer):
         if not self.parameters[device_name]:
             del self.parameters[device_name]
         yield parameter.stop()
+        # Signal parameter removed
+        self.parameter_removed(str(device_name + " " + parameter_name))
 
     @setting(4, parameters='s', generic_parameter='b', returns='b')
     def set_parameter_values(self, c, parameters, generic_parameter=False, 
@@ -351,6 +358,21 @@ class ConductorServer(LabradServer):
         self.experiment_stopped(True)
         return True
 
+    # KM added 09/10/2017
+    # Abort the experiment immediately, then run defaults
+    @setting(17)
+    def abort_experiment(self, c):
+        for ID, call in self.advance_dict.items():
+            try:
+                call.cancel()
+            except:
+                pass
+        self.advance_dict = {}
+        self.stop_experiment(c)
+        for device_name, device_parameters in self.parameters.items():
+            for parameter_name, parameter in device_parameters.items():
+                self.update_parameter(parameter)
+ 
     @setting(13, returns='s')
     def get_data(self, c):
         return json.dumps(self.data)
@@ -508,15 +530,36 @@ class ConductorServer(LabradServer):
 #                except:
 #                    pass
 #
+
+    # KM edited 09/10/2017
     @setting(15)
-    def advance(self, c, delay=0):
+    def advance(self, c, delay=0, **kwargs):
+#        # this was the original function
+#        if delay:
+#            callLater(delay, self.advance, c)
+#        else:
+#            ti = time()
+#            yield deferToThread(self.save_parameters)
+#            yield self.advance_parameters()
+#            tf = time()
+#            if self.do_print_delay:
+#                print 'delay', tf-ti
+
+        # KM added 09/10/2017
+        # keep track of pending callLaters in a dict
+        # and remove from the dict when the call is finished
         if delay:
-            callLater(delay, self.advance, c)
+            self.advance_dict[str(self.advance_counter)] = callLater(delay, self.advance, c, ID=self.advance_counter)
+            self.advance_counter=0
+            while str(self.advance_counter) in self.advance_dict.keys():
+                self.advance_counter += 1 
         else:
             ti = time()
             yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
+            if 'ID' in kwargs:
+                del self.advance_dict[str(kwargs['ID'])]
             if self.do_print_delay:
                 print 'delay', tf-ti
 

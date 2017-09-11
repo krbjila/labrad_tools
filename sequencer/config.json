@@ -922,48 +922,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "QTrap Voltage", 
+                    "name": "DAC0: QTrap Voltage", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "QTrap Current", 
+                    "name": "DAC1: QTrap Current", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "Bias Field Voltage", 
+                    "name": "DAC2: Bias Field Voltage", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "Bias Field Current", 
+                    "name": "DAC3: Bias Field Current", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "Grad. Coils", 
+                    "name": "DAC4: Grad. Coils", 
                     "mode": "auto",
                     "manual_output": 1.0
                 },
                 {   "loc": 5, 
-                    "name": "MOT U/D Shim", 
+                    "name": "DAC5: MOT U/D Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "MOT SW/NE Shim", 
+                    "name": "DAC6: MOT SW/NE Shim", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "MOT SE/NW Shim", 
+                    "name": "DAC7: MOT SE/NW Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -978,48 +978,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "Rb Probe Detuning", 
+                    "name": "DAC8: Rb Probe Detuning", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "Rb Probe Intensity", 
+                    "name": "DAC9: Rb Probe Intensity", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "Rb MOT Intensity", 
+                    "name": "DAC10: Rb MOT Intensity", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "Rb Repump Power", 
+                    "name": "DAC11: Rb Repump Power", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC12", 
+                    "name": "DAC12: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC13", 
+                    "name": "DAC13: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC14", 
+                    "name": "DAC14: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC15", 
+                    "name": "DAC15: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1034,48 +1034,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "K Probe Detuning", 
+                    "name": "DAC16: K Probe Detuning", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "K Probe Intensity", 
+                    "name": "DAC17: K Probe Intensity", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "K MOT Intensity", 
+                    "name": "DAC18: K MOT Intensity", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "K Repump Power", 
+                    "name": "DAC19: K Repump Power", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "K D1 Power", 
+                    "name": "DAC20: K D1 Power", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC21", 
+                    "name": "DAC21: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC22", 
+                    "name": "DAC22: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC23", 
+                    "name": "DAC23: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1090,48 +1090,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "Plug", 
+                    "name": "DAC24: Plug", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "H OT", 
+                    "name": "DAC25: H OT", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "V OT", 
+                    "name": "DAC26: V OT", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "V Latt", 
+                    "name": "DAC27: V Latt", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "Latt 1", 
+                    "name": "DAC28: Latt 1", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "Latt 2", 
+                    "name": "DAC29: Latt 2", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC30", 
+                    "name": "DAC30: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC31", 
+                    "name": "DAC31: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1146,48 +1146,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32", 
+                    "name": "DAC32: ", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC33", 
+                    "name": "DAC33: ", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "DAC34", 
+                    "name": "DAC34: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC35", 
+                    "name": "DAC35: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC36", 
+                    "name": "DAC36: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC37", 
+                    "name": "DAC37: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC38", 
+                    "name": "DAC38: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC39", 
+                    "name": "DAC39: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1202,48 +1202,48 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC40", 
+                    "name": "DAC40: ", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC41", 
+                    "name": "DAC41: ", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 2, 
-                    "name": "DAC42", 
+                    "name": "DAC42: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC43", 
+                    "name": "DAC43: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC44", 
+                    "name": "DAC44: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC45", 
+                    "name": "DAC45: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC46", 
+                    "name": "DAC46: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC47", 
+                    "name": "DAC47: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }

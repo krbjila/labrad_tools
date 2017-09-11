@@ -10,8 +10,6 @@ sys.path.append('../../client_tools')
 sys.path.append('../../arduino/clients')
 sys.path.append('../../conductor/clients')
 
-sys.path.append('../../sequencer/clients')
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from twisted.internet.defer import inlineCallbacks
@@ -20,8 +18,8 @@ SEP = os.path.sep
 
 from status_client import StatusClient
 from arduino_client import ArduinoClient
+from abort_button import AbortButton
 from parameter_values_control import ParameterControl, ControlConfig
-from sequencer_control import SequencerControl
 
 # Runs the indicator button and communicates with Labrad servers
 class MainClient(QMainWindow):
@@ -30,18 +28,15 @@ class MainClient(QMainWindow):
     def __init__(self, reactor, parent=None):
         super(MainClient, self).__init__(parent)
         self.reactor = reactor
-        self.setGeometry(0, 0, 3*self.RAD, 3*self.RAD)
-        self.alive = True
-        self.state = -1
+        self.setGeometry(0, 0, 5*self.RAD, 5*self.RAD)
         
         # layout the GUI
         self.setupLayout()
 
     # Lays out the widget
     def setupLayout(self):
-        self.setWindowTitle('Main Widget')
-        #create a vertical layout
-        # add the indicator to the widget and connect signals
+        self.setWindowTitle('Auxiliary Widgets')
+       
         self.status_widget = StatusClient(self.reactor)
 
         self.arduino_widget = QDockWidget()
@@ -58,14 +53,10 @@ class MainClient(QMainWindow):
         self.parameter_widget.setTitleBarWidget(pvc_title)
         self.parameter_widget.setWidget(ParameterControl(ControlConfig(), self.reactor))
 
-        self.sequencer_widget = QDockWidget()
-        self.sequencer_widget.setWidget(SequencerControl(self.reactor))
-
         self.setCentralWidget(self.status_widget)
 
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.arduino_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.arduino_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.parameter_widget)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.sequencer_widget)
 
     def closeEvent(self, x):
         #stop the reactor when closing the widget

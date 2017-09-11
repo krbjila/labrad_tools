@@ -80,7 +80,8 @@ class AnalogBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-        self.bitfile = 'analog_sequencer.bit'
+#        self.bitfile = 'analog_sequencer.bit'
+        self.bitfile = 'dac.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80

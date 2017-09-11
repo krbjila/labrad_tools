@@ -74,7 +74,7 @@ class ParameterControl(QtGui.QGroupBox):
         # initialize default variables and values from variables_config.py
         default_variables = variables_config.variables_dict
         if self.numRows < len(default_variables):
-            self.numRows = len(default_variables)
+            self.numRows = len(default_variables) + 4
 
         self.parameterRows = [ParameterRow(self.configuration) 
                 for i in range(self.numRows)]

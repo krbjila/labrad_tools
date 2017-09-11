@@ -21,7 +21,7 @@ class NameBox(QtGui.QLabel):
         super(NameBox, self).__init__(None)
         self.nameloc = nameloc
         name, loc = nameloc.split('@')
-        self.setText(name)
+        self.setText(loc+': '+name)
         self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter  )
         self.name = name
 

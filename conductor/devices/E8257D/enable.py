@@ -25,10 +25,10 @@ class Enable(ConductorParameter):
         super(Enable, self).__init__(config)
         self.value = 0
         self.state = 0
-        self.enabled = self.default_enable
         self.ID_case = 8008
         self.ID_start = 8009
         self.ID_stop = 8010
+        self.ID_update = 8011
         self.to_run = {}
 
     @inlineCallbacks
@@ -36,10 +36,16 @@ class Enable(ConductorParameter):
 
         self.cxn = yield connectAsync()
 	yield self.cxn.krbjila_gpib.select_interface('GPIB0::19::INSTR')
+
         yield self.cxn.krbjila_arduino.signal__case(self.ID_case)
         yield self.cxn.krbjila_arduino.addListener(listener = self.advanceAction, source = None, ID = self.ID_case)
+
+        yield self.cxn.conductor.signal__parameters_updated(self.ID_update)
+        yield self.cxn.conductor.addListener(listener = self.updateAction, source = None, ID = self.ID_update)
+
         yield self.cxn.conductor.signal__experiment_started(self.ID_start)
         yield self.cxn.conductor.addListener(listener = self.startAction, source = None, ID = self.ID_start)
+
         yield self.cxn.conductor.signal__experiment_stopped(self.ID_stop)
         yield self.cxn.conductor.addListener(listener = self.stopAction, source = None, ID = self.ID_stop)
 
@@ -48,15 +54,15 @@ class Enable(ConductorParameter):
         # turn off the output before proceeding
         yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
         # if enabled and the signal is True
-        if self.enabled and signal:
+        if self.default_enable and signal:
             # look for defaults set in config file
-            if self.defaults['0']:
-                defaults = self.defaults['0']
-                if 'f' in defaults:
-                    f = defaults['f']
+            if self.defaults[u'0']:
+                defaults = self.defaults[u'0']
+                if u'frequency' in defaults:
+                    f = str(defaults[u'frequency'])
                     yield self.cxn.krbjila_gpib.write('FREQ ' + f + 'MHz')
-                if 'a' in defaults:
-                    a = defaults['a']
+                if u'amplitude' in defaults:
+                    a = str(defaults[u'amplitude'])
                     yield self.cxn.krbjila_gpib.write('POW:AMPL ' + a + 'dbm')
                 yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
             # otherwise output default parameters
@@ -69,12 +75,21 @@ class Enable(ConductorParameter):
     def stopAction(self, cntx, signal):
         if signal:
             yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
+            if self.defaults[u'0']:
+                defaults = self.defaults[u'0']
+                if u'frequency' in defaults:
+                    f = str(defaults[u'frequency'])
+                    yield self.cxn.krbjila_gpib.write('FREQ ' + f + 'MHz')
+                if u'amplitude' in defaults:
+                    a = str(defaults[u'amplitude'])
+                    yield self.cxn.krbjila_gpib.write('POW:AMPL ' + a + 'dbm')
 
     @inlineCallbacks
     def advanceAction(self, cntx, signal):
-        if self.enabled:
+        if self.value:
             yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
             state = signal
+            self.state = state
             if str(state) in self.to_run:
                 to_run = self.to_run[str(state)]
                 if 'e' in to_run:
@@ -87,8 +102,35 @@ class Enable(ConductorParameter):
                         yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
                         for k in self.cmds:
                             self.cxn.krbjila_gpib.write(k)
-                            # removed "yield" below KM 08/30/17
-                            # was tripping over itself at end of evap
+                            yield sleep(self.evap.dt)
+                # if not, then just setting a single frequency and/or amplitude
+                elif ('f' in to_run) or ('a' in to_run):
+                    if 'f' in to_run:
+                       yield self.cxn.krbjila_gpib.write('FREQ ' + str(to_run['f']) + 'MHz')
+                    if 'a' in to_run:
+                       yield self.cxn.krbjila_gpib.write('POW:AMPL ' + str(to_run['a']) + 'dbm')
+                    yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')  
+            else:
+                yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
+                yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm') 
+
+    @inlineCallbacks
+    def updateAction(self, cntx, signal):
+        if self.value:
+            yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
+            state = self.state
+            if str(state) in self.to_run:
+                to_run = self.to_run[str(state)]
+                if 'e' in to_run:
+                    if to_run['e']:
+                        self.evap = evaporation()
+                        self.cmds = []
+                        for k in range(self.evap.points):
+                            self.cmds.append('FREQ {:0.2f}MHz; POW:AMPL {:0.2f}dbm'.format(self.evap.trajectory[k], self.evap.amps[k]))
+    
+                        yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')
+                        for k in self.cmds:
+                            self.cxn.krbjila_gpib.write(k)
                             yield sleep(self.evap.dt)
                 # if not, then just setting a single frequency and/or amplitude
                 elif ('f' in to_run) or ('a' in to_run):
@@ -102,8 +144,6 @@ class Enable(ConductorParameter):
                 yield self.cxn.krbjila_gpib.write('POW:AMPL -19dbm') 
 
     def update(self):
-        if self.value:
-            self.enabled = 1
         self.to_run = {}
         # look for parameters for the triggered state
         for attr in ['defaults', 'value']:
