@@ -53,6 +53,7 @@ class Enable(ConductorParameter):
     def startAction(self, cntx, signal):
         # turn off the output before proceeding
         yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
+        yield self.cxn.krbjila_gpib.write('FM1:STAT OFF')
         # if enabled and the signal is True
         if self.default_enable and signal:
             # look for defaults set in config file
@@ -75,6 +76,7 @@ class Enable(ConductorParameter):
     def stopAction(self, cntx, signal):
         if signal:
             yield self.cxn.krbjila_gpib.write('OUTP:STAT OFF')
+            yield self.cxn.krbjila_gpib.write('FM1:STAT OFF')
             if self.defaults[u'0']:
                 defaults = self.defaults[u'0']
                 if u'frequency' in defaults:
@@ -104,11 +106,16 @@ class Enable(ConductorParameter):
                             self.cxn.krbjila_gpib.write(k)
                             yield sleep(self.evap.dt)
                 # if not, then just setting a single frequency and/or amplitude
-                elif ('f' in to_run) or ('a' in to_run):
+                elif ('f' in to_run) or ('a' in to_run) or ('d' in to_run):
                     if 'f' in to_run:
                        yield self.cxn.krbjila_gpib.write('FREQ ' + str(to_run['f']) + 'MHz')
                     if 'a' in to_run:
                        yield self.cxn.krbjila_gpib.write('POW:AMPL ' + str(to_run['a']) + 'dbm')
+                    if 'd' in to_run:
+                       yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       yield self.cxn.krbjila_gpib.write('FM1:DEV ' + str(to_run['d']) + 'MHz')
+                       yield self.cxn.krbjila_gpib.write('FM1:STAT ON')
+                       yield self.cxn.krbjila_gpib.write('OUTP:MOD ON')
                     yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')  
             else:
                 yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
@@ -133,11 +140,16 @@ class Enable(ConductorParameter):
                             self.cxn.krbjila_gpib.write(k)
                             yield sleep(self.evap.dt)
                 # if not, then just setting a single frequency and/or amplitude
-                elif ('f' in to_run) or ('a' in to_run):
+                elif ('f' in to_run) or ('a' in to_run) or ('d' in to_run):
                     if 'f' in to_run:
                        yield self.cxn.krbjila_gpib.write('FREQ ' + str(to_run['f']) + 'MHz')
                     if 'a' in to_run:
                        yield self.cxn.krbjila_gpib.write('POW:AMPL ' + str(to_run['a']) + 'dbm')
+                    if 'd' in to_run:
+                       yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       yield self.cxn.krbjila_gpib.write('FM1:DEV ' + str(to_run['d']) + 'MHz')
+                       yield self.cxn.krbjila_gpib.write('FM1:STAT ON')
+                       yield self.cxn.krbjila_gpib.write('OUTP:MOD ON')
                     yield self.cxn.krbjila_gpib.write('OUTP:STAT ON')  
             else:
                 yield self.cxn.krbjila_gpib.write('FREQ 6834.7MHz')
@@ -163,3 +175,5 @@ class Enable(ConductorParameter):
                             self.to_run[state]['a'] = params[u'amplitude']
                         if u'evap' in params:
                             self.to_run[state]['e'] = params[u'evap']
+                        if u'dev' in params:
+                            self.to_run[state]['d'] = params[u'dev']

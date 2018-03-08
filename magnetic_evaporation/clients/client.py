@@ -238,10 +238,13 @@ class Ui_MainWindow(object):
             x = exponential(self.A['start'][k],self.A['stop'][k],self.A['asymp'][k],self.A['tau'][k])
             F = np.append(F,x)
         T = np.arange(len(F))*dT
-
-
+	MaxTime = T[-1]
+	print(MaxTime)
+	
         self.graph.axes.clear()
         self.graph.axes.plot(T,F)
+        fick = "Evap. Time: {0:.2f} s".format(MaxTime)
+	self.graph.axes.set_title(fick)
         self.graph.draw()
 
     def delrow(self):

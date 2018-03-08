@@ -2,6 +2,7 @@ import json
 import numpy as np
 import sys
 
+import collections
 import variables_config
 
 from PyQt4 import QtGui, QtCore, Qt
@@ -87,12 +88,16 @@ class ParameterControl(QtGui.QGroupBox):
         
         # added KM 08/28/17
         # initialize default variables and values from variables_config.py
-        variables = default_variables.keys()
-        for i in range(len(variables)):
-            self.parameterRows[i].nameBox.setText(variables[i])
-            self.parameterRows[i].valueBox.display(default_variables[variables[i]])
+#        variables = default_variables.keys()
+        
+        for i in range(len(default_variables)):
+#            self.parameterRows[i].nameBox.setText(variables[i])
+#            self.parameterRows[i].valueBox.display(default_variables[variables[i]])
+            self.parameterRows[i].nameBox.setText(default_variables[i][0])
+            self.parameterRows[i].valueBox.display(default_variables[i][1])
             # write the parameters to conductor
             self.forceWriteValue(self.parameterRows[i])
+            i += 1
 
         self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
         self.setLayout(self.layout)

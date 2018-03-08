@@ -81,14 +81,17 @@ class AnalogBoard(DeviceWrapper):
         self.init_commands = []
 
 #        self.bitfile = 'analog_sequencer.bit'
-        self.bitfile = 'dac.bit'
+#        self.bitfile = 'dac.bit'
+        self.bitfile = 'analog_lower_drive.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
         self.channel_mode_wire = 0x09
         self.manual_voltage_wires = [0x01, 0x02, 0x03, 0x04, 
                                      0x05, 0x06, 0x07, 0x08]
-        self.clk = 48e6 / (8.*2. + 2.)
+
+        self.clk =  48e6 / (8.*2. + 2.)
+#        self.clk = 12e6 / (8.*4. + 2.)
         self.mode = 'idle'
 
         channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name})
@@ -157,7 +160,7 @@ class AnalogBoard(DeviceWrapper):
 
         # order ramps by when the happen, then physical location on board
         sorted_ramps = sorted(unsorted_ramps)
-        
+
         # ints to bytes
         byte_array = []
         for r in sorted_ramps:

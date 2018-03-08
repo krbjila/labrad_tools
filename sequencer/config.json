@@ -92,14 +92,14 @@
                 },
                 {
                     "loc": ["A", 12],
-                    "name": "TTL A12",
+                    "name": "Grad. Coil Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["A", 13],
-                    "name": "TTL A13",
+                    "name": "Grad. Coil H-Bridge",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -127,28 +127,28 @@
                 },
                 {
                     "loc": ["B", 1],
-                    "name": "Trig. Stage",
+                    "name": "K/KRb RF MUX",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 2],
-                    "name": "TTL B2",
+                    "name": "AD9910 PS0",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 3],
-                    "name": "X-Y Shims",
+                    "name": "AD9910 PS1",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 4],
-                    "name": "Z Shim",
+                    "name": "AD9910 PS2",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -162,56 +162,56 @@
                 },
                 {
                     "loc": ["B", 6],
-                    "name": "uWave Switch",
+                    "name": "Rb uWave Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 7],
-                    "name": "uWave Amp.",
+                    "name": "Rb uWave Amp.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 8],
-                    "name": "uWave Mux.",
+                    "name": "TTL B8",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 9],
-                    "name": "Trig. uWave Sweep",
+                    "name": "Trig. Parametric Heating",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 10],
-                    "name": "K RF Switch",
+                    "name": "K/KRb RF Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 11],
-                    "name": "K RF DDS Switch",
+                    "name": "K/KRb AD9910 Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 12],
-                    "name": "K RF Mux.",
+                    "name": "K 10-80 MHz Mux.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 13],
-                    "name": "TTL B13",
+                    "name": "Internal DAC Bias Field",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -232,14 +232,14 @@
                 },
                 {
                     "loc": ["C", 0],
-                    "name": "TBeam AOM",
+                    "name": "TTL C0",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 1],
-                    "name": "TBeam Shutter",
+                    "name": "TTL C1",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -260,42 +260,42 @@
                 },
                 {
                     "loc": ["C", 4],
-                    "name": "V OT AOM",
+                    "name": "Vertical Lattice AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 5],
-                    "name": "V OT Shutter",
+                    "name": "Vertical Lattice Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 6],
-                    "name": "V LATT AOM",
+                    "name": "TTL C6",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 7],
-                    "name": "V LATT Shutter",
+                    "name": "TTL C7",
                     "mode": "auto",
                     "manual_output": 1,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 8],
-                    "name": "LATT1 AOM",
+                    "name": "MARIA AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 9],
-                    "name": "LATT1 Shutter",
+                    "name": "MARIA Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -316,14 +316,14 @@
                 },
                 {
                     "loc": ["C", 12],
-                    "name": "Red H OT AOM",
+                    "name": "TTL C12",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 13],
-                    "name": "Red H OT Shutter",
+                    "name": "TTL C13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -366,35 +366,35 @@
                 },
                 {
                     "loc": ["D", 3],
-                    "name": "Kinetics Camera Shutter",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["D", 4],
-                    "name": "Side Imaging Shutter",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["D", 5],
                     "name": "Pixelfly Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
+                    "loc": ["D", 4],
+                    "name": "Up Leg AOM",
+                    "mode": "auto",
+                    "manual_output": 0,
+                    "invert": 0
+                },
+                {
+                    "loc": ["D", 5],
+                    "name": "Down Leg AOM",
+                    "mode": "auto",
+                    "manual_output": 0,
+                    "invert": 0
+                },
+                {
                     "loc": ["D", 6],
-                    "name": "TTL D6",
+                    "name": "Not Functional",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 7],
-                    "name": "Axial Imaging Shutter",
+                    "name": "Trigger STIRAP",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -422,7 +422,7 @@
                 },
                 {
                     "loc": ["D", 11],
-                    "name": "TTL D11",
+                    "name": "Raman Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -465,56 +465,56 @@
             "channels": [
                 {
                     "loc": ["E", 0],
-                    "name": "Sci. Coil. Switch",
+                    "name": "Kinetics Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 1],
-                    "name": "Sci. Coil. H-Bridge",
+                    "name": "Side Imaging Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 2],
-                    "name": "Bias Internal DAC",
+                    "name": "Axial Imaging Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 3],
-                    "name": "TTL E3",
+                    "name": "Top Imaging Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 4],
-                    "name": "Raman AOM Switch",
+                    "name": "TTL E4",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 5],
-                    "name": "Raman Shutter",
+                    "name": "TTL E5",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 6],
-                    "name": "Trigger Raman Burst",
+                    "name": "TTL E6",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 7],
-                    "name": "K Blast AOM Switch",
+                    "name": "TTL E7",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -549,122 +549,122 @@
                 },
                 {
                     "loc": ["E", 12],
-                    "name": "Trigger Parametric Heating",
+                    "name": "Trigger Keithly",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 13],
-                    "name": "2.2GHz u-wave Switch",
+                    "name": "TTL E13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 14],
-                    "name": "AD9858 PS1",
+                    "name": "TTL E14",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 15],
-                    "name": "AD9858 PS2",
+                    "name": "TTL E15",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["F", 0],
-                    "name": "HV PS 0 Enable",
+                    "name": "Lower Plate PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 1],
-                    "name": "HV PS 1 Enable",
+                    "name": "Upper Plate PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 2],
                     "name": "HV PS 2 Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 3],
                     "name": "HV PS 3 Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 4],
                     "name": "HV PS 4 Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 5],
                     "name": "HV PS 5 Enable",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 6],
-                    "name": "HV Servo 0",
+                    "name": "Lower Plate Servo",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 7],
-                    "name": "HV Servo 1",
+                    "name": "Upper Plate Servo",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 8],
                     "name": "HV Servo 2",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 9],
                     "name": "HV Servo 3",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 10],
                     "name": "HV Servo 4",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 11],
                     "name": "HV Servo 5",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 12],
                     "name": "TTL F12",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 13],
@@ -951,19 +951,19 @@
                     "manual_output": 1.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC5: MOT U/D Shim", 
+                    "name": "DAC5:", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC6: MOT SW/NE Shim", 
+                    "name": "DAC6:", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC7: MOT SE/NW Shim", 
+                    "name": "DAC7:", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1019,7 +1019,7 @@
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC15: ", 
+                    "name": "DAC15: Rb ARP Sweep", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1102,13 +1102,13 @@
                 },
                 {
                     "loc": 2, 
-                    "name": "DAC26: V OT", 
+                    "name": "DAC26: Vertical Lattice", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC27: V Latt", 
+                    "name": "DAC27: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1119,7 +1119,7 @@
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC29: Latt 2", 
+                    "name": "DAC29: MARIA", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1146,15 +1146,15 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32: ", 
+                    "name": "DAC32: Lower Plate (Neg. V)", 
                     "mode": "auto", 
-                    "manual_output": 10.0
+                    "manual_output": 0.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC33: ", 
+                    "name": "DAC33: Upper Plate (Pos. V)", 
                     "mode": "auto", 
-                    "manual_output": 10.0
+                    "manual_output": 0.0
                 },
                 {
                     "loc": 2, 
