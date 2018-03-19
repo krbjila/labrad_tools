@@ -20,6 +20,7 @@ from status_client import StatusClient
 from arduino_client import ArduinoClient
 from abort_button import AbortButton
 from parameter_values_control import ParameterControl, ControlConfig
+from refresh_button import RefreshButton
 
 # Runs the indicator button and communicates with Labrad servers
 class MainClient(QMainWindow):

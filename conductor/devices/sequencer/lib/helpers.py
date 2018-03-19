@@ -9,14 +9,24 @@ SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 
 def value_to_sequence(sequence):
     if type(sequence.value).__name__ == 'list':
-        try: 
-            return combine_sequences([
-                read_sequence_file(sequence.sequence_directory, v) 
-                for v in sequence.value
-            ])
-        except Exception, e:
-            print e
-            return read_sequence_file(sequence.sequence_directory, 'all_off')
+
+#        # removed KM 3/18/18
+#        # the try-except block is nice for error handling but
+#        # we'd rather just break conductor if an
+#        # incorrect sequence is put in 
+#        try: 
+#            return combine_sequences([
+#                read_sequence_file(sequence.sequence_directory, v) 
+#                for v in sequence.value
+#            ])
+#        except Exception, e:
+#            print e
+#            return read_sequence_file(sequence.sequence_directory, 'all_off')
+
+        return combine_sequences([
+            read_sequence_file(sequence.sequence_directory, v) 
+            for v in sequence.value
+        ])
     else:
         return value
 

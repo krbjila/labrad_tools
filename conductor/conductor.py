@@ -58,6 +58,7 @@ class ConductorServer(LabradServer):
     experiment_started = Signal(696969, 'signal: experiment started', 'b')
     experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
     parameter_removed = Signal(696971, 'signal: parameter removed', 's')
+    parameters_refreshed = Signal(696972, 'signal: parameters refreshed', 'b')
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}
@@ -85,6 +86,39 @@ class ConductorServer(LabradServer):
     def initServer(self):
         # register default parameters after connected to labrad
         callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
+
+
+    # Re-initialize parameters
+    # Added KM 03/18/18
+    @setting(18)
+    def refresh_default_parameters(self, c):
+        """
+        refresh parameters
+
+        tries to register all default parameters defined in the config.json file
+        """
+
+        # Signal to clients that parameters are being refreshed
+        self.parameters_refreshed(True)
+
+        # Loop through the devices defined in config.json
+        for device in self.default_parameters:
+            # If the device is not there, try to import its parameters
+            if not device in self.parameters:
+                params = {device: self.default_parameters[device]}
+                try:
+                    yield self.register_parameters(c, json.dumps(params))
+                except ParameterNotImported:
+                    print "{} not imported successfully".format(device)
+
+            # If the device is loaded, check that all the parameters are there
+            else:
+                for param in self.default_parameters[device]:
+                    # If a parameter is missing, try to import it
+                    if not param in self.parameters[device]:
+                        param_dict = {param: self.default_parameters[device][param]}
+                        yield self.register_parameters(c, json.dumps({device: param_dict}))
+
 
     @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
     def register_parameters(self, c, parameters, generic_parameter=False, value_type=None):
@@ -159,7 +193,9 @@ class ConductorServer(LabradServer):
                 parameter.name = parameter_name
                 if value_type is not None:
                     parameter.value_type = value_type
-                self.parameters[device_name][parameter_name] = parameter              
+                self.parameters[device_name][parameter_name] = parameter
+                
+                print "{}'s {} registered".format(device_name, parameter_name)              
                 yield parameter.initialize()
                 yield self.update_parameter(parameter)
 
@@ -245,7 +281,6 @@ class ConductorServer(LabradServer):
                 generic_parameter = True
             yield self.register_parameter(device_name, parameter_name, {}, 
                                           generic_parameter, value_type)
-
         self.parameters[device_name][parameter_name].value = parameter_value
 
     @setting(5, parameters='s', use_registry='b', returns='s')

@@ -15,6 +15,7 @@ from twisted.internet.defer import inlineCallbacks
 from connection import connection
 
 from abort_button import AbortButton
+from refresh_button import RefreshButton
 
 SEP = os.path.sep
 
@@ -29,6 +30,7 @@ class Indicator(QWidget):
         self.setMinimumSize(QSize(3*self.RAD,3*self.RAD))
         self.coords = [1.5*self.RAD, 1.5*self.RAD]        
         self.color = QColor(client_config.widget['colorIdle'])
+        self.warning_flag = 0
 
     # Resize when stretched
     def resizeEvent(self, event):
@@ -65,12 +67,24 @@ class Indicator(QWidget):
         self.update()
 
     def exptStopped(self):
-        self.color = QColor(client_config.widget['colorOff'])
+        if self.warning_flag:
+            self.color = QColor(client_config.widget['colorWarning'])
+        else:
+            self.color = QColor(client_config.widget['colorOff'])
         self.update()
 
     def labradServerError(self):
         self.color = QColor(client_config.widget['colorError'])
         self.update()
+
+    def parameterRemoved(self):
+        self.color = QColor(client_config.widget['colorWarning'])
+        self.update()
+
+    def parametersRefreshed(self):
+        self.color = QColor(client_config.widget['colorOff'])
+        self.update()
+
 
 # Runs the indicator button and communicates with Labrad servers
 class StatusClient(QWidget):
@@ -78,6 +92,8 @@ class StatusClient(QWidget):
     exptStarted = pyqtSignal()
     exptStopped = pyqtSignal()
     labradServerError = pyqtSignal()
+    parameterRemoved = pyqtSignal()
+    parametersRefreshed = pyqtSignal()
 
     def __init__(self, reactor, parent=None):
         super(StatusClient, self).__init__(parent)
@@ -85,12 +101,13 @@ class StatusClient(QWidget):
         self.setGeometry(0, 0, 3*self.RAD, 3*self.RAD)
         self.alive = True
         self.state = -1
-        self.error_flag = 0        
+        self.error_flag = 0
  
         # define IDs for LABRAD signals
         self.ID_start = 11111
         self.ID_stop = 11112
         self.ID_par_removed = 11113
+        self.ID_pars_refreshed = 11114
         
         # layout the GUI
         self.setupLayout()
@@ -120,6 +137,9 @@ class StatusClient(QWidget):
             yield server.signal__parameter_removed(self.ID_par_removed)
             yield server.addListener(listener = self.parameter_removed, source = None, ID = self.ID_par_removed)
     
+            yield server.signal__parameters_refreshed(self.ID_pars_refreshed)
+            yield server.addListener(listener=self.parameters_refreshed, source=None, ID = self.ID_pars_refreshed)
+
             yield self.cxn.add_on_disconnect('conductor', self.server_stopped)
         except:
             self.server_stopped("conductor not running")
@@ -134,6 +154,9 @@ class StatusClient(QWidget):
             self.textedit.append("started " + timestr)
             self.exptStarted.emit()
             self.abort_button.button.setEnabled(True)
+            self.refresh_button.button.setEnabled(False)
+        else:
+            self.refresh_button.button.setEnabled(True)
 
     # Runs when the client gets the experiment_stopped signal from Conductor.
     # Prints timestamp to the widget and emits signal for the indicator to change color.
@@ -145,6 +168,7 @@ class StatusClient(QWidget):
             self.textedit.append("stopped " + timestr)
             self.exptStopped.emit()
             self.abort_button.button.setEnabled(False)
+            self.refresh_button.button.setEnabled(True)
         else:
             self.alive = False
 
@@ -154,9 +178,19 @@ class StatusClient(QWidget):
         self.error_flag = 1
         self.alive = False
         timestr = time.strftime("%H:%M:%S", time.localtime())
-        self.textedit.setTextColor(QColor(client_config.widget['colorError']))
+        self.textedit.setTextColor(QColor(client_config.widget['colorWarning']))
         self.textedit.append(signal + " removed " + timestr)
-        self.labradServerError.emit()
+         
+        self.error_message = QErrorMessage()
+        self.error_message.showMessage(signal + " has been removed. You can still run the experiment if you don't need it.\n Otherwise, try to refresh parameters.")
+        
+        self.parameterRemoved.emit()
+        self.refresh_button.button.setEnabled(True)
+
+
+    def parameters_refreshed(self, cntx, signal):
+        self.error_flag = 0
+        self.parametersRefreshed.emit()
 
     # Appends a message to the text edit and changes the color of the indicator widget
     # when a server is stopped
@@ -181,9 +215,14 @@ class StatusClient(QWidget):
         self.exptStarted.connect(self.indicator.exptStarted)
         self.exptStopped.connect(self.indicator.exptStopped)
         self.labradServerError.connect(self.indicator.labradServerError)
+        self.parameterRemoved.connect(self.indicator.parameterRemoved)
+        self.parametersRefreshed.connect(self.indicator.parametersRefreshed)
         # add the abort button
         self.abort_button = AbortButton(self.reactor)
         self.abort_button.button.setEnabled(False)
+        # add the refresh button
+        self.refresh_button = RefreshButton(self.reactor)
+        self.refresh_button.button.setEnabled(False)
         # create the text widget 
         self.textedit = QTextEdit()
         self.textedit.setReadOnly(True)
@@ -191,6 +230,7 @@ class StatusClient(QWidget):
         layout.addWidget(self.indicator)
         layout.setStretch(0, 2)
         layout.addWidget(self.abort_button, alignment=Qt.AlignHCenter)
+        layout.addWidget(self.refresh_button, alignment=Qt.AlignHCenter)
         layout.addWidget(self.textedit)
         self.setLayout(layout)
 

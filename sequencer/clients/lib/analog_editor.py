@@ -83,11 +83,27 @@ class RampColumn(QtGui.QGroupBox):
         for k, pw in self.parameter_widgets.items():
             self.stack.addWidget(pw)
         
+        self.zero_button = QtGui.QPushButton('zero')
+        self.prev_button = QtGui.QPushButton('previous')
+        self.next_button = QtGui.QPushButton('next')        
+#        self.all_zero = QtGui.QPushButton('all zero')
+
         self.layout = QtGui.QGridLayout()
         self.layout.addWidget(self.add, 0, 0)
         self.layout.addWidget(self.dlt, 0, 1)
         self.layout.addWidget(self.ramp_select, 0, 2)
         self.layout.addWidget(self.stack, 1, 0, 1, 3)
+
+        self.layout.addWidget(self.zero_button, 2, 2, 1, 2)
+        self.layout.addWidget(self.prev_button, 3, 2, 1, 2)
+        self.layout.addWidget(self.next_button, 4, 2, 1, 2)
+#        self.layout.addWidget(self.all_zero, 5, 2, 1, 2)
+
+        self.zero_button.setFixedSize(80, 20)
+        self.prev_button.setFixedSize(80, 20)
+        self.next_button.setFixedSize(80, 20)
+#        self.all_zero.setFixedSize(80, 20)
+
         self.setLayout(self.layout)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -229,6 +245,11 @@ class AnalogVoltageEditor(QtGui.QDialog):
             c.add.clicked.connect(self.add_column(i))
             c.dlt.clicked.connect(self.dlt_column(i))
 
+            c.zero_button.clicked.connect(self.zero_column(i))
+            c.prev_button.clicked.connect(self.prev_column(i))
+            c.next_button.clicked.connect(self.next_column(i))
+#            c.all_zero.clicked.connect(self.all_zero(i))
+
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
 
@@ -278,6 +299,40 @@ class AnalogVoltageEditor(QtGui.QDialog):
                 sequence[c].pop(i)
             self.set_sequence(sequence)
         return dc
+
+    def zero_column(self, i):
+        def zc():
+            sequence = self.get_sequence()
+            dt = sequence[self.channel][i]['dt']
+            sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
+            self.set_sequence(sequence)
+        return zc
+
+    def prev_column(self, i):
+        def pc():
+            sequence = self.get_sequence()
+            if i > 0:
+                sequence[self.channel][i] = sequence[self.channel][i-1]
+            self.set_sequence(sequence)
+        return pc
+
+    def next_column(self, i):
+        def nc():
+            sequence = self.get_sequence()
+            if i < len(sequence[self.channel]) - 1:
+                sequence[self.channel][i] = sequence[self.channel][i+1]
+            self.set_sequence(sequence)
+        return nc
+
+    def all_zero(self, i):
+        def az():
+            sequence = self.get_sequence()
+            for i in range(0, len(sequence[self.channel])):
+                dt = sequence[self.channel][i]['dt']
+                sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
+                i += 1
+            self.set_sequence(sequence)
+        return az
 
     def set_sequence(self, sequence):
         self.sequence = sequence

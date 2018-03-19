@@ -19,22 +19,35 @@ class Update(ConductorParameter):
 
     def __init__(self, config={}):
         super(Update, self).__init__(config)
-        self.value = self.default
+        try:
+            self.value = self.default
+        except AttributeError:
+            # a default was never loaded
+            # this can happen if the parameter was called
+            # with invalid arguments. just set it to 0
+            self.value = 0
+            self.default = 0
 
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        self.server = self.cxn.polarkrb_ad9910
-        interfaces = yield self.server.get_interface_list()
-        if len(interfaces) == 1:
-            interface = interfaces[0]
-        else:
-            if arduino_address in interfaces:
-               interface = arduino_address
+        try:
+            self.server = self.cxn.polarkrb_ad9910
+            interfaces = yield self.server.get_interface_list()
+            if len(interfaces) == 1:
+                interface = interfaces[0]
             else:
-               interface = interfaces[0]
+                if arduino_address in interfaces:
+                   interface = arduino_address
+                else:
+                   interface = interfaces[0]
+    
+            yield self.server.select_interface(interface)
+        except AttributeError:
+            # Log a warning that the server can't be found.
+            # Conductor will throw an error and remove the parameter
+            print "ad9910's update: PolarKRb server not connected."
 
-        yield self.server.select_interface(interface)
 
     @inlineCallbacks
     def update(self):

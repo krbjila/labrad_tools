@@ -246,12 +246,16 @@ class SequencerControl(QtGui.QWidget):
         @inlineCallbacks
         def odnc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
-                server = yield self.cxn.get_server(self.sequencer_servername)
-                mode = yield server.channel_mode(channel_name)
-                if mode == 'manual':
-                    yield server.channel_mode(channel_name, 'auto')
-                else:
-                    yield server.channel_mode(channel_name, 'manual')
+
+                pass
+#                # removed KM 03/18/18
+#                # we don't use the manual mode, and it's dangerous to be able to enable it
+#                server = yield self.cxn.get_server(self.sequencer_servername)
+#                mode = yield server.channel_mode(channel_name)
+#                if mode == 'manual':
+#                    yield server.channel_mode(channel_name, 'auto')
+#                else:
+#                    yield server.channel_mode(channel_name, 'manual')
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
                 server = yield self.cxn.get_server(self.sequencer_servername)
                 state = yield server.channel_manual_output(channel_name)
@@ -263,13 +267,17 @@ class SequencerControl(QtGui.QWidget):
         @inlineCallbacks
         def oanc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
-                conf = AnalogControlConfig()
-                conf.name = channel_name.split('@')[0]
-                widget = AnalogVoltageManualControl(conf, self.reactor)
-                dialog = QtGui.QDialog()
-                dialog.ui = widget
-                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-                widget.show()
+                pass
+
+#                # removed KM 03/18/18
+#                # we don't use the manual mode, and it's dangerous to be able to enable it
+#                conf = AnalogControlConfig()
+#                conf.name = channel_name.split('@')[0]
+#                widget = AnalogVoltageManualControl(conf, self.reactor)
+#                dialog = QtGui.QDialog()
+#                dialog.ui = widget
+#                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+#                widget.show()
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
                 ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
                 ave = AnalogVoltageEditor(*ave_args)
