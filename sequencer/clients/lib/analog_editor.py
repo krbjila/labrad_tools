@@ -16,6 +16,7 @@ from helpers import merge_dicts, get_sequence_parameters, substitute_sequence_pa
 sys.path.append('../')
 from devices.lib.analog_ramps import RampMaker
 
+from copy import deepcopy
 
 class ParameterWidget(QtGui.QWidget):
     def __init__(self, ramp_type, ramp):
@@ -312,7 +313,9 @@ class AnalogVoltageEditor(QtGui.QDialog):
         def pc():
             sequence = self.get_sequence()
             if i > 0:
-                sequence[self.channel][i] = sequence[self.channel][i-1]
+                dt = sequence[self.channel][i]['dt']
+                sequence[self.channel][i] = deepcopy(sequence[self.channel][i-1])
+                sequence[self.channel][i]['dt'] = dt
             self.set_sequence(sequence)
         return pc
 
@@ -320,19 +323,21 @@ class AnalogVoltageEditor(QtGui.QDialog):
         def nc():
             sequence = self.get_sequence()
             if i < len(sequence[self.channel]) - 1:
-                sequence[self.channel][i] = sequence[self.channel][i+1]
+                dt = sequence[self.channel][i]['dt']
+		sequence[self.channel][i] = deepcopy(sequence[self.channel][i+1])
+                sequence[self.channel][i]['dt'] = dt
             self.set_sequence(sequence)
         return nc
 
-    def all_zero(self, i):
-        def az():
-            sequence = self.get_sequence()
-            for i in range(0, len(sequence[self.channel])):
-                dt = sequence[self.channel][i]['dt']
-                sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
-                i += 1
-            self.set_sequence(sequence)
-        return az
+#    def all_zero(self, i):
+#        def az():
+#            sequence = self.get_sequence()
+#            for i in range(0, len(sequence[self.channel])):
+#                dt = sequence[self.channel][i]['dt']
+#                sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
+#                i += 1
+#            self.set_sequence(sequence)
+#        return az
 
     def set_sequence(self, sequence):
         self.sequence = sequence
