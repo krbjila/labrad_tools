@@ -290,7 +290,10 @@ class AnalogVoltageEditor(QtGui.QDialog):
             sequence = self.get_sequence()
 	    for c in sequence.keys():
                 sequence[c].insert(i, sequence[c][i])
+
+            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
             self.set_sequence(sequence)
+            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
         return ac
 
     def dlt_column(self, i):
@@ -298,7 +301,10 @@ class AnalogVoltageEditor(QtGui.QDialog):
             sequence = self.get_sequence()
 	    for c in sequence.keys():
                 sequence[c].pop(i)
+
+            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
             self.set_sequence(sequence)
+            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
         return dc
 
     def zero_column(self, i):
@@ -306,7 +312,10 @@ class AnalogVoltageEditor(QtGui.QDialog):
             sequence = self.get_sequence()
             dt = sequence[self.channel][i]['dt']
             sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
+            
+            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
             self.set_sequence(sequence)
+            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
         return zc
 
     def prev_column(self, i):
@@ -316,7 +325,10 @@ class AnalogVoltageEditor(QtGui.QDialog):
                 dt = sequence[self.channel][i]['dt']
                 sequence[self.channel][i] = deepcopy(sequence[self.channel][i-1])
                 sequence[self.channel][i]['dt'] = dt
+
+            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
             self.set_sequence(sequence)
+            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
         return pc
 
     def next_column(self, i):
@@ -326,7 +338,10 @@ class AnalogVoltageEditor(QtGui.QDialog):
                 dt = sequence[self.channel][i]['dt']
 		sequence[self.channel][i] = deepcopy(sequence[self.channel][i+1])
                 sequence[self.channel][i]['dt'] = dt
+
+            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
             self.set_sequence(sequence)
+            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
         return nc
 
 #    def all_zero(self, i):

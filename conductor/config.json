@@ -11,22 +11,22 @@
 	    }
         },
         "E8257D": {
-                "enable": {
-                    "default_enable": 1,
-                    "defaults": {
-                       "0": {"frequency": 6834.7, "amplitude": -12},
-			"1": {"evap": 1},
-                        "2": {"frequency": 6889.25, "amplitude": 16, "dev": 1}
-                    }
+            "enable": {
+                "default_enable": 1,
+                "defaults": {
+                    "0": {"frequency": 6834.7, "amplitude": -12},
+	            "1": {"evap": 1},
+                    "2": {"frequency": 6889.25, "amplitude": 16, "dev": 1}
                 }
+            }
         },
         "arp33220A": {
-                "frequency": {
-                    "default_frequency": 100
-                },
-                "amplitude": {
-                    "default_amplitude": 1
-                }
+            "frequency": {
+                "default_frequency": 100
+            },
+            "amplitude": {
+                "default_amplitude": 1
+            }
         },
         "ad9910": {
             "update": {
@@ -45,6 +45,19 @@
                         {"profile": 7, "freq": 0, "ampl": 0, "phase": 0}
                     ]
                 }
+            }
+        },
+        "highFieldRbARP": {
+            "duration": {
+                "default": 1
+            }
+        },    
+        "3xAD9959_0": {
+            "downlegexp": {
+                "default": 0
+            },
+            "uplegdp": {
+                "default": 0
             }
         },
         "time": {

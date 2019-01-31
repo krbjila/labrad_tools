@@ -22,6 +22,11 @@ from lib.helpers import get_sequence_parameters, ConfigWrapper
 
 SEP = os.path.sep
 
+# minimum sequence time for running the sequence from the client
+# if this is small, then the code can hang due to 
+# the latency in loading the sequences to the FPGAs
+MIN_SEQ_TIME = 0.3
+
 class LoadSaveRun(QtGui.QWidget):
     """ Tool bar for entering filenames, loading, saving and running """
     def __init__(self):
@@ -241,6 +246,14 @@ class SequencerControl(QtGui.QWidget):
         for l in self.analogControl.nameColumn.labels.values():
             l.clicked.connect(self.onAnalogNameClick(l.nameloc))
 
+        # KM added below 05/07/18
+        # for tracking changes
+        for col in self.digitalControl.array.columns:
+            for key, val in col.buttons.items():
+                val.changed_signal.connect(self.sequenceChanged)
+        for b in self.durationRow.boxes:
+            b.changed_signal.connect(self.sequenceChanged)
+
     def onDigitalNameClick(self, channel_name):
         channel_name = str(channel_name)
         @inlineCallbacks
@@ -284,6 +297,10 @@ class SequencerControl(QtGui.QWidget):
                 if ave.exec_():
                     sequence = ave.getEditedSequence().copy()
                     self.displaySequence(sequence)
+
+                    # added KM 05/07/2018
+                    # star on the title bar for unsaved
+                    self.sequenceChanged()
                 conductor = yield self.cxn.get_server(self.conductor_servername)
                 yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
         return oanc
@@ -333,13 +350,33 @@ class SequencerControl(QtGui.QWidget):
             sequence = self.getSequence()
             json.dump(sequence, outfile)
 
+        self.setWindowTitle('sequencer control')
+
     @inlineCallbacks
     def runSequence(self, c):
         self.saveSequence()
         sequence = self.getSequence()
-        conductor = yield self.cxn.get_server(self.conductor_servername)
-        sequence_json = json.dumps({'sequencer': {'sequence': [sequence]}})
-        yield conductor.set_parameter_values(sequence_json)
+
+        # changed KM 05/07/2018
+        seq_time = 0
+        # get the total sequence time
+        for k, d in sequence.items():
+            for step in d:
+            	seq_time += step['dt']
+            break
+
+        # if the sequence is longer than MIN_SEQ_TIME, run the sequence
+        if seq_time >= MIN_SEQ_TIME:
+            conductor = yield self.cxn.get_server(self.conductor_servername)
+            sequence_json = json.dumps({'sequencer': {'sequence': [sequence]}})
+            yield conductor.set_parameter_values(sequence_json)
+        # otherwise, throw up a message box and don't run
+        else:
+            msg = QtGui.QMessageBox()
+            msg.setIcon(QtGui.QMessageBox.Information)
+            msg.setText("Sequences shorter than " + str(MIN_SEQ_TIME) + "s cannot be run from the sequencer control.")
+            msg.setDetailedText("To change the minimum sequence time, change the variable MIN_SEQ_TIME at the top of sequencer_control.py.")
+            msg.exec_()
     
     @inlineCallbacks
     def loadSequence(self, filepath):
@@ -354,6 +391,8 @@ class SequencerControl(QtGui.QWidget):
         sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))
         self.displaySequence(json.loads(sequence))
         self.loadSaveRun.locationBox.setText(filepath)
+
+        self.setWindowTitle('sequencer control')
 
     @inlineCallbacks
     def displaySequence(self, sequence):
@@ -405,6 +444,9 @@ class SequencerControl(QtGui.QWidget):
         sequence = dict(digital_sequence.items() + analog_sequence.items())
         return sequence
     
+    def sequenceChanged(self):
+        self.setWindowTitle('sequencer control*')
+
     def addColumn(self, i):
         def ac():
             sequence = self.getSequence()
@@ -455,4 +497,4 @@ if __name__ == '__main__':
     from twisted.internet import reactor
     widget = SequencerControl(reactor)
     widget.show()
-    reactor.run()
+    reactor.run() 

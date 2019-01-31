@@ -2,6 +2,10 @@ from PyQt4 import QtGui, QtCore, Qt
 import numpy as np
 
 class SuperSpinBox(QtGui.QLineEdit):
+    
+    # added KM 05/07/18
+    changed_signal = QtCore.pyqtSignal()
+
     def __init__(self, display_range, units, num_decimals=1, significant_figures=3):# num_decimals, display_factor=1):
         super(SuperSpinBox, self).__init__()
         self.display_range = display_range
@@ -10,7 +14,7 @@ class SuperSpinBox(QtGui.QLineEdit):
         self.unit = units[0] # a string to be appended to the displayed value (e.g. 's')
         self.num_decimals = num_decimals # number of digits after decimal point to be displayed
         self.display(0)
-
+        
     def keyPressEvent(self, c):
         if len(self.text().split('*')) > 1:
             print 'variable: ', self.text()
@@ -31,6 +35,10 @@ class SuperSpinBox(QtGui.QLineEdit):
                 self.display(self.value())
             except: 
                 self.display(0)
+
+            # added KM 05/07/18
+            self.changed_signal.emit()
+     
         super(SuperSpinBox, self).keyPressEvent(c)
         if c.key() == QtCore.Qt.Key_Up:
             self.step(up=1)

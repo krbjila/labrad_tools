@@ -112,7 +112,13 @@ class Enable(ConductorParameter):
                     if 'a' in to_run:
                        yield self.cxn.krbjila_gpib.write('POW:AMPL ' + str(to_run['a']) + 'dbm')
                     if 'd' in to_run:
-                       yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       if 's' in to_run:
+                           if to_run['s'] == 2:
+                               yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT2')
+                           else:
+                               yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       else:
+                           yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
                        yield self.cxn.krbjila_gpib.write('FM1:DEV ' + str(to_run['d']) + 'MHz')
                        yield self.cxn.krbjila_gpib.write('FM1:STAT ON')
                        yield self.cxn.krbjila_gpib.write('OUTP:MOD ON')
@@ -146,7 +152,13 @@ class Enable(ConductorParameter):
                     if 'a' in to_run:
                        yield self.cxn.krbjila_gpib.write('POW:AMPL ' + str(to_run['a']) + 'dbm')
                     if 'd' in to_run:
-                       yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       if 's' in to_run:
+                           if to_run['s'] == 2:
+                               yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT2')
+                           else:
+                               yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
+                       else:
+                           yield self.cxn.krbjila_gpib.write('FM1:SOUR EXT1')
                        yield self.cxn.krbjila_gpib.write('FM1:DEV ' + str(to_run['d']) + 'MHz')
                        yield self.cxn.krbjila_gpib.write('FM1:STAT ON')
                        yield self.cxn.krbjila_gpib.write('OUTP:MOD ON')
@@ -177,3 +189,5 @@ class Enable(ConductorParameter):
                             self.to_run[state]['e'] = params[u'evap']
                         if u'dev' in params:
                             self.to_run[state]['d'] = params[u'dev']
+                        if u'source' in params:
+                            self.to_run[state]['s'] = params[u'source']

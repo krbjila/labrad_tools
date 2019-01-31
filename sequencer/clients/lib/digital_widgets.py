@@ -12,15 +12,20 @@ class Spacer(QtGui.QFrame):
         self.setFrameShape(1)
         self.setLineWidth(0)
 
-
 class SequencerButton(QtGui.QFrame):
+    # added KM 05/07/18
+    changed_signal = QtCore.pyqtSignal()
+    # added KM 1/23/19
+    clicked_signal = QtCore.pyqtSignal(str)
+
     def __init__(self):
         super(SequencerButton, self).__init__(None)
         self.setFrameShape(2)
         self.setLineWidth(1)
         self.on_color = '#ff69b4'
         self.off_color = '#ffffff'
-    
+        self.name = ''
+
     def setChecked(self, state):
         if state:
             self.setFrameShadow(0x0030)
@@ -30,14 +35,27 @@ class SequencerButton(QtGui.QFrame):
             self.setFrameShadow(0x0020)
             self.setStyleSheet('QWidget {background-color: %s}' % self.off_color)
             self.is_checked = False
+        # added KM 05/07/18
+        self.changed_signal.emit()
 
-    def mousePressEvent(self, x):
+    def changeState(self):
         if self.is_checked:
             self.setChecked(False)
         else:
-            self.setChecked(True)
+           self.setChecked(True)
+
+    # modified KM 1/23/19
+    def mousePressEvent(self, event):
+        self.changeState()
+        self.clicked_signal.emit(self.name)
+        event.accept()
+
 
 class DigitalColumn(QtGui.QWidget):
+
+    # added KM 1/23/19
+    clicked_signal = pyqtSignal(str,int)
+
     def __init__(self, channels, config, position):
         super(DigitalColumn, self).__init__(None)
         self.channels = channels
@@ -47,6 +65,12 @@ class DigitalColumn(QtGui.QWidget):
 
     def populate(self):
         self.buttons = {nl: SequencerButton() for nl in self.channels}
+
+        # added KM 1/23/19
+        for (nl, b) in self.buttons.items():
+            b.name = nl
+            b.clicked_signal.connect(self.handle_click)
+
         self.layout = QtGui.QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -65,13 +89,33 @@ class DigitalColumn(QtGui.QWidget):
         for nameloc in self.channels:
             self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
 
+    # added KM 1/23/19
+    def handle_click(self, nl):
+        self.clicked_signal.emit(nl, self.position)
 
 class DigitalArray(QtGui.QWidget):
+
+    # added KM 1/23/19
+    shift_toggled = False
+    toggle_sign = False
+    last_clicked = {'nl': '', 'position': 0}
+
     def __init__(self, channels, config):
         super(DigitalArray, self).__init__(None)
         self.channels = channels
         self.config = config
         self.populate()
+
+        # added KM 1/23/19
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        for col in self.columns:
+            col.clicked_signal.connect(self.handle_click)
+
+        self.channel_to_index = {}
+        self.index_to_channel = []
+        for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
+            self.channel_to_index[nl] = i
+            self.index_to_channel.append(nl)
 
     def populate(self):
         self.columns = [DigitalColumn(self.channels, self.config, i) for i in range(self.config.max_columns)]
@@ -93,6 +137,67 @@ class DigitalArray(QtGui.QWidget):
                 c.show()
         for c in self.columns[:num_to_show]:
             c.setLogic(sequence)
+
+    # added KM 1/23/19
+    # watches for shift key depressed
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Shift:
+            self.shift_toggled = True
+        else:
+            super(DigitalArray, self).keyPressEvent(event)
+
+    # added KM 1/23/19
+    # watches for shift key released
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Shift:
+            self.shift_toggled = False
+        else:
+            super(DigitalArray, self).keyPressEvent(event)
+
+    # added KM 1/23/19
+    # receives signals for clicks on the sequencer buttons
+    # changes state of entire intermediate region when shift is depressed
+    def handle_click(self, nl, position):
+        nl = str(nl) # name loc of currently clicked channel
+        last_nl = self.last_clicked['nl']
+        last_position = self.last_clicked['position']
+
+        # look for shift toggled
+        if self.shift_toggled:
+            # get indices
+            last_index = self.channel_to_index[last_nl]
+            current_index = self.channel_to_index[nl]
+            
+            # generate array of indices so we can grab every sequencer button
+            # between the two that were clicked
+            channel_index = range(min(last_index,current_index), max(last_index,current_index)+1)
+            col_index = range(min(last_position, position), max(last_position, position) + 1)
+
+            # flip the state of the two buttons that were most recently clicked
+            # this is required to get a fair polling in the limit of few buttons being selected
+            self.columns[last_position].buttons[last_nl].changeState()
+            self.columns[position].buttons[last_nl].changeState()
+
+            # take a poll to determine what sign to set the buttons to
+            poll = 0
+            for i in col_index:
+                for j in channel_index:
+                    # Checked counts as +1, unchecked as -1
+                    if self.columns[i].buttons[self.index_to_channel[j]].is_checked:
+                        poll += 1
+                    else:
+                        poll += -1
+
+            # Set the state of all the buttons to the minority state
+            if poll > 0:
+                state = False
+            else:
+                state = True
+            for i in col_index:
+                for j in channel_index:
+                    self.columns[i].buttons[self.index_to_channel[j]].setChecked(state)
+        # Update what the last clicked button is
+        self.last_clicked = {'nl': nl, 'position': position}
 
 class NameBox(QtGui.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -198,3 +303,4 @@ class DigitalControl(QtGui.QWidget):
             for vs in self.vscrolls:
                 vs.setValue(val)
         return afv
+
