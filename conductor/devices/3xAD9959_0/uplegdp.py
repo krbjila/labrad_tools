@@ -68,5 +68,6 @@ class Uplegdp(ConductorParameter):
                     ]
                 }
                 yield self.server.update_dds(json.dumps(d))
-        except:
+        except Exception as e:
+            print e
             print "3xAD9959_0's uplegdp: didn't update"

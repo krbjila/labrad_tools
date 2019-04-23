@@ -35,6 +35,8 @@ class ParameterRow(QtGui.QWidget):
         self.layout.addWidget(self.valueBox)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 10, 0)
+
+
         self.setLayout(self.layout)
 
 class ParameterControl(QtGui.QGroupBox):
@@ -74,8 +76,7 @@ class ParameterControl(QtGui.QGroupBox):
         # added KM 08/28/17
         # initialize default variables and values from variables_config.py
         default_variables = variables_config.variables_dict
-        if self.numRows < len(default_variables):
-            self.numRows = len(default_variables) + 4
+        self.numRows = len(default_variables) + 1
 
         self.parameterRows = [ParameterRow(self.configuration) 
                 for i in range(self.numRows)]
@@ -84,15 +85,10 @@ class ParameterControl(QtGui.QGroupBox):
         for pr in self.parameterRows:
             self.layout.addWidget(pr)
         self.layout.setSpacing(1)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setContentsMargins(0, 1, 0, 0)
         
-        # added KM 08/28/17
-        # initialize default variables and values from variables_config.py
-#        variables = default_variables.keys()
         
         for i in range(len(default_variables)):
-#            self.parameterRows[i].nameBox.setText(variables[i])
-#            self.parameterRows[i].valueBox.display(default_variables[variables[i]])
             self.parameterRows[i].nameBox.setText(default_variables[i][0])
             self.parameterRows[i].valueBox.display(default_variables[i][1])
             # write the parameters to conductor
@@ -114,6 +110,25 @@ class ParameterControl(QtGui.QGroupBox):
         for pr in self.parameterRows:
             pr.nameBox.returnPressed.connect(self.do_update)
             pr.valueBox.returnPressed.connect(self.writeValue(pr))
+
+            pr.nameBox.returnPressed.connect(self.appendToRows)
+            pr.valueBox.returnPressed.connect(self.appendToRows)
+
+    # 
+    def appendToRows(self):
+        arr = self.parameterRows
+        if arr[-1].nameBox.text() != "" or arr[-1].valueBox.text() != "":
+            arr.append(ParameterRow(self.configuration))
+
+            # Connect signals
+            arr[-1].nameBox.returnPressed.connect(self.do_update)
+            arr[-1].valueBox.returnPressed.connect(self.writeValue(arr[-1]))
+            arr[-1].nameBox.returnPressed.connect(self.appendToRows)
+            arr[-1].valueBox.returnPressed.connect(self.appendToRows)
+
+            self.layout.addWidget(arr[-1])
+            self.setLayout(self.layout)
+
     
     @inlineCallbacks
     def receive_update(self, c, signal):

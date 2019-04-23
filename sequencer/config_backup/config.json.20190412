@@ -85,7 +85,7 @@
                 },
                 {
                     "loc": ["A", 11],
-                    "name": "MOT Shim Switch",
+                    "name": "TTL A11",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -99,7 +99,7 @@
                 },
                 {
                     "loc": ["A", 13],
-                    "name": "Quad. Shim Switch",
+                    "name": "Grad. Coil H-Bridge",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -176,7 +176,7 @@
                 },
                 {
                     "loc": ["B", 8],
-                    "name": "Trig. Fast Rb ARP",
+                    "name": "TTL B8",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -218,14 +218,14 @@
                 },
                 {
                     "loc": ["B", 14],
-                    "name": "Plug AOM Switch",
+                    "name": "M2 AOM Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 15],
-                    "name": "Plug Shutter",
+                    "name": "M2 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -302,44 +302,44 @@
                 },
                 {
                     "loc": ["C", 10],
-                    "name": "LSL AOM",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["C", 11],
-                    "name": "LSL Shutter",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["C", 12],
-                    "name": "LATT1 AOM",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["C", 13],
-                    "name": "LATT1 Shutter",
-                    "mode": "auto",
-                    "manual_output": 0,
-                    "invert": 0
-                },
-                {
-                    "loc": ["C", 14],
                     "name": "LATT2 AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
-                    "loc": ["C", 15],
+                    "loc": ["C", 11],
                     "name": "LATT2 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
+                    "invert": 0
+                },
+                {
+                    "loc": ["C", 12],
+                    "name": "TTL C12",
+                    "mode": "auto",
+                    "manual_output": 0,
+                    "invert": 0
+                },
+                {
+                    "loc": ["C", 13],
+                    "name": "TTL C13",
+                    "mode": "auto",
+                    "manual_output": 0,
+                    "invert": 0
+                },
+                {
+                    "loc": ["C", 14],
+                    "name": "TTL C14",
+                    "mode": "auto",
+                    "manual_output": 0,
+                    "invert": 0
+                },
+                {
+                    "loc": ["C", 15],
+                    "name": "TTL C15",
+                    "mode": "auto",
+                    "manual_output": 1,
                     "invert": 0
                 },
     
@@ -359,7 +359,7 @@
                 },
                 {
                     "loc": ["D", 2],
-                    "name": "Princeton Camera Trig.",
+                    "name": "Kinetics Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -429,7 +429,7 @@
                 },
                 {
                     "loc": ["D", 12],
-                    "name": "Andor Camera Trig.",
+                    "name": "TTL D12",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -465,7 +465,7 @@
             "channels": [
                 {
                     "loc": ["E", 0],
-                    "name": "Princeton Camera Shutter",
+                    "name": "Kinetics Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -493,7 +493,7 @@
                 },
                 {
                     "loc": ["E", 4],
-                    "name": "Andor Camera Shutter",
+                    "name": "TTL E4",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -591,14 +591,14 @@
                 },
                 {
                     "loc": ["F", 2],
-                    "name": "Upper Rods PS Enable",
+                    "name": "HV PS 2 Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 3],
-                    "name": "Lower Rods PS Enable",
+                    "name": "HV PS 3 Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
@@ -633,14 +633,14 @@
                 },
                 {
                     "loc": ["F", 8],
-                    "name": "Upper Rods Servo",
+                    "name": "HV Servo 2",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 9],
-                    "name": "Lower Rods Servo",
+                    "name": "HV Servo 3",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
@@ -934,7 +934,7 @@
                 },
                 {
                     "loc": 2, 
-                    "name": "DAC2: Unused (Noisy)", 
+                    "name": "DAC2: Bias Field Voltage", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
@@ -951,19 +951,19 @@
                     "manual_output": 1.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC5: Bias Field Voltage", 
+                    "name": "DAC5:", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC6: NE/SW Quad. Shim", 
+                    "name": "DAC6:", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC7: NW/SE Quad. Shim", 
+                    "name": "DAC7:", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1108,7 +1108,7 @@
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC27: Large Spacing Lattice", 
+                    "name": "DAC27: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1125,7 +1125,7 @@
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC30: Latt 2", 
+                    "name": "DAC30: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
@@ -1146,13 +1146,13 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32: Lower Plate (DAC: -V)", 
+                    "name": "DAC32: Lower Plate (Neg. V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC33: Upper Plate (DAC: +V)", 
+                    "name": "DAC33: Upper Plate (Pos. V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1164,7 +1164,7 @@
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC35: Upper Rods (DAC: -V)", 
+                    "name": "DAC35: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1175,7 +1175,7 @@
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC37: Lower Rods (DAC: +V)", 
+                    "name": "DAC37: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1243,7 +1243,7 @@
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC47: Bias Field Subtraction", 
+                    "name": "DAC47: ", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }

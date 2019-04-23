@@ -42,7 +42,7 @@ class SequencerButton(QtGui.QFrame):
         if self.is_checked:
             self.setChecked(False)
         else:
-           self.setChecked(True)
+            self.setChecked(True)
 
     # modified KM 1/23/19
     def mousePressEvent(self, event):
@@ -175,8 +175,10 @@ class DigitalArray(QtGui.QWidget):
 
             # flip the state of the two buttons that were most recently clicked
             # this is required to get a fair polling in the limit of few buttons being selected
-            self.columns[last_position].buttons[last_nl].changeState()
-            self.columns[position].buttons[last_nl].changeState()
+            last_bool = self.columns[last_position].buttons[last_nl].is_checked
+            curr_bool = self.columns[position].buttons[last_nl].is_checked
+            self.columns[last_position].buttons[last_nl].setChecked(not last_bool)
+            self.columns[position].buttons[last_nl].setChecked(not curr_bool)
 
             # take a poll to determine what sign to set the buttons to
             poll = 0

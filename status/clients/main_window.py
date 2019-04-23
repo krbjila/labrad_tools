@@ -52,12 +52,19 @@ class MainClient(QMainWindow):
         pvc_title.setAlignment(Qt.AlignHCenter | Qt.AlignBottom)
         self.parameter_widget = QDockWidget()
         self.parameter_widget.setTitleBarWidget(pvc_title)
-        self.parameter_widget.setWidget(ParameterControl(ControlConfig(), self.reactor))
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidget(ParameterControl(ControlConfig(), self.reactor))
+        self.scroll.setWidgetResizable(False)
+        self.parameter_widget.setWidget(self.scroll)
 
         self.setCentralWidget(self.status_widget)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.arduino_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.parameter_widget)
+
+        self.arduino_widget.setMaximumHeight(client_config.arduino['y'])
+        self.setFixedSize(client_config.main['x'], client_config.main['y'])
 
     def closeEvent(self, x):
         #stop the reactor when closing the widget
