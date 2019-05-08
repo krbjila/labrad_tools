@@ -52,6 +52,10 @@ variables_dict = [
     ['*UpperPlate', 0.0],
     ['*LowerRods', 0.0],
     ['*UpperRods', 0.0],
+    ['*LowerPlateZero', 17.5/1.998e3],
+    ['*UpperPlateZero', 14.5/1.996e3],
+    ['*LowerRodsZero', 20.9/1.985e3],
+    ['*UpperRodsZero', 18.6/1.982e3],
     # Utility variables
     ['*HRecompress', 0], # Evap recompression midpoint
     ['*MRecompress', 0], # Evap recompression midpoint

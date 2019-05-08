@@ -45,11 +45,44 @@ def exp_ramp(p, ret_seq=False):
     else:
         return lambda t: sum([lin_ramp(ss)(t) for ss in sseq])
 
+
+# scurve added 4/23/19
+def scurve_ramp(p, ret_seq=False):
+    """
+    returns continuous function defined over ['ti', 'tf'].
+    values are determined by connecting 'vi' to 'vf' with a logistic function.
+    v = c + a / (1 + e^-x), with x = (t - (ti + tf) / 2 ) * (12 * 'k' / (tf - ti)).
+    the weird-looking formula is chosen so that the shape of the curve is
+    determined only by 'k', and not by the time interval tf - ti
+    """
+
+    p['a'] = p['vf'] - p['vi']
+    p['c'] = p['vi']
+    
+    t0 = (p['ti'] + p['tf']) / 2.0
+    dt = p['tf'] - p['ti']
+
+    # normalize away the dependence of the shape on dt
+    # multiply by 12 so that "nice-looking" s-curves have steepness O(1)
+    steep = 12.0 * p['k'] / dt
+
+    v_ideal = lambda t: G(p['ti'], p['tf'])(t) * (p['c'] + p['a'] / (1 + np.exp(-(t-t0)*steep)) )
+    t_pts = np.linspace(p['ti'], p['tf']-2e-9, p['pts']+1)
+    v_pts = v_ideal(t_pts)
+    sseq = [{'type': 'lin', 'ti': ti, 'tf': tf, 'vi': vi, 'vf': vf} 
+            for ti, tf, vi, vf in zip(t_pts[:-1], t_pts[1:], v_pts[:-1], v_pts[1:])]
+    if ret_seq:
+        return sseq
+    else:
+        return lambda t: sum([lin_ramp(ss)(t) for ss in sseq])
+
+
 class SRamp(object):
     required_parameters = [
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
         ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
+    default_values = {}
     def __init__(self, p=None):
         self.p = p
         if p is not None:
@@ -68,6 +101,7 @@ class LinRamp(object):
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
         ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
+    default_values = {}
     def __init__(self, p=None):
         self.p = p
         if p is not None:
@@ -86,6 +120,9 @@ class SLinRamp(object):
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
         ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
+    default_values = {
+        'vi': 0,
+    }
     def __init__(self, p=None):
 
         if p is not None:
@@ -106,6 +143,10 @@ class ExpRamp(object):
         ('tau', ([-1e2, 1e2], [(0, 's'), (-3, 'ms'), (-6, 'us'), (-9, 'ns')], 1)),
         ('pts', ([1, 10], [(0, 'na')], 0)),
         ]
+    default_values = {
+        'pts': 20,
+        'tau': 1
+    }
     def __init__(self, p=None):
         self.p = p
         if p is not None:
@@ -125,8 +166,13 @@ class SExpRamp(object):
         ('vf', ([-10, 10], [(0, 'V')], 3)),
         ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ('tau', ([-1e2, 1e2], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)),
-        ('pts', ([1, 10], [(0, 'na')], 0)),
+        ('pts', ([1, 20], [(0, 'na')], 0)),
         ]
+    default_values = {
+        'vi': 0,
+        'pts': 10,
+        'tau': 1
+    }
     def __init__(self, p=None):
         self.p = p
         if p is not None:
@@ -140,6 +186,34 @@ class SExpRamp(object):
         seq = exp_ramp(p, ret_seq=True)
         return [{'dt': 1e-6, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
 
+
+class SCurveRamp(object):
+    required_parameters = [
+        ('vi', ([-10, 10], [(0, 'V')], 3)),
+        ('vf', ([-10, 10], [(0, 'V')], 3)),
+        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('k', ([0, 10], [(0, '')], 1)),
+        ('pts', ([1, 20], [(0, 'na')], 0)),
+        ]
+    default_values = {
+        'vi': 0,
+        'pts': 20,
+        'k': 1
+    }
+    def __init__(self, p=None):
+        self.p = p
+        if p is not None:
+            self.v = scurve_ramp(p)
+    
+    def to_lin(self):
+        """
+        to list of linear ramps [{dt, dv}]
+        """
+        p = self.p
+        seq = scurve_ramp(p, ret_seq=True)
+        return [{'dt': 1e-6, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
+
+
 class RampMaker(object):
     available_ramps = {
         's': SRamp,
@@ -147,6 +221,7 @@ class RampMaker(object):
         'slin': SLinRamp,
         'exp': ExpRamp,
         'sexp': SExpRamp,
+        'scurve': SCurveRamp
         }
     def __init__(self, sequence):
         j=0

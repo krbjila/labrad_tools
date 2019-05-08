@@ -26,6 +26,10 @@ class ParameterWidget(QtGui.QWidget):
         super(ParameterWidget, self).__init__(None)
         self.ramp_type = ramp_type
         self.parameters = ramp.required_parameters
+
+        # added 4/23/19
+        self.default_values = ramp.default_values # dict with default values
+
         self.populate()
 
     def populate(self):
@@ -48,6 +52,11 @@ class ParameterWidget(QtGui.QWidget):
         else:
             for i, (p,( r, s, n)) in enumerate(self.parameters):
                 label, self.pboxes[p] = self.make_pbox(*(p, r, s, n))
+                
+                # added 4/23/19
+                if p in self.default_values:
+                    self.pboxes[p].display(self.default_values[p])
+
                 self.layout.addWidget(QtGui.QLabel(label), i, 0)
                 self.layout.addWidget(self.pboxes[p], i, 1)
         self.setFixedWidth(80+30+4)
