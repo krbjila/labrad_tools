@@ -1248,6 +1248,39 @@
                     "manual_output": 0.0
                 }
             ]
+        },
+        "S": {
+            "device_type": "AD5791Board",
+            "connection_type": "OKFPGA",
+            "servername": "polarkrb_okfpga",
+            "address": "KRbStable01",
+            "channels": [
+                {
+                    "loc": 0,
+                    "name": "SDAC0: Lower Plate (DAC: -V)"
+                },
+                {
+                    "loc": 1,
+                    "name": "SDAC1: Upper Plate (DAC: +V)"
+                },
+                {
+                    "loc": 2,
+                    "name": "SDAC2: Lower West Rod (DAC: -V)"
+                },
+                {
+                    "loc": 3,
+                    "name": "SDAC3: Lower East Rod (DAC: -V)"
+                },
+                {
+                    "loc": 4,
+                    "name": "SDAC4: Upper West Rod (DAC: +V)"
+                },
+                {
+                    "loc": 5,
+                    "name": "SDAC5: Upper East Rod (DAC: +V)"
+                }
+                
+            ]
         }
     }
 }

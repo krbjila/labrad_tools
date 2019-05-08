@@ -14,10 +14,6 @@ from widgets import SuperSpinBox
 from lib.duration_widgets import DurationRow
 from lib.digital_widgets import DigitalControl
 from lib.analog_widgets import AnalogControl
-
-from lib.ad5791_widgets import AD5791Control
-from lib.ad5791_editor import AD5791VoltageEditor
-
 from lib.add_dlt_widgets import AddDltRow
 from lib.analog_editor import AnalogVoltageEditor
 from lib.analog_manual_control import AnalogVoltageManualControl
@@ -87,21 +83,16 @@ class SequencerControl(QtGui.QWidget):
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         channels = yield sequencer.get_channels()
         self.channels = json.loads(channels)
-
         self.analog_channels = {k: c for k, c in self.channels.items() 
                                      if c['channel_type'] == 'analog'}
         self.digital_channels = {k: c for k, c in self.channels.items() 
                                      if c['channel_type'] == 'digital'}
-        self.ad5791_channels = {k: c for k, c in self.channels.items()
-                                     if c['channel_type'] == 'ad5791'}
 
         self.default_sequence = dict(
             [(nameloc, [{'type': 'lin', 'vf': 0, 'dt': 1}]) 
                   for nameloc in self.analog_channels]
             + [(nameloc, [{'dt': 1, 'out': 0}]) 
-                  for nameloc in self.digital_channels]
-            + [(nameloc, [{'type': 's', 'vf': 0, 'dt': 1}]) 
-                  for nameloc in self.ad5791_channels])
+                  for nameloc in self.digital_channels])
 
     @inlineCallbacks
     def connectSignals(self):
@@ -135,7 +126,6 @@ class SequencerControl(QtGui.QWidget):
 
         self.digitalControl = DigitalControl(self.digital_channels, self.config)
         self.analogControl = AnalogControl(self.analog_channels, self.config)
-        self.ad5791Control = AD5791Control(self.ad5791_channels, self.config)
 
         self.hscrollArray = QtGui.QScrollArea()
         self.hscrollArray.setWidget(QtGui.QWidget())
@@ -154,14 +144,6 @@ class SequencerControl(QtGui.QWidget):
         self.splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
         self.splitter.addWidget(self.digitalControl)
         self.splitter.addWidget(self.analogControl)
-
-        self.splitter_line = QtGui.QFrame()
-        self.splitter_line.setFixedHeight(2)
-        self.splitter_line.setFrameShape(QtGui.QFrame.HLine)
-        self.splitter_line.setFrameShadow(QtGui.QFrame.Sunken)
-        self.splitter.addWidget(self.splitter_line)
-
-        self.splitter.addWidget(self.ad5791Control)
 
         #spacer widgets
         self.northwest = QtGui.QWidget()
@@ -226,19 +208,6 @@ class SequencerControl(QtGui.QWidget):
         nc_height = self.analogControl.array.height()
         self.analogControl.nameColumn.setFixedSize(nc_width, nc_height)
         self.analogControl.nameColumn.scrollArea.setFixedWidth(self.namecolumn_width)
-
-
-        height = self.analog_height*len(self.ad5791_channels)
-        self.ad5791Control.array.setFixedSize(width, height)
-        self.ad5791Control.vscroll.widget().setFixedSize(0, self.ad5791Control.array.height())
-        self.ad5791Control.vscroll.setFixedWidth(20)
-
-        for nl in self.ad5791Control.nameColumn.labels.values():
-            nl.setFixedSize(self.namelabel_width, self.analog_height)
-        nc_width = self.namelabel_width
-        nc_height = self.ad5791Control.array.height()
-        self.ad5791Control.nameColumn.setFixedSize(nc_width, nc_height)
-        self.ad5791Control.nameColumn.scrollArea.setFixedWidth(self.namecolumn_width)
         
         for b in self.durationRow.boxes:
             b.setFixedSize(self.spacer_width, self.durationrow_height)
@@ -254,7 +223,7 @@ class SequencerControl(QtGui.QWidget):
         self.addDltRow.setFixedSize(dr_width, self.durationrow_height)
         self.addDltRow.scrollArea.setFixedHeight(self.durationrow_height)
         
-        self.hscrollArray.widget().setFixedSize(self.ad5791Control.array.width(), 0)
+        self.hscrollArray.widget().setFixedSize(self.digitalControl.array.width(), 0)
         self.hscrollArray.setFixedHeight(20)
         self.hscrollName.widget().setFixedSize(self.namelabel_width, 0)
         self.hscrollName.setFixedSize(self.namecolumn_width, 20)
@@ -276,9 +245,6 @@ class SequencerControl(QtGui.QWidget):
 
         for l in self.analogControl.nameColumn.labels.values():
             l.clicked.connect(self.onAnalogNameClick(l.nameloc))
-
-        for l in self.ad5791Control.nameColumn.labels.values():
-            l.clicked.connect(self.onAD5791NameClick(l.nameloc))
 
         # KM added below 05/07/18
         # for tracking changes
@@ -338,37 +304,6 @@ class SequencerControl(QtGui.QWidget):
                 conductor = yield self.cxn.get_server(self.conductor_servername)
                 yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
         return oanc
-
-    def onAD5791NameClick(self, channel_name):
-        channel_name = str(channel_name)
-        @inlineCallbacks
-        def osnc():
-            if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
-                pass
-
-#                # removed KM 03/18/18
-#                # we don't use the manual mode, and it's dangerous to be able to enable it
-#                conf = AnalogControlConfig()
-#                conf.name = channel_name.split('@')[0]
-#                widget = AnalogVoltageManualControl(conf, self.reactor)
-#                dialog = QtGui.QDialog()
-#                dialog.ui = widget
-#                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-#                widget.show()
-            elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
-                ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
-                ave = AD5791VoltageEditor(*ave_args)
-                if ave.exec_():
-                    sequence = ave.getEditedSequence().copy()
-                    self.displaySequence(sequence)
-
-                    # added KM 05/07/2018
-                    # star on the title bar for unsaved
-                    self.sequenceChanged()
-                conductor = yield self.cxn.get_server(self.conductor_servername)
-                yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
-        return osnc
-
 
     def adjustForDVScroll(self):
         val = self.digitalVScroll.verticalScrollBar().value()
@@ -447,7 +382,6 @@ class SequencerControl(QtGui.QWidget):
     def loadSequence(self, filepath):
         with open(filepath, 'r') as infile:
             sequence = json.load(infile)
-
         if sequence.has_key('sequence'):
             sequence = sequence['sequence']
             timestr = time.strftime(self.time_format)
@@ -466,7 +400,6 @@ class SequencerControl(QtGui.QWidget):
         self.durationRow.displaySequence(sequence)
         self.digitalControl.displaySequence(sequence)
         self.analogControl.displaySequence(sequence)
-        self.ad5791Control.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
         yield self.updateParameters()
     
@@ -480,7 +413,6 @@ class SequencerControl(QtGui.QWidget):
         self.durationRow.updateParameters(parameter_values)
         self.digitalControl.updateParameters(parameter_values)
         self.analogControl.updateParameters(parameter_values)
-        self.ad5791Control.updateParameters(parameter_values)
         self.addDltRow.updateParameters(parameter_values)
         self.setSizes()
 
@@ -509,10 +441,7 @@ class SequencerControl(QtGui.QWidget):
         analog_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
                 for s, dt in zip(self.analogControl.sequence[key], durations)]
                 for key in self.analog_channels}
-        ad5791_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
-                for s, dt in zip(self.ad5791Control.sequence[key], durations)]
-                for key in self.ad5791_channels}
-        sequence = dict(digital_sequence.items() + analog_sequence.items() + ad5791_sequence.items())
+        sequence = dict(digital_sequence.items() + analog_sequence.items())
         return sequence
     
     def sequenceChanged(self):

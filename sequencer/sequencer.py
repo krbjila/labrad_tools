@@ -79,7 +79,7 @@ class SequencerServer(DeviceServer):
         for device in self.devices.values():
             yield device.program_sequence(fixed_sequence)
         for device in self.devices.values():
-            if device.sequencer_type == 'analog':
+            if device.sequencer_type == 'analog' or device.sequencer_type == 'ad5791':
                 yield device.start_sequence()
 
 #		# removed KM 08/11/2017
