@@ -40,6 +40,10 @@ def exp_ramp(p, ret_seq=False):
     v_pts = v_ideal(t_pts)
     sseq = [{'type': 'lin', 'ti': ti, 'tf': tf, 'vi': vi, 'vf': vf} 
             for ti, tf, vi, vf in zip(t_pts[:-1], t_pts[1:], v_pts[:-1], v_pts[1:])]
+
+    sseq[0]['vi'] = p['vi']
+    sseq[-1]['vf'] = p['vf']    
+
     if ret_seq:
         return sseq
     else:
@@ -71,6 +75,10 @@ def scurve_ramp(p, ret_seq=False):
     v_pts = v_ideal(t_pts)
     sseq = [{'type': 'lin', 'ti': ti, 'tf': tf, 'vi': vi, 'vf': vf} 
             for ti, tf, vi, vf in zip(t_pts[:-1], t_pts[1:], v_pts[:-1], v_pts[1:])]
+
+    sseq[0]['vi'] = p['vi']
+    sseq[-1]['vf'] = p['vf']    
+
     if ret_seq:
         return sseq
     else:

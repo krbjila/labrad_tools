@@ -2,6 +2,8 @@ import numpy as np
 
 VLIM = 4
 
+MIN_TIME = 1e-6
+
 
 def H(x):
     """
@@ -48,6 +50,10 @@ def exp_ramp(p, ret_seq=False):
     v_pts = v_ideal(t_pts)
     sseq = [{'type': 'lin', 'ti': ti, 'tf': tf, 'vi': vi, 'vf': vf} 
             for ti, tf, vi, vf in zip(t_pts[:-1], t_pts[1:], v_pts[:-1], v_pts[1:])]
+
+    sseq[0]['vi'] = p['vi']
+    sseq[-1]['vf'] = p['vf']
+
     if ret_seq:
         return sseq
     else:
@@ -71,6 +77,10 @@ def scurve_ramp(p, ret_seq=False):
     v_pts = v_ideal(t_pts)
     sseq = [{'type': 'lin', 'ti': ti, 'tf': tf, 'vi': vi, 'vf': vf} 
             for ti, tf, vi, vf in zip(t_pts[:-1], t_pts[1:], v_pts[:-1], v_pts[1:])]
+
+    sseq[0]['vi'] = p['vi']
+    sseq[-1]['vf'] = p['vf']
+
     if ret_seq:
         return sseq
     else:
@@ -92,7 +102,7 @@ class SRamp(object):
         to list of linear ramps [{dt, dv}]
         """
         p = self.p
-        return [{'dt': 1e-6, 'v': p['vf']}, {'dt': p['dt']-1e-6, 'v': p['vf']}]
+        return [{'dt': MIN_TIME, 'v': p['vf']}, {'dt': p['dt']-MIN_TIME, 'v': p['vf']}]
 
 class LinRamp(object):
     required_parameters = [
@@ -128,7 +138,7 @@ class SLinRamp(object):
         to list of linear ramps [{dt, dv}]
         """
         p = self.p
-        return [{'dt': 1e-6, 'v': p['vi']}, {'dt': p['dt']-1e-6, 'v': p['vf']}]
+        return [{'dt': MIN_TIME, 'v': p['vi']}, {'dt': p['dt']-MIN_TIME, 'v': p['vf']}]
 
 class ExpRamp(object):
     required_parameters = [
@@ -169,7 +179,7 @@ class SExpRamp(object):
         """
         p = self.p
         seq = exp_ramp(p, ret_seq=True)
-        return [{'dt': 1e-6, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
+        return [{'dt': MIN_TIME, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
 
 
 class SCurveRamp(object):
@@ -191,7 +201,7 @@ class SCurveRamp(object):
         """
         p = self.p
         seq = scurve_ramp(p, ret_seq=True)
-        return [{'dt': 1e-6, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
+        return [{'dt': MIN_TIME, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
 
 
 class RampMaker(object):

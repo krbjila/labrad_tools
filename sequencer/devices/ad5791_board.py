@@ -15,7 +15,7 @@ DT_BITS = 28
 FPGA_CLOCK = 4e6
 N_CHANNELS = 6
 
-RAM_DEPTH = 8
+RAM_DEPTH = 10
 MAX_STEPS = (2**RAM_DEPTH - 1) / 3 - 1
 
 TICKS_TO_OUTPUT = 31 # Number of clock cycles to output 1 value
@@ -70,6 +70,7 @@ class AD5791Channel(object):
         for key, value in config.items():
             setattr(self, key, value)
         
+        self.index = self.loc 
         self.loc = self.board_name + str(self.loc).zfill(2)
         self.key = self.name+'@'+self.loc
 
@@ -116,6 +117,7 @@ class AD5791Board(DeviceWrapper):
         yield self.connection.program_bitfile(self.bitfile)
         yield self.set_mode('idle')
         yield self.set_mode('reset')
+        yield self.set_mode('idle')
         yield self.set_mode('init')
         yield self.set_mode('idle')
 
@@ -139,10 +141,9 @@ class AD5791Board(DeviceWrapper):
         yield self.set_mode('load')
 
         for c in self.channels:
-            index = int(c.loc[1:-1])
+            index = c.index
             yield self.set_load_channel(index)
             yield self.connection.write_to_pipe_in(self.sequence_pipe, json.dumps(byte_array[c.loc]))
-
         yield self.set_mode('idle')
 
     @inlineCallbacks
@@ -162,8 +163,7 @@ class AD5791Board(DeviceWrapper):
 
         byte_array = {}
         for c in self.channels:
-            index = c.loc
-            byte_array[index] = []
+            byte_array[c.loc] = []
 
             # Generate the list of ramps from the sequence
             ramps = RampMaker(sequence[c.key]).get_programmable()
@@ -203,11 +203,12 @@ class AD5791Board(DeviceWrapper):
                         dt_accumulated += r['dt']
                     # Otherwise, the voltage is changing
                     else:
+                        # First, handle the last voltage, which we havent appended yet because we were consolidating columns
+
                         # MIN_TIME is the time to output a single voltage
                         # In this case, we have time to do this
                         if dt_accumulated > MIN_TIME:
                             consolidated_ramps.append({'dt': dt_accumulated, 'v': last_v})
-                            dt_accumulated = 0
                         # In this case, the requested step is shorter than what we can do
                         # Do our best by setting a step with MIN_TIME
                         # Subtract MIN_TIME from dt_accumulated to keep track of the accumulated timing error
@@ -215,8 +216,15 @@ class AD5791Board(DeviceWrapper):
                         else:
                             consolidated_ramps.append({'dt': MIN_TIME, 'v': last_v})
                             dt_accumulated -= MIN_TIME
+
+                        # Next, handle the current ramp
+                        if r['dt'] < MIN_TIME:
+                            consolidated_ramps.append({'dt': MIN_TIME, 'v': r['v']})
+                            dt_accumulated = -MIN_TIME
+                        else:
+                            consolidated_ramps.append({'dt': r['dt'], 'v': r['v']})
+                            dt_accumulated = 0
                         last_v = r['v']
-                        dt_accumulated += r['dt']    
 
             
             # Need to check that we haven't created any ramps that are
@@ -259,9 +267,9 @@ class AD5791Board(DeviceWrapper):
 
                 bits = dvbits[0:2] + [dvbits[2] + dtbits[0]] + dtbits[1:4]
 
-                byte_array[index] += bits
+                byte_array[c.loc] += bits
 
             # Pad
-            byte_array[index] += [0]*6
+            byte_array[c.loc] += [0]*6
 
         return byte_array
