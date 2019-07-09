@@ -11,7 +11,7 @@ from conductor_device.conductor_parameter import ConductorParameter
 import serial
 import json
 
-arduino_address = 'COM21'
+arduino_address = 'COM3'
 
 
 class Update(ConductorParameter):

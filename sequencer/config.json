@@ -591,28 +591,28 @@
                 },
                 {
                     "loc": ["F", 2],
-                    "name": "Upper Rods PS Enable",
+                    "name": "Lower West Rod PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 3],
-                    "name": "Lower Rods PS Enable",
+                    "name": "Lower East Rod PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 4],
-                    "name": "HV PS 4 Enable",
+                    "name": "TTL F4 (Broken)",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 5],
-                    "name": "HV PS 5 Enable",
+                    "name": "Upper East Rod PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
@@ -633,35 +633,35 @@
                 },
                 {
                     "loc": ["F", 8],
-                    "name": "Upper Rods Servo",
+                    "name": "Lower West Rod Servo",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 9],
-                    "name": "Lower Rods Servo",
+                    "name": "Lower East Rod Servo",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 10],
-                    "name": "HV Servo 4",
+                    "name": "Upper West Rod Servo",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 11],
-                    "name": "HV Servo 5",
+                    "name": "Upper East Rod Servo",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
                 },
                 {
                     "loc": ["F", 12],
-                    "name": "TTL F12",
+                    "name": "Upper West Rod PS Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1

@@ -25,6 +25,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 sys.path.append('../')
 from server_tools.device_server import DeviceServer
 
+from time import sleep
+
 UPDATE_ID = 698032
 TRIGGER_CHANNEL = 'Trigger@D15'
 
@@ -78,8 +80,13 @@ class SequencerServer(DeviceServer):
         fixed_sequence = self._fix_sequence_keys(json.loads(sequence))
         for device in self.devices.values():
             yield device.program_sequence(fixed_sequence)
+
         for device in self.devices.values():
-            if device.sequencer_type == 'analog' or device.sequencer_type == 'ad5791':
+            if device.sequencer_type == 'ad5791':
+                yield device.start_sequence()
+
+        for device in self.devices.values():
+            if device.sequencer_type == 'analog':
                 yield device.start_sequence()
 
 #		# removed KM 08/11/2017

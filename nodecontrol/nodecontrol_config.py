@@ -5,8 +5,8 @@ node_dict = {
        	'okfpga',
         'arduino',
 	# start device servers next
-#        'sequencer',
+        'sequencer',
 	# start conductor last
-#        'conductor', 
+        'conductor', 
     ],
 }

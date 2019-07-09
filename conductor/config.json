@@ -7,7 +7,7 @@
         "sequencer": {
             "sequence": {
                 "sequence_directory": "/home/bialkali/data/{}/sequences/",
-                "default_sequence": "KRb_default_test"
+                "default_sequence": "KRb_default"
 	    }
         },
         "E8257D": {

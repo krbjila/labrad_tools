@@ -6,11 +6,12 @@ variables_dict = [
     ['*RbProbeI', -8.1],
     ['*KProbeI', -4.1],
     ['*KHFBlast', 0.58],
+    ['*KMOT', 0.8],
     # QUAD shims
-    ['*NWhigh', 4.86],
-    ['*NWlow', 4.65],
-    ['*SWhigh', 4.9],
-    ['*SWlow',4.72],
+    ['*NWhigh', 4.61],
+    ['*NWlow', 4.34],
+    ['*SWhigh', 4.69],
+    ['*SWlow',4.54],
    # Plug PZTs
     ['*PLUGV', 0],
    # Plug Power
@@ -39,24 +40,44 @@ variables_dict = [
     ['*HOTMid', 1.6], # was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
     ['*HOTBottom', 0.4],
+    ['*HOTRecom', 0.42],
     ['*MARIALoad', 2.34], # was 2.6
     ['*MARIAMid', 1.0], # was 1
     ['*MARIAFinal', 0.43], # was 0.5
     ['*MARIABottom', 0.344],
+    ['*MARIARecom', 0.4],
+    ['*Latt1Load', 0],
     ['*StableBias', 0.05], # was 0.45
     ['*FeshBias', -5.43],
+    ['*ToeBias', -5.01],
     ['*LSLLoad', 0],
     ['*X', 0.005],
     # Electric Fields
     ['*LowerPlate', 0.0],
     ['*UpperPlate', 0.0],
-    ['*LowerRods', 0.0],
-    ['*UpperRods', 0.0],
-    ['*LowerPlateZero', 17.5/1.998e3],
-    ['*UpperPlateZero', 14.5/1.996e3],
-    ['*LowerRodsZero', 20.9/1.985e3],
-    ['*UpperRodsZero', 18.6/1.982e3],
+    ['*LowerWestRod', 0.0],
+    ['*LowerEastRod', 0.0],
+    ['*UpperWestRod', 0.0],
+    ['*UpperEastRod', 0.0],
+    ['*LowerPlateZero', -0.458/2.0016e3],
+    ['*UpperPlateZero', 1.003/2.00172e3],
+    ['*LWRodZero', 2.848/2.00192e3],
+    ['*LERodZero', -6.029/2.0014e3],
+    ['*UWRodZero', -2.496/2.00005e3],
+    ['*UERodZero', 0.15/2.0017e3],
+    ['*LPGrad', 0],
+    ['*UPGrad', 0],
+    ['*LWGrad', 0],
+    ['*LEGrad', 0],
+    ['*UWGrad', 0],
+    ['*UEGrad', 0],
+    ['*LPEvap', 0],
+    ['*UPEvap', 0],
+    ['*LWEvap', 0],
+    ['*LEEvap', 0],
+    ['*UWEvap', 0],
+    ['*UEEvap', 0],
     # Utility variables
-    ['*HRecompress', 0], # Evap recompression midpoint
-    ['*MRecompress', 0], # Evap recompression midpoint
+#    ['*HRecompress', 0], # Evap recompression midpoint
+#    ['*MRecompress', 0], # Evap recompression midpoint
 ]
