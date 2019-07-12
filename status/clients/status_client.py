@@ -19,6 +19,8 @@ from refresh_button import RefreshButton
 
 SEP = os.path.sep
 
+WAIT_TIME = 3.0
+
 # Indicator button widget
 class Indicator(QWidget):
     RAD = client_config.widget['rad']
@@ -153,7 +155,7 @@ class StatusClient(QWidget):
             self.textedit.setTextColor(QColor(client_config.widget['colorOn']))
             self.textedit.append("started " + timestr)
             self.exptStarted.emit()
-            self.abort_button.button.setEnabled(True)
+            self.callback = self.reactor.callLater(WAIT_TIME, self.abort_button.button.setEnabled, True)
             self.refresh_button.button.setEnabled(False)
         else:
             self.refresh_button.button.setEnabled(True)
@@ -167,6 +169,9 @@ class StatusClient(QWidget):
             self.textedit.setTextColor(QColor(client_config.widget['colorOff']))
             self.textedit.append("stopped " + timestr)
             self.exptStopped.emit()
+            try:
+                self.callback.cancel()
+            except: pass
             self.abort_button.button.setEnabled(False)
             self.refresh_button.button.setEnabled(True)
         else:

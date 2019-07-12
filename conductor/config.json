@@ -14,7 +14,7 @@
             "enable": {
                 "default_enable": 1,
                 "defaults": {
-                    "0": {"frequency": 6834.7, "amplitude": -12},
+                    "0": {"frequency": 6834.25, "amplitude": -12},
 	            "1": {"evap": 1},
                     "2": {"frequency": 6889.25, "amplitude": 16, "dev": 1}
                 }

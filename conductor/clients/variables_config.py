@@ -26,7 +26,7 @@ variables_dict = [
     ['*BIASI', 0.04], # was 0.044
     ['*LowField', 0.457], # was 0.465
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.1], # was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.3], # was -3.6 before moving stuff to back corridor
     ['*BiasSub', -2.65],
     #Micellaneous
     ['*Tau', -3],
@@ -37,12 +37,12 @@ variables_dict = [
     ['*FillTime', 1.0], 
     # Optical traps
     ['*HOTLoad', 3.77], # was 5.2 before calibration changed
-    ['*HOTMid', 1.6], # was 1.8 before calibration changed
+    ['*HOTMid', 0.9], # was 1.6 (7/11/19); was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
     ['*HOTBottom', 0.4],
     ['*HOTRecom', 0.42],
     ['*MARIALoad', 2.34], # was 2.6
-    ['*MARIAMid', 1.0], # was 1
+    ['*MARIAMid', 0.7], # was 1.0 (7/11/19); was 1
     ['*MARIAFinal', 0.43], # was 0.5
     ['*MARIABottom', 0.344],
     ['*MARIARecom', 0.4],
