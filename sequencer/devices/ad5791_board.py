@@ -250,6 +250,9 @@ class AD5791Board(DeviceWrapper):
                 final_ramps = final_ramps[0:MAX_STEPS]
             except: pass
 
+
+            print final_ramps
+
             # Convert final ramps to sequence bytes
             for r in final_ramps:
                 r['dt'] = time_to_ticks(self.clk, r['dt'])
