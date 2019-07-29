@@ -230,8 +230,6 @@ class AD5791Board(DeviceWrapper):
                 final_ramps = final_ramps[0:MAX_STEPS]
             except: pass
 
-            print final_ramps
-
             # Convert final ramps to sequence bytes
             for r in final_ramps:
                 r['dt'] = time_to_ticks(self.clk, r['dt'])
@@ -240,14 +238,14 @@ class AD5791Board(DeviceWrapper):
                 r['v'] = calcD(r['v'])
 
                 dtbits = []
-                for i in range(0, 4):
+                for i in range(4):
                     dtbits.append(int((r['dt'] >> 8*i) & 0xff))
 
                 dvbits = []
-                for i in range(0, 3):
+                for i in range(3):
                     dvbits.append(int((r['v'] >> 8*i) & 0xff))
 
-                bits = dvbits[0:2] + [dvbits[2] + dtbits[0]] + dtbits[1:4]
+                bits = dvbits[0:2] + [dvbits[2] + dtbits[0]] + dtbits[1:]
 
                 byte_array[c.loc] += bits
 
