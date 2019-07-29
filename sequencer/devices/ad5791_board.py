@@ -18,7 +18,9 @@ N_CHANNELS = 6
 RAM_DEPTH = 10
 MAX_STEPS = (2**RAM_DEPTH - 1) / 3 - 1
 
-TICKS_TO_OUTPUT = 31 # Number of clock cycles to output 1 value
+MIN_TICKS_TO_OUTPUT = 31 # Number of clock cycles to output 1 value
+# Let's pad this a bit to be safe
+TICKS_TO_OUTPUT = 40
 MIN_TIME = float(TICKS_TO_OUTPUT) / FPGA_CLOCK
 MAX_TIME = (2**DT_BITS - 1) / float(FPGA_CLOCK)
 
@@ -172,61 +174,39 @@ class AD5791Board(DeviceWrapper):
             # The amount of RAM is limited on the FPGA
             # Each linear ramp counts as a step
             # Want to consolidate these to avoid taking up too much memory
-            #
-            # Keep track of the last value
-            # and any accumulated time
-            last_v = ramps[0]['v']
-            dt_accumulated = 0 
             consolidated_ramps = []
 
-            for i in range(len(ramps)):
+            # First walk through the ramp array and remove any redundancy
+            # Redundant ramps are when we have 3 ramps with the same setpoint in a row
+            # In this case we can consolidate the second 2
+            c_ramps = ramps[0:2]
+            for i in range(2, len(ramps)):
                 r = ramps[i]
-                
-                # Be careful with the first ramp in the sequence
-                # Since we don't actually know what the last_v should be 
-                if i == 0:
-                    if r['dt'] < MIN_TIME:
-                        consolidated_ramps.append({'dt': MIN_TIME, 'v': r['v']})
-                        dt_accumulated = r['dt'] - MIN_TIME
-                    else:
-                        consolidated_ramps.append({'dt': r['dt'], 'v': r['v']})
-                        dt_accumulated = 0
-                    last_v = r['v']
-                # If at the end of the list, don't forget to add the last ramp
-                elif i == len(ramps) - 1:
-                    dt_accumulated += r['dt']
-                    consolidated_ramps.append({'dt': max(dt_accumulated, MIN_TIME), 'v': r['v']})
+                rm = ramps[i-1]
+                rmm = ramps[i-2]
+
+                if r['v'] == rm['v'] and r['v'] == rmm['v']:
+                    rp = c_ramps.pop()
+                    c_ramps.append({'dt': r['dt']+rp['dt'], 'v': r['v']})
                 else:
-                    # If this step has the same voltage as the last,
-                    # consolidate into a single step
-                    if r['v'] == last_v:
-                        dt_accumulated += r['dt']
-                    # Otherwise, the voltage is changing
-                    else:
-                        # First, handle the last voltage, which we havent appended yet because we were consolidating columns
+                    c_ramps.append(r)
 
-                        # MIN_TIME is the time to output a single voltage
-                        # In this case, we have time to do this
-                        if dt_accumulated > MIN_TIME:
-                            consolidated_ramps.append({'dt': dt_accumulated, 'v': last_v})
-                        # In this case, the requested step is shorter than what we can do
-                        # Do our best by setting a step with MIN_TIME
-                        # Subtract MIN_TIME from dt_accumulated to keep track of the accumulated timing error
-                        # This error will end up being subtracted from the next long step
-                        else:
-                            consolidated_ramps.append({'dt': MIN_TIME, 'v': last_v})
-                            dt_accumulated -= MIN_TIME
+            # Now enforce the MIN_TIME to update the DAC
+            # dt_accumulated is the accumulated error due to ramps being requested too fast
+            #
+            # When this happens, we will just output as fast as we can until there is a
+            # long enough block where we can catch up to the sequence
+            dt_accumulated = 0
+            for r in c_ramps:
+                dt_accumulated += r['dt']
+                if dt_accumulated < MIN_TIME:
+                    consolidated_ramps.append({'dt': MIN_TIME, 'v': r['v']})
+                    dt_accumulated -= MIN_TIME
+                else:
+                    consolidated_ramps.append({'dt': dt_accumulated, 'v': r['v']})
+                    dt_accumulated = 0
 
-                        # Next, handle the current ramp
-                        if r['dt'] < MIN_TIME:
-                            consolidated_ramps.append({'dt': MIN_TIME, 'v': r['v']})
-                            dt_accumulated = -MIN_TIME
-                        else:
-                            consolidated_ramps.append({'dt': r['dt'], 'v': r['v']})
-                            dt_accumulated = 0
-                        last_v = r['v']
 
-            
             # Need to check that we haven't created any ramps that are
             # longer than the maximum ramp time.
             # If we did, then just need to split the ramp.
@@ -249,7 +229,6 @@ class AD5791Board(DeviceWrapper):
             try:
                 final_ramps = final_ramps[0:MAX_STEPS]
             except: pass
-
 
             print final_ramps
 
