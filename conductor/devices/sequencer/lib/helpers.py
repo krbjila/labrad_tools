@@ -43,7 +43,11 @@ def read_sequence_file(sequence_directory, filename):
                 break
     with open(filename, 'r') as infile:
          sequence = json.load(infile)
-    return sequence['sequence']
+
+    if sequence.has_key('sequence'):
+        return sequence['sequence']
+    else:
+        return sequence
 
 def combine_sequences(sequence_list):
     combined_sequence = sequence_list.pop(0)
