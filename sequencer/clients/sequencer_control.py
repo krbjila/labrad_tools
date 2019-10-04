@@ -469,10 +469,9 @@ class SequencerControl(QtGui.QWidget):
         with open(filepath, 'r') as infile:
             sequence = json.load(infile)
 
-        self.metadata = sequence['meta']
-
-
         if sequence.has_key('sequence'):
+            self.metadata = sequence['meta']
+
             sequence = sequence['sequence']
             timestr = time.strftime(self.time_format)
             directory = self.sequence_directory.format(timestr)
