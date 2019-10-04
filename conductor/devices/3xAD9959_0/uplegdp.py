@@ -30,6 +30,10 @@ class Uplegdp(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
+        yield self.getChannelInfo()
+
+    @inlineCallbacks
+    def getChannelInfo(self):
         try:
             # Try to connect to the DDS server
             self.server = self.cxn.krbg2_dds
@@ -57,6 +61,16 @@ class Uplegdp(ConductorParameter):
 
     @inlineCallbacks
     def update(self):
+        # Sketchy way of checking for self.address attribute error
+        try:
+            if self.address:
+                pass
+        except AttributeError:
+            try:
+                yield self.getChannelInfo()
+            except:
+                print "3xAD9959_0's uplegdp: Tried to get address but failed :("
+
         try:
             if self.value:
                 d = {
