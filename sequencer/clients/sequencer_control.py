@@ -472,6 +472,10 @@ class SequencerControl(QtGui.QWidget):
         if sequence.has_key('sequence'):
             self.metadata = sequence['meta']
 
+            if not self.metadata.has_key('descriptions'):
+                v = sequence['sequence'][self.config.timing_channel]
+                self.metadata['descriptions'] = ['']*len(v)
+
             sequence = sequence['sequence']
             timestr = time.strftime(self.time_format)
             directory = self.sequence_directory.format(timestr)
