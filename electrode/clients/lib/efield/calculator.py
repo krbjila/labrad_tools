@@ -34,7 +34,7 @@ EPSILON = 1e-9
 class ECalculator(object):
 	def __init__(self, path):
 		self.path = path
-		self.poly = np.flip(np.array(D_POLY_FIT))
+		self.poly = np.flip(np.array(D_POLY_FIT), axis=0)
 		self.getCoeffs()
 
 		self.V = Potential(self.coeffs)
@@ -46,20 +46,20 @@ class ECalculator(object):
 
 	# This is d Dipole / d E 
 	def dDdE(self, E):
-		x = np.flip(deepcopy(self.poly))
+		x = np.flip(deepcopy(self.poly), axis=0)
 		for i in range(len(x)):
 			x[i] *= i
-		x = np.flip(x[1:])
+		x = np.flip(x[1:], axis=0)
 
 		# Divide by 1000 because E was in kV/cm for fit
 		return np.polyval(x, E/1000.) / 1000.
 
 	# This is d^2 dipole / d E^2
 	def d2DdE2(self, E):
-		x = np.flip(deepcopy(self.poly))
+		x = np.flip(deepcopy(self.poly), axis=0)
 		for i in range(len(x)):
 			x[i] *= i*(i-1)
-		x = np.flip(x[2:])
+		x = np.flip(x[2:], axis=0)
 
 		# Divide by 1000 because E was in kV/cm for fit
 		return np.polyval(x, E/1000.) / 1000. / 1000.

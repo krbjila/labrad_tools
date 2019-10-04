@@ -6,8 +6,8 @@
     "default_parameters": {
         "sequencer": {
             "sequence": {
-                "sequence_directory": "/home/bialkali/data/{}/sequences/",
-                "default_sequence": "KRb_default"
+                "sequence_directory": "/home/bialkali/kyle/test_sequences/{}/",
+                "default_sequence": "KRb_default_test"
 	    }
         },
         "E8257D": {

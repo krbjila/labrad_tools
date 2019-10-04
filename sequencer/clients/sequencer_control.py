@@ -18,6 +18,11 @@ from lib.analog_widgets import AnalogControl
 from lib.ad5791_widgets import AD5791Control
 from lib.ad5791_editor import AD5791VoltageEditor
 
+from lib.electrode_widgets import ElectrodeControl
+from lib.electrode_editor import ElectrodeEditor
+
+from lib.description import DescriptionDialog
+
 from lib.add_dlt_widgets import AddDltRow
 from lib.analog_editor import AnalogVoltageEditor
 from lib.analog_manual_control import AnalogVoltageManualControl
@@ -58,6 +63,8 @@ class SequencerControl(QtGui.QWidget):
         self.load_config(config_path)
         self.cxn = cxn
 
+        self.metadata = {}
+
         self.connect()
 
     def load_config(self, path=None):
@@ -76,10 +83,12 @@ class SequencerControl(QtGui.QWidget):
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
         yield self.getChannels()
-        self.populate()
+        try:
+            self.populate()
+        except Exception as e:
+            print e
         yield self.displaySequence(self.default_sequence)
         yield self.connectSignals()
-
         yield self.update_sequencer(None, True)
 
     @inlineCallbacks
@@ -87,13 +96,14 @@ class SequencerControl(QtGui.QWidget):
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         channels = yield sequencer.get_channels()
         self.channels = json.loads(channels)
-
+        
         self.analog_channels = {k: c for k, c in self.channels.items() 
                                      if c['channel_type'] == 'analog'}
         self.digital_channels = {k: c for k, c in self.channels.items() 
                                      if c['channel_type'] == 'digital'}
-        self.ad5791_channels = {k: c for k, c in self.channels.items()
+        self.electrode_channels = {k: c for k, c in self.channels.items()
                                      if c['channel_type'] == 'ad5791'}
+
 
         self.default_sequence = dict(
             [(nameloc, [{'type': 'lin', 'vf': 0, 'dt': 1}]) 
@@ -101,7 +111,7 @@ class SequencerControl(QtGui.QWidget):
             + [(nameloc, [{'dt': 1, 'out': 0}]) 
                   for nameloc in self.digital_channels]
             + [(nameloc, [{'type': 's', 'vf': 0, 'dt': 1}]) 
-                  for nameloc in self.ad5791_channels])
+                  for nameloc in self.electrode_channels])
 
     @inlineCallbacks
     def connectSignals(self):
@@ -135,7 +145,7 @@ class SequencerControl(QtGui.QWidget):
 
         self.digitalControl = DigitalControl(self.digital_channels, self.config)
         self.analogControl = AnalogControl(self.analog_channels, self.config)
-        self.ad5791Control = AD5791Control(self.ad5791_channels, self.config)
+        self.electrodeControl = ElectrodeControl(self.electrode_channels, self.config)
 
         self.hscrollArray = QtGui.QScrollArea()
         self.hscrollArray.setWidget(QtGui.QWidget())
@@ -161,7 +171,7 @@ class SequencerControl(QtGui.QWidget):
         self.splitter_line.setFrameShadow(QtGui.QFrame.Sunken)
         self.splitter.addWidget(self.splitter_line)
 
-        self.splitter.addWidget(self.ad5791Control)
+        self.splitter.addWidget(self.electrodeControl)
 
         #spacer widgets
         self.northwest = QtGui.QWidget()
@@ -228,17 +238,17 @@ class SequencerControl(QtGui.QWidget):
         self.analogControl.nameColumn.scrollArea.setFixedWidth(self.namecolumn_width)
 
 
-        height = self.analog_height*len(self.ad5791_channels)
-        self.ad5791Control.array.setFixedSize(width, height)
-        self.ad5791Control.vscroll.widget().setFixedSize(0, self.ad5791Control.array.height())
-        self.ad5791Control.vscroll.setFixedWidth(20)
+        height = self.analog_height*len(self.electrode_channels)
+        self.electrodeControl.array.setFixedSize(width, height)
+        self.electrodeControl.vscroll.widget().setFixedSize(0, self.electrodeControl.array.height())
+        self.electrodeControl.vscroll.setFixedWidth(20)
 
-        for nl in self.ad5791Control.nameColumn.labels.values():
+        for nl in self.electrodeControl.nameColumn.labels.values():
             nl.setFixedSize(self.namelabel_width, self.analog_height)
         nc_width = self.namelabel_width
-        nc_height = self.ad5791Control.array.height()
-        self.ad5791Control.nameColumn.setFixedSize(nc_width, nc_height)
-        self.ad5791Control.nameColumn.scrollArea.setFixedWidth(self.namecolumn_width)
+        nc_height = self.electrodeControl.array.height()
+        self.electrodeControl.nameColumn.setFixedSize(nc_width, nc_height)
+        self.electrodeControl.nameColumn.scrollArea.setFixedWidth(self.namecolumn_width)
         
         for b in self.durationRow.boxes:
             b.setFixedSize(self.spacer_width, self.durationrow_height)
@@ -254,12 +264,13 @@ class SequencerControl(QtGui.QWidget):
         self.addDltRow.setFixedSize(dr_width, self.durationrow_height)
         self.addDltRow.scrollArea.setFixedHeight(self.durationrow_height)
         
-        self.hscrollArray.widget().setFixedSize(self.ad5791Control.array.width(), 0)
+        self.hscrollArray.widget().setFixedSize(self.analogControl.array.width(), 0)
         self.hscrollArray.setFixedHeight(20)
         self.hscrollName.widget().setFixedSize(self.namelabel_width, 0)
         self.hscrollName.setFixedSize(self.namecolumn_width, 20)
 
     def connectWidgets(self):
+
         self.hscrollArray.horizontalScrollBar().valueChanged.connect(self.adjustForHScrollArray)
         self.hscrollName.horizontalScrollBar().valueChanged.connect(self.adjustForHScrollName)
 
@@ -277,8 +288,8 @@ class SequencerControl(QtGui.QWidget):
         for l in self.analogControl.nameColumn.labels.values():
             l.clicked.connect(self.onAnalogNameClick(l.nameloc))
 
-        for l in self.ad5791Control.nameColumn.labels.values():
-            l.clicked.connect(self.onAD5791NameClick(l.nameloc))
+        for l in self.electrodeControl.nameColumn.labels.values():
+            l.clicked.connect(self.onElectrodeNameClick(l.nameloc))
 
         # KM added below 05/07/18
         # for tracking changes
@@ -287,6 +298,23 @@ class SequencerControl(QtGui.QWidget):
                 val.changed_signal.connect(self.sequenceChanged)
         for b in self.durationRow.boxes:
             b.changed_signal.connect(self.sequenceChanged)
+
+    # Handle double click events
+    # Open the description editor
+    def mouseDoubleClickEvent(self, event):
+        self.openDescriptionDialog() 
+
+    # Opens dialog for adding annotations to the sequence
+    def openDescriptionDialog(self):
+        try:
+            a = DescriptionDialog(self.getSequence(), self.metadata['descriptions'])
+        except:
+            a = DescriptionDialog(self.getSequence(), [''])
+
+        if a.exec_():
+            self.metadata['descriptions'] = a.getDescriptions()
+        self.sequenceChanged()
+
 
     def onDigitalNameClick(self, channel_name):
         channel_name = str(channel_name)
@@ -339,25 +367,15 @@ class SequencerControl(QtGui.QWidget):
                 yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
         return oanc
 
-    def onAD5791NameClick(self, channel_name):
+    def onElectrodeNameClick(self, channel_name):
         channel_name = str(channel_name)
         @inlineCallbacks
         def osnc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
                 pass
-
-#                # removed KM 03/18/18
-#                # we don't use the manual mode, and it's dangerous to be able to enable it
-#                conf = AnalogControlConfig()
-#                conf.name = channel_name.split('@')[0]
-#                widget = AnalogVoltageManualControl(conf, self.reactor)
-#                dialog = QtGui.QDialog()
-#                dialog.ui = widget
-#                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-#                widget.show()
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
                 ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
-                ave = AD5791VoltageEditor(*ave_args)
+                ave = ElectrodeEditor(*ave_args)
                 if ave.exec_():
                     sequence = ave.getEditedSequence().copy()
                     self.displaySequence(sequence)
@@ -413,7 +431,10 @@ class SequencerControl(QtGui.QWidget):
             os.makedirs(directory)
         with open(filepath, 'w+') as outfile:
             sequence = self.getSequence()
-            json.dump(sequence, outfile)
+            toSave = {}
+            toSave['sequence'] = sequence
+            toSave['meta'] = self.metadata
+            json.dump(toSave, outfile)
 
         self.setWindowTitle('sequencer control')
 
@@ -448,6 +469,9 @@ class SequencerControl(QtGui.QWidget):
         with open(filepath, 'r') as infile:
             sequence = json.load(infile)
 
+        self.metadata = sequence['meta']
+
+
         if sequence.has_key('sequence'):
             sequence = sequence['sequence']
             timestr = time.strftime(self.time_format)
@@ -466,7 +490,7 @@ class SequencerControl(QtGui.QWidget):
         self.durationRow.displaySequence(sequence)
         self.digitalControl.displaySequence(sequence)
         self.analogControl.displaySequence(sequence)
-        self.ad5791Control.displaySequence(sequence)
+        self.electrodeControl.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
         yield self.updateParameters()
     
@@ -480,7 +504,7 @@ class SequencerControl(QtGui.QWidget):
         self.durationRow.updateParameters(parameter_values)
         self.digitalControl.updateParameters(parameter_values)
         self.analogControl.updateParameters(parameter_values)
-        self.ad5791Control.updateParameters(parameter_values)
+        self.electrodeControl.updateParameters(parameter_values)
         self.addDltRow.updateParameters(parameter_values)
         self.setSizes()
 
@@ -509,10 +533,10 @@ class SequencerControl(QtGui.QWidget):
         analog_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
                 for s, dt in zip(self.analogControl.sequence[key], durations)]
                 for key in self.analog_channels}
-        ad5791_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
-                for s, dt in zip(self.ad5791Control.sequence[key], durations)]
-                for key in self.ad5791_channels}
-        sequence = dict(digital_sequence.items() + analog_sequence.items() + ad5791_sequence.items())
+        electrode_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
+                for s, dt in zip(self.electrodeControl.sequence[key], durations)]
+                for key in self.electrode_channels}
+        sequence = dict(digital_sequence.items() + analog_sequence.items() + electrode_sequence.items())
         return sequence
     
     def sequenceChanged(self):
@@ -524,6 +548,8 @@ class SequencerControl(QtGui.QWidget):
 	    for c in self.channels:
                 sequence[c].insert(i, sequence[c][i])
             self.displaySequence(sequence)
+
+            self.metadata['descriptions'].insert(i, '')
         return ac
 
     def dltColumn(self, i):
@@ -532,6 +558,8 @@ class SequencerControl(QtGui.QWidget):
 	    for c in self.channels:
                 sequence[c].pop(i)
             self.displaySequence(sequence)
+
+            self.metadata['descriptions'].pop(i)
         return dc
 
     def undo(self):

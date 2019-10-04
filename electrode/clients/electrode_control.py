@@ -147,9 +147,13 @@ class ElectrodeControl(QtGui.QWidget):
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
+    a.setQuitOnLastWindowClosed(True)
+
     import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
     widget = ElectrodeControl(reactor)
+
     widget.show()
-    reactor.run() 
+    reactor.runReturn()
+    sys.exit(a.exec_()) 

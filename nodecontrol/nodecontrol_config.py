@@ -4,9 +4,11 @@ node_dict = {
         'gpib', 
        	'okfpga',
         'arduino',
+#        # electrode gui
+#        'electrode',
 	# start device servers next
         'sequencer',
 	# start conductor last
-        'conductor', 
+#        'conductor', 
     ],
 }
