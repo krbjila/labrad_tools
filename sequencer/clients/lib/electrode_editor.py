@@ -19,6 +19,35 @@ from devices.lib.ad5791_ramps import RampMaker
 
 from copy import deepcopy
 
+def zero_sequence(dt):
+    return {'dt': dt, 'type': 's', 'vf': 0}
+
+class Combo(QtGui.QComboBox):
+    def __init__(self, *args):
+        super(Combo, self).__init__()
+        self.addItem('0: Default')
+        self.lookup = {'0': 0}
+
+    def updatePresets(self, presets):
+        self.presets = presets
+        self.presets_sorted = [(key, self.presets[key]) for key in sorted(self.presets.keys())]
+
+        self.clear()
+        self.lookup = {}
+        for i in range(len(self.presets_sorted)):
+            (x,y) = self.presets_sorted[i]
+            self.addItem(str(x) + ': ' + y['description'])
+            self.lookup[str(x)] = i
+        self.setCurrentIndex(0)
+
+    def display(self, value):
+        v = str(int(value))
+        self.setCurrentIndex(self.lookup[v])
+
+    def value(self):
+        return self.presets_sorted[int(self.currentIndex())][0]
+
+
 class ParameterWidget(QtGui.QWidget):
     def __init__(self, ramp_type, ramp):
         """
@@ -59,8 +88,19 @@ class ParameterWidget(QtGui.QWidget):
         self.setLayout(self.layout)
 
     def make_pbox(self, p, r, s, n):
-        pbox = SuperSpinBox(r, s, n)
-        pbox.display(1)
+        if p == 'vi': 
+            pbox = Combo()
+            pbox.display(0)
+        elif p == 'vf':
+            pbox = Combo()
+            pbox.display(0)
+        else:
+            pbox = SuperSpinBox(r, s, n)
+            pbox.display(1)
+
+        if p == 'dt':
+            pbox.setDisabled(True)
+        
         label = QtGui.QLabel(p+': ')
         label.setFixedWidth(30)
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -72,11 +112,14 @@ class RampColumn(QtGui.QGroupBox):
     def __init__(self, RampMaker):
         super(RampColumn, self).__init__(None)
         self.ramp_maker = RampMaker
+        self.presets = {}
         self.populate()
 
     def populate(self):
-        self.add = QtGui.QPushButton('+')
-        self.dlt = QtGui.QPushButton('-')
+        self.add = QtGui.QWidget()
+        self.dlt = QtGui.QWidget()
+        # self.add = QtGui.QPushButton('+')
+        # self.dlt = QtGui.QPushButton('-')
         self.ramp_select = QtGui.QComboBox()
         self.ramp_select.addItems(self.ramp_maker.available_ramps.keys())
         self.parameter_widgets = {k: ParameterWidget(k, ramp) for 
@@ -107,8 +150,8 @@ class RampColumn(QtGui.QGroupBox):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        self.add.setFixedSize(15, 20) # w, h
-        self.dlt.setFixedSize(15, 20) # w, h
+        self.add.setFixedSize(16, 20) # w, h
+        self.dlt.setFixedSize(16, 20) # w, h
         self.ramp_select.setFixedWidth(90)
         self.ramp_select.setFixedHeight(20)
         self.setFixedWidth(30+120+4)
@@ -129,6 +172,14 @@ class RampColumn(QtGui.QGroupBox):
                 pass
         self.stack.setCurrentWidget(self.parameter_widgets[self.ramp_type])
 
+    def updatePresets(self, presets):
+        self.presets = presets
+        for p in self.parameter_widgets.values():        
+            ps = p.pboxes
+            for k in ps.keys():
+                if k == 'vi' or k == 'vf':
+                    ps[k].updatePresets(self.presets)
+
     def get_ramp(self):
         ramp_type = str(self.ramp_select.currentText())
         ramp = {'type': str(self.ramp_select.currentText())}
@@ -139,13 +190,14 @@ class RampColumn(QtGui.QGroupBox):
         return ramp
 
 class RampTable(QtGui.QWidget):
-    def __init__(self, RampMaker):
+    def __init__(self, RampMaker, sequence_length):
         QtGui.QDialog.__init__(self)
         self.ramp_maker = RampMaker
+        self.sequence_length = sequence_length
         self.populate()
 
     def populate(self):
-        self.cols = [RampColumn(self.ramp_maker) for i in range(100)]
+        self.cols = [RampColumn(self.ramp_maker) for i in range(self.sequence_length)]
         self.layout = QtGui.QHBoxLayout()
         for c in self.cols:
             self.layout.addWidget(c)
@@ -155,40 +207,76 @@ class RampTable(QtGui.QWidget):
 
         self.setLayout(self.layout)
 
-    def get_channel_sequence(self):
-        return [c.get_ramp() for c in self.cols if not c.isHidden()]
+    def get_sequence(self):
+        return [c.get_ramp() for c in self.cols]
 
 class MplCanvas(FigureCanvas):
-    def __init__(self):
+    def __init__(self, channel_list):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
-        self.axes.hold(False)
 
+        self.channel_list = channel_list
 
         self.fig.set_tight_layout(True)
 
         FigureCanvas.__init__(self, self.fig)
         self.setFixedSize(600, 300)
 
-    def make_figure(self, times=None, voltages=None):
+    def clear(self):
+        self.axes.clear()
+
+    def legend(self):
+        self.axes.legend()
+
+    def make_figure(self, waveforms):
         self.axes.set_xlabel('time [s]')
         self.axes.set_ylabel('voltage [V]')
-        self.axes.plot(times, voltages)
+
+        for x in self.channel_list:
+            (T, V) = waveforms[x]
+            self.axes.plot(T, V, label=x)
+
+        self.axes.legend()
+
 
 class ElectrodeEditor(QtGui.QDialog):
     sequence_parameters = {}
-    def __init__(self, channel, sequence, config, reactor=None, cxn=None, parent=None):
+    def __init__(self, channels, sequence, electrode_sequence, config, reactor=None, cxn=None, parent=None):
         super(ElectrodeEditor, self).__init__(parent)
-        self.channel = str(channel)
+        self.channels = channels
         self.sequence = sequence
+
         self.ramp_maker = RampMaker
         self.config = config
         self.reactor = reactor
         self.cxn = cxn
 
+        self.lookup = self.generateChannelLookup(self.channels)
+
+        self.electrode_sequence = self.check_electrode_sequence(electrode_sequence)
+        self.sequence_length = len(electrode_sequence)
+        self.presets = {}
+
         self.loading = False
         self.connect()
-   
+
+    def generateChannelLookup(self, channels):
+        lookup = {}
+        for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
+            lookup[self.config.electrode_channel_map[i]] = nl
+        return lookup
+
+    def check_electrode_sequence(self, electrode_sequence):
+        dummy = self.sequence.keys()[0]
+        dummy_seq = self.sequence[dummy]
+
+        if len(electrode_sequence) != len(dummy_seq):
+            electrode_sequence = []
+            for x in dummy_seq:
+                v = deepcopy(zero_sequence(x['dt']))
+                electrode_sequence.append(v)
+        return electrode_sequence
+
     @inlineCallbacks
     def connect(self):
         if self.cxn is None:
@@ -196,16 +284,16 @@ class ElectrodeEditor(QtGui.QDialog):
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
 #        yield self.get_sequence_parameters()
-        yield self.populate()
-        self.connect_signals()
+        self.populate()
+        yield self.connect_signals()
+        yield self.update_presets()
 
-    @inlineCallbacks
     def populate(self):
-        self.setWindowTitle(self.channel)
+        self.setWindowTitle("Electrode control")
 
-        self.canvas = MplCanvas()
+        self.canvas = MplCanvas(self.config.electrode_channel_map)
         self.nav = NavigationToolbar(self.canvas, self)
-        self.ramp_table = RampTable(self.ramp_maker)
+        self.ramp_table = RampTable(self.ramp_maker, self.sequence_length)
         self.ramp_scroll = QtGui.QScrollArea()
         self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
 
@@ -228,8 +316,6 @@ class ElectrodeEditor(QtGui.QDialog):
         width = self.canvas.width()
         height = self.nav.height() + self.canvas.height() + self.ramp_scroll.height() + 20
         self.setFixedSize(width, height)
-        yield self.set_columns()
-        yield self.replot()
 
     @inlineCallbacks
     def connect_signals(self):
@@ -237,30 +323,63 @@ class ElectrodeEditor(QtGui.QDialog):
         for c in self.ramp_table.cols:
             c.ramp_select.currentIndexChanged.connect(self.replot)
             for pw in c.parameter_widgets.values():
-                for pb in pw.pboxes.values():
-                    pb.returnPressed.connect(self.replot)
+                for key, pb in pw.pboxes.items():
+                    if key == 'vi' or key == 'vf':
+                        pb.currentIndexChanged.connect(self.replot)
+                    else:
+                        pb.returnPressed.connect(self.replot)
         
         for i, c in enumerate(self.ramp_table.cols):
-            c.add.clicked.connect(self.add_column(i))
-            c.dlt.clicked.connect(self.dlt_column(i))
+            # c.add.clicked.connect(self.add_column(i))
+            # c.dlt.clicked.connect(self.dlt_column(i))
 
             c.zero_button.clicked.connect(self.zero_column(i))
             c.prev_button.clicked.connect(self.prev_column(i))
             c.next_button.clicked.connect(self.next_column(i))
-#            c.all_zero.clicked.connect(self.all_zero(i))
 
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
 
+        self.electrode = yield self.cxn.get_server(self.config.electrode_servername)
+        yield self.electrode.signal__presets_changed(self.config.electrode_update_id)
+        yield self.electrode.addListener(listener=self._update_presets, source=None, ID=self.config.electrode_update_id)
+
         # labrad signals
-        conductor = yield self.cxn.get_server(self.config.conductor_servername)
-        yield conductor.signal__parameters_updated(self.config.conductor_update_id)
-        yield conductor.addListener(listener=self.receive_parameters, source=None, ID=self.config.conductor_update_id)
+        self.conductor = yield self.cxn.get_server(self.config.conductor_servername)
+        yield self.conductor.signal__parameters_updated(self.config.conductor_update_id)
+        yield self.conductor.addListener(listener=self.receive_parameters, source=None, ID=self.config.conductor_update_id)
+
+    @inlineCallbacks
+    def get_electrode_presets(self):
+        s = yield self.electrode.get_presets()
+        s = json.loads(s)
+
+        presets = {}
+        for x in s:
+            idn = x.pop('id')
+            presets[idn] = x
+        self.presets = presets
+
+    def _update_presets(self, c, updated):
+        if updated:
+            self.update_presets()
+
+    @inlineCallbacks
+    def update_presets(self):
+        self.loading = True
+
+        yield self.get_electrode_presets()
+
+        for c in self.ramp_table.cols:
+            c.updatePresets(self.presets)
+
+        self.loading = False
+
+        yield self.set_columns()
 
     @inlineCallbacks
     def get_sequence_parameters(self):
-        conductor = yield self.cxn.get_server(self.config.conductor_servername)
-        sp = yield conductor.set_sequence_parameters()
+        sp = yield self.conductor.set_sequence_parameters()
         self.sequence_parameters = json.loads(sp)
     
     @inlineCallbacks
@@ -270,107 +389,127 @@ class ElectrodeEditor(QtGui.QDialog):
     @inlineCallbacks
     def set_columns(self):
         self.loading = True
-        for c in self.ramp_table.cols:
-            c.hide()
 
-        for s, c in zip(self.sequence[self.channel], self.ramp_table.cols):
+        for s, c in zip(self.electrode_sequence, self.ramp_table.cols):
             ramp_type = s['type']
-            c.show()
             c.ramp_select.setCurrentIndex(c.ramp_select.findText(ramp_type))
-	    for k in c.parameter_widgets[ramp_type].pboxes.keys():
+        
+            for k in c.parameter_widgets[ramp_type].pboxes.keys():
                 c.parameter_widgets[ramp_type].pboxes[k].display(s[k])
                 
         self.loading = False
         yield self.replot()
 
-    def add_column(self, i):
-        def ac():
-            sequence = self.get_sequence()
-	    for c in sequence.keys():
-                sequence[c].insert(i, sequence[c][i])
+    # def add_column(self, i):
+    #     def ac():
+    #         sequence = self.get_sequence()
+	   #  for c in sequence.keys():
+    #             sequence[c].insert(i, sequence[c][i])
 
-            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-            self.set_sequence(sequence)
-            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
-        return ac
+    #         scroll_position = self.ramp_scroll.horizontalScrollBar().value()
+    #         self.set_sequence(sequence)
+    #         self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
+    #     return ac
 
-    def dlt_column(self, i):
-        def dc():
-            sequence = self.get_sequence()
-	    for c in sequence.keys():
-                sequence[c].pop(i)
+    # def dlt_column(self, i):
+    #     def dc():
+    #         sequence = self.get_sequence()
+	   #  for c in sequence.keys():
+    #             sequence[c].pop(i)
 
-            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-            self.set_sequence(sequence)
-            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
-        return dc
+    #         scroll_position = self.ramp_scroll.horizontalScrollBar().value()
+    #         self.set_sequence(sequence)
+    #         self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
+    #     return dc
 
     def zero_column(self, i):
-        def zc():
-            sequence = self.get_sequence()
-            dt = sequence[self.channel][i]['dt']
-            sequence[self.channel][i] = {'dt': dt, 'type': 's', 'vf': 0.0}
-            
-            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-            self.set_sequence(sequence)
-            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
+
+        # QAbstractButton.clicked() sends a bool (for whether the button is checked or not)
+        # This will cause an error as zc is then called with an extra argument
+        # Just put *args and ignore them to catch this
+        @inlineCallbacks
+        def zc(*args):
+            self.electrode_sequence = self.getElectrodeSequence()
+            dt = self.electrode_sequence[i]['dt']
+            self.electrode_sequence[i] = zero_sequence(dt)
+            yield self.set_columns()
+        
         return zc
 
     def prev_column(self, i):
-        def pc():
-            sequence = self.get_sequence()
-            if i > 0:
-                dt = sequence[self.channel][i]['dt']
-                sequence[self.channel][i] = deepcopy(sequence[self.channel][i-1])
-                sequence[self.channel][i]['dt'] = dt
 
-            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-            self.set_sequence(sequence)
-            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
+        # See comment on zc()
+        @inlineCallbacks
+        def pc(*args):
+            self.electrode_sequence = self.getElectrodeSequence()
+
+            if i > 0:
+                self.electrode_sequence[i] = deepcopy(self.electrode_sequence[i-1])
+                yield self.set_columns()
+        
         return pc
 
     def next_column(self, i):
-        def nc():
-            sequence = self.get_sequence()
-            if i < len(sequence[self.channel]) - 1:
-                dt = sequence[self.channel][i]['dt']
-		sequence[self.channel][i] = deepcopy(sequence[self.channel][i+1])
-                sequence[self.channel][i]['dt'] = dt
+        
+        # See comment on zc()
+        @inlineCallbacks
+        def nc(*args):
+            self.electrode_sequence = self.getElectrodeSequence()
 
-            scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-            self.set_sequence(sequence)
-            self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
+            if i < len(self.electrode_sequence) - 1:
+                self.electrode_sequence[i] = deepcopy(self.electrode_sequence[i+1])
+                yield self.set_columns()
+        
         return nc
 
-    def set_sequence(self, sequence):
-        self.sequence = sequence
-        self.set_columns()
+    def parseElectrodesSequence(self, electrode_sequence):
+        sequence = {}
+        for x in self.config.electrode_channel_map:
+            s = []
+            for step in electrode_sequence:
+                seq = deepcopy(step)
+                vf = self.presets[int(step['vf'])]['values'][x]
+                seq['vf'] = vf
+                if step.has_key('vi'):
+                    vi = self.presets[int(step['vi'])]['values'][x]
+                    seq['vi'] = vi
+                s.append(seq)
+            sequence[x] = s
+        return sequence
 
-    @inlineCallbacks
     def get_plottable_sequence(self):
-        sequence = self.ramp_table.get_channel_sequence()
-        parameters = {'sequencer': get_sequence_parameters(sequence)}
-        parameters_json = json.dumps(parameters)
-        conductor = yield self.cxn.get_server(self.config.conductor_servername)
-        pv_json = yield conductor.get_parameter_values(parameters_json, True)
-        parameter_values = json.loads(pv_json)['sequencer']
-        plottable_sequence = substitute_sequence_parameters(sequence, parameter_values)
-        returnValue(self.ramp_maker(plottable_sequence).get_plottable())
-
+        sequence = self.ramp_table.get_sequence()
+        fixed_sequence = self.parseElectrodesSequence(sequence)
+        return {key: self.ramp_maker(val).get_plottable() for key, val in fixed_sequence.items()}
+    
     def get_sequence(self):
-        channel_sequence = self.ramp_table.get_channel_sequence()
-        self.sequence.update({self.channel: channel_sequence})
+        electrode_sequence = self.ramp_table.get_sequence()
+        fixed_sequence = self.parseElectrodesSequence(electrode_sequence)
+
+        for k, v in fixed_sequence.items():
+            self.sequence.update({k: v})
         return self.sequence
 
-    @inlineCallbacks
     def replot(self, c=None):
         if not self.loading:
-            T, V = yield self.get_plottable_sequence()
-            self.canvas.make_figure(T, V)
+            self.canvas.clear()
+
+            # Update the electrode sequence
+            self.electrode_sequence = self.getElectrodeSequence()
+
+            seq = self.get_plottable_sequence()
+            self.canvas.make_figure(seq)
+            # for key, val in seq.items():
+            #     (T, V) = val
+            #     self.canvas.make_figure(T, V, key)
             self.canvas.draw()
+        self.canvas.legend()
 
     def getEditedSequence(self):
         return self.get_sequence()
+
+    def getElectrodeSequence(self):
+        return self.ramp_table.get_sequence()
 
     def keyPressEvent(self, c):
         if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:

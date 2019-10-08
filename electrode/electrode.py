@@ -33,21 +33,33 @@ from helpers import json_load_byteified, json_loads_byteified
 
 from calibrations import *
 
-CONFIG_PATH = 'config.json'
+PRESETS_PATH = 'values.json'
 BACKUP_PATH = './backup/'
-
 
 class ElectrodeServer(LabradServer):
     name = 'electrode'
-    relative_config_path = CONFIG_PATH
+    relative_presets_path = PRESETS_PATH
     relative_backup_path = BACKUP_PATH
     
-    def __init__(self):
+    presets_changed = Signal(101010, 'signal: presets changed', 'b')
+
+    def __init__(self, config_path='./config.json'):
     	super(ElectrodeServer, self).__init__()
     	self.presets = []
     	self.lookup = {}
 
+    	self.load_config(config_path)
+
     	self._reload_presets()
+
+    def load_config(self, path=None):
+        """ set instance attributes defined in json config """
+        if path is not None:
+            self.config_path = path
+        with open(self.config_path, 'r') as infile:
+            config = json.load(infile)
+            for key, value in config.items():
+                setattr(self, key, value)
 
     @setting(1, returns='s')
     def get_presets(self, c):
@@ -68,13 +80,15 @@ class ElectrodeServer(LabradServer):
 
     		self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
 
-    		with open(self.relative_config_path, 'w') as f:
+    		with open(self.relative_presets_path, 'w') as f:
     			f.write(json.dumps(self.presets, sort_keys=True, indent=4))
     		self.backup_presets()
 
     		print "Settings updated and backed up:"
     		for x in self.presets:
     			print "{}: {}".format(int(x['id']), x['description'])
+
+    		self.presets_changed(True)
 
     def backup_presets(self):
     	folder_s = datetime.now().strftime("%Y%m%d/")
@@ -95,21 +109,26 @@ class ElectrodeServer(LabradServer):
     	print "Settings reloaded:"
     	for x in self.presets:
     		print "{}: {}".format(int(x['id']), x['description'])
+    	self.presets_changed(True)
 
     def _reload_presets(self):
-    	if os.path.exists(self.relative_config_path):
-    		with open(self.relative_config_path, 'r') as f:
+    	if os.path.exists(self.relative_presets_path):
+    		with open(self.relative_presets_path, 'r') as f:
     			presets = json_load_byteified(f)
     	else:
     		presets = [
-    			{'id': 0, 'values': ZEROS, 'compShim': 0., 'description': 'Zero'}
+    			{'id': str(0), 'values': ZEROS, 'compShim': 0., 'description': 'Zero'}
     		]
-    		with open(self.relative_config_path, 'w') as f:
+    		with open(self.relative_presets_path, 'w') as f:
     			f.write(json.dumps(presets, sort_keys=True, indent=4))
 
        	for x in presets:
     		self.lookup[x['id']] = x
     	self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
+
+    @setting(4, returns='s')
+    def get_channels(self):
+    	return json.dumps(self.channels)
 
 
     

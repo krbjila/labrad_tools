@@ -155,5 +155,4 @@ if __name__ == '__main__':
     widget = ElectrodeControl(reactor)
 
     widget.show()
-    reactor.runReturn()
-    sys.exit(a.exec_()) 
+    reactor.run() 
