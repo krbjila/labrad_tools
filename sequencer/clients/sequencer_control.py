@@ -454,7 +454,7 @@ class SequencerControl(QtGui.QWidget):
             self.loadSequence(filepath)
     
     def saveSequence(self):
-        filename = self.loadSaveRun.locationBox.text().split('/')[-1]
+        filename = self.loadSaveRun.locationBox.text().split('\\')[-1]
         timestr = time.strftime(self.time_format)
         directory = self.sequence_directory.format(timestr)
         filepath = directory + filename

@@ -42,7 +42,11 @@ class Combo(QtGui.QComboBox):
 
     def display(self, value):
         v = str(int(value))
-        self.setCurrentIndex(self.lookup[v])
+
+        try:
+            self.setCurrentIndex(self.lookup[v])
+        except:
+            self.setCurrentIndex(0)
 
     def value(self):
         return self.presets_sorted[int(self.currentIndex())][0]
