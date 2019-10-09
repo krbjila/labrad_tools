@@ -34,6 +34,8 @@ WIDGET_GEOMETRY = {
 	'h' : 800
 }
 
+CXN_ID = 10101
+
 class ElectrodeControl(QtGui.QWidget):
 	def __init__(self, reactor, cxn=None):
 		super(ElectrodeControl, self).__init__()
@@ -54,7 +56,6 @@ class ElectrodeControl(QtGui.QWidget):
 
 		self.settings = SettingWidget()
 		self.forms = FormWidget(self.calculator)
-		# self.compShim = CompShimForm()
 		self.displays = DisplayWidget(self.calculator)
 
 		self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
@@ -66,10 +67,7 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settings.settingDeletedSignal.connect(self.settingDeleted)
 		self.settings.refreshSignal.connect(self.refresh)
 
-		# self.compShim.compShimSignal.connect(self.setCompShim)
-
 		self.layout.addWidget(self.settings)
-		# self.layout.addWidget(self.compShim)
 		self.layout.addWidget(self.forms)
 		self.layout.addWidget(self.displays)
 
@@ -87,6 +85,8 @@ class ElectrodeControl(QtGui.QWidget):
 		self.context = yield self.cxn.context()
 		self.server = yield self.cxn.get_server(SERVERNAME)
 
+		yield self.server.signal__presets_changed(CXN_ID)
+		yield self.server.addListener(listener=self.refresh, source=None, ID=CXN_ID)
 		self.getPresets()
 
 	@inlineCallbacks
@@ -106,10 +106,6 @@ class ElectrodeControl(QtGui.QWidget):
 		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
 		self.displays.setValues(vals)
 		self.unsavedChanges()
-
-	# def setCompShim(self, comp_shim):
-	# 	self.forms.setCompShim(comp_shim)
-	# 	self.inputFormChanged(self)
 
 	def unsavedChanges(self):
 		self.setWindowTitle("Electrode Control*")

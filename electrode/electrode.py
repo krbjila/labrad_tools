@@ -84,11 +84,42 @@ class ElectrodeServer(LabradServer):
     			f.write(json.dumps(self.presets, sort_keys=True, indent=4))
     		self.backup_presets()
 
-    		print "Settings updated and backed up:"
+    		print "Settings update and back up:"
     		for x in self.presets:
     			print "{}: {}".format(int(x['id']), x['description'])
 
     		self.presets_changed(True)
+
+
+    # Only update keys that are currently in the presets dict
+    @setting(5, data='s', returns='i')
+    def soft_update(self, c, data):
+        # Make into dict
+        try:
+            d = json_loads_byteified(data)
+        except:
+            return -1
+
+        temp = deepcopy(self.lookup)
+        
+        for k, v in d.items():
+            if self.lookup.has_key(k):
+                if v != self.lookup[k]:
+                    self.lookup[k] = v
+
+        if self.lookup != temp:
+            self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
+
+            with open(self.relative_presets_path, 'w') as f:
+                f.write(json.dumps(self.presets, sort_keys=True, indent=4))
+            self.backup_presets()
+
+            print "Settings soft update and back up:"
+            for x in self.presets:
+                print "{}: {}".format(int(x['id']), x['description'])
+            self.presets_changed(True)
+        return 0
+
 
     def backup_presets(self):
     	folder_s = datetime.now().strftime("%Y%m%d/")
