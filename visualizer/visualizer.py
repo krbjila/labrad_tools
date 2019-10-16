@@ -49,16 +49,8 @@ class VisualizerWindow(QtGui.QWidget):
 
 		super(VisualizerWindow, self).__init__()
 		self.reactor = reactor
-
 		self.load_config(config_path)
-
 		self.channels = {}
-
-		# self.calculator = ECalculator(fit_coeffs_path)
-
-		# self.setFixedWidth(WIDGET_GEOMETRY['w'])
-		# self.setFixedHeight(WIDGET_GEOMETRY['h'])
-
 		self.initialize()
 
 	def load_config(self, path=None):
@@ -75,36 +67,23 @@ class VisualizerWindow(QtGui.QWidget):
 		self.setWindowTitle("Sequence visualizer")
 		self.layout = QtGui.QVBoxLayout()
 
-		self.channel_select = ChannelSelect()
+		self.channel_select = ChannelSelect(self.digital_channels, self.analog_channels)
 
-		self.digital_plot = DigitalPlot()
-		self.analog_plot = AnalogPlot()
+		self.channel_scroll = QtGui.QScrollArea()
+		self.channel_scroll.setWidget(self.channel_select)
 
+		# self.digital_plot = DigitalPlot()
+		# self.analog_plot = AnalogPlot()
 
-		# self.settings = SettingWidget()
-		# self.forms = FormWidget(self.calculator)
-		# # self.compShim = CompShimForm()
-		# self.displays = DisplayWidget(self.calculator)
-
-		# self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
-		# self.settings.updateDescriptionSignal.connect(self.descriptionChanged)
-
-		# self.settings.settingChangedSignal.connect(self.settingChanged)
-		# self.settings.newSettingSignal.connect(self.newSettingAdded)
-		# self.settings.saveSettingSignal.connect(self.saveSetting)
-		# self.settings.settingDeletedSignal.connect(self.settingDeleted)
-		# self.settings.refreshSignal.connect(self.refresh)
-
-		# # self.compShim.compShimSignal.connect(self.setCompShim)
-
-		# self.layout.addWidget(self.settings)
-		# # self.layout.addWidget(self.compShim)
-		# self.layout.addWidget(self.forms)
-		# self.layout.addWidget(self.displays)
+		self.channel_scroll.setHorizontalScrollBarPolicy(1)
+		self.channel_scroll.setVerticalScrollBarPolicy(2)
+		self.channel_scroll.setFrameShape(0)
 
 		font = QtGui.QFont()
 		font.setPointSize(12)
 		self.setFont(font)
+
+		self.layout.addWidget(self.channel_scroll)
 
 		self.setLayout(self.layout)
 
@@ -129,10 +108,21 @@ class VisualizerWindow(QtGui.QWidget):
 		s = yield self.sequencer.get_channels()
 		self.channels = json.loads(s)
 
-		self.digital_channels = {k:v for k,v in self.channels.items() if v['channel_type'] == 'digital'}
-		self.analog_channels = {k:v for k,v in self.channels.items() if (v['channel_type'] == 'analog' or v['channel_type'] == 'ad5791')}
+		self.digital_channels = {}
+		self.analog_channels = {}
 
-		print self.analog_channels.keys()
+		# Get channels by board
+		for k, v in self.channels.items():
+			board = v['loc'][0]
+
+			if v['channel_type'] == 'digital':
+				if not board in self.digital_channels:
+					self.digital_channels[board] = {}
+				self.digital_channels[board][k] = v
+			else:
+				if not board in self.analog_channels:
+					self.analog_channels[board] = {}
+				self.analog_channels[board][k] = v
 
 
 
