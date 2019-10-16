@@ -86,7 +86,7 @@ class ElectrodeControl(QtGui.QWidget):
 		self.server = yield self.cxn.get_server(SERVERNAME)
 
 		yield self.server.signal__presets_changed(CXN_ID)
-		yield self.server.addListener(listener=self.refresh, source=None, ID=CXN_ID)
+		yield self.server.addListener(listener=self._refresh, source=None, ID=CXN_ID)
 		self.getPresets()
 
 	@inlineCallbacks
@@ -133,6 +133,10 @@ class ElectrodeControl(QtGui.QWidget):
 	def settingDeleted(self, index):
 		self.presets.pop(index)
 		self.unsavedChanges()
+
+	@inlineCallbacks
+	def _refresh(self, x):
+		yield self.refresh()
 
 	@inlineCallbacks
 	def refresh(self):
