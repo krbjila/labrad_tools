@@ -571,6 +571,7 @@ class SequencerControl(QtGui.QWidget):
             self.displaySequence(sequence)
 
             self.metadata['descriptions'].insert(i, '')
+            self.updateDescriptionTooltips()
         return ac
 
     def dltColumn(self, i):
@@ -581,6 +582,7 @@ class SequencerControl(QtGui.QWidget):
             self.displaySequence(sequence)
 
             self.metadata['descriptions'].pop(i)
+            self.updateDescriptionTooltips()
         return dc
 
     def undo(self):
