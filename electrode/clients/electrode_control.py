@@ -104,7 +104,7 @@ class ElectrodeControl(QtGui.QWidget):
 		dac = VsToDACs(vals)
 		self.presets[self.settings.currentSetting]['values'] = dac
 		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
-		self.displays.setValues(vals)
+		self.displays.setValues(vals, comp_shim)
 		self.unsavedChanges()
 
 	def unsavedChanges(self):
@@ -128,7 +128,7 @@ class ElectrodeControl(QtGui.QWidget):
 		comp_shim = self.presets[self.settings.currentSetting]['compShim']
 		vals = DACsToVs(vs)
 		self.forms.setValues(vals, comp_shim)
-		self.displays.setValues(vals)
+		self.displays.setValues(vals, comp_shim)
 
 	def settingDeleted(self, index):
 		self.presets.pop(index)

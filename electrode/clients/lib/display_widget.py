@@ -4,12 +4,17 @@ import numpy as np
 import os
 import sys
 
+from copy import deepcopy
+
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
 sys.path.append('./displays/')
 from display_gui_elements import *
+
+sys.path.append('../')
+from calibrations import *
 
 SEP = os.path.sep
 
@@ -30,7 +35,22 @@ class DisplayWidget(QtGui.QWidget):
 
 		self.setLayout(self.layout)
 
-	def setValues(self, values):
-		self.values = values
-		self.electrodeSchematic.redraw(values)
-		self.fieldSlicesWindow.update(values)
+	def setValues(self, values, comp_shim):
+		self.values = self.compShimCorrection(values, comp_shim)
+		self.electrodeSchematic.redraw(self.values)
+		self.fieldSlicesWindow.update(self.values)
+
+	def compShimCorrection(self, values, comp_shim):
+		vs = deepcopy(values)
+
+		PlateSpan = vs['LP'] - vs['UP']
+		bias = float(PlateSpan) / PLATE_SEPARATION * RODS_CORRECTION
+
+		dEdx = comp_shim * bias / NORMALIZATION_FIELD
+
+		vs['LW'] -= (-1.0)*dEdx
+		vs['LE'] += (-1.0)*dEdx
+		vs['UW'] += (-1.0)*dEdx
+		vs['UE'] -= (-1.0)*dEdx
+
+		return vs

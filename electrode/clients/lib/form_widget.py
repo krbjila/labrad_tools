@@ -21,7 +21,6 @@ CS_GEOMETRY = {
 	'w': 200
 }
 
-
 class FormWidget(QtGui.QWidget):
 	def __init__(self, calculator):
 		super(FormWidget, self).__init__()
@@ -51,47 +50,8 @@ class FormWidget(QtGui.QWidget):
 		self.updateOutputForms()
 
 	def updateOutputForms(self):
-		self.outputForms.update(self.getValues()[0])
+		self.outputForms.update(*self.getValues())
 
 	def setCompShim(self, comp_shim):
 		self.inputForms.setCompShim(comp_shim)
-		
-# class CompShimForm(QtGui.QWidget):
-# 	config = {
-# 		'title' : 'Comp shim (scaled V)',
-# 		'tooltips' : TOOLTIPS['cs'],
-# 		'precisions' : FIELD_PRECISIONS['cs'],
-# 		'min' : FIELD_MIN['cs'],
-# 		'max' : FIELD_MAX['cs'],
-# 		'step' : FIELD_STEP['cs']
-# 	}
-
-# 	compShimSignal = pyqtSignal(float)
-
-# 	def __init__(self):
-# 		super(CompShimForm, self).__init__()
-# 		self.populate()
-# 		self.setFixedWidth(CS_GEOMETRY['w'])
-
-# 	def populate(self):
-# 		self.layout = QtGui.QVBoxLayout()
-
-# 		self.label = QtGui.QLabel(self.config['title'])
-
-# 		self.edit = QtGui.QDoubleSpinBox()
-# 		self.edit.setValue(COMP_SHIM_DEFAULT)
-# 		self.edit.setToolTip(self.config['tooltips']['cs'])
-# 		self.edit.editingFinished.connect(self.emitSignal)
-# 		self.edit.setDecimals(self.config['precisions'][0])
-# 		self.edit.setRange(self.config['min'][0], self.config['max'][0])
-# 		self.edit.setSingleStep(self.config['step'][0])
-
-# 		self.layout.addWidget(self.label)
-# 		self.layout.addWidget(self.edit)
-# 		self.setLayout(self.layout)
-
-# 	def getCompShim(self):
-# 		return self.edit.value()
-
-# 	def emitSignal(self):
-# 		self.compShimSignal.emit(self.getCompShim())
+	

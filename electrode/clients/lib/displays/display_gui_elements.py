@@ -113,7 +113,9 @@ class FieldSlicesWindow(QtGui.QWidget):
 		self.layout = QtGui.QHBoxLayout()
 
 		self.E = EWindow(self.calculator)
+		self.E.setToolTip("Field cuts, assuming CompShim has zeroed linear gradient")
 		self.U = UWindow(self.calculator)
+		self.U.setToolTip("Potential cuts, assuming CompShim has zeroed linear gradient")
 
 		self.layout.addWidget(self.E)
 		self.layout.addWidget(self.U)

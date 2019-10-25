@@ -21,3 +21,6 @@ DAC_LIMIT = 2
 
 # Default comp shim
 COMP_SHIM_DEFAULT = 1.5
+
+# Field we normalize comp_shim to
+NORMALIZATION_FIELD = 3000.0

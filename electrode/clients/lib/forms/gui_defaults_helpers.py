@@ -11,8 +11,6 @@ from twisted.internet.defer import inlineCallbacks
 sys.path.append('../../')
 from calibrations import *
 
-NORMALIZATION_FIELD = 3000.0
-
 # Form fields (short names)
 FORM_FIELDS = {
 	'i' : ['LP', 'UP', 'LW', 'LE', 'UW', 'UE'],
