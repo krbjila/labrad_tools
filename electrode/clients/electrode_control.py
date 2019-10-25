@@ -34,7 +34,7 @@ WIDGET_GEOMETRY = {
 	'h' : 800
 }
 
-CXN_ID = 10101
+CXN_ID = 110101
 
 class ElectrodeControl(QtGui.QWidget):
 	def __init__(self, reactor, cxn=None):
@@ -135,8 +135,14 @@ class ElectrodeControl(QtGui.QWidget):
 		self.unsavedChanges()
 
 	@inlineCallbacks
-	def _refresh(self, x):
-		yield self.refresh()
+	def _refresh(self, c, x):
+		# The signal is emitted every time the presets are changed or reloaded.
+		# We will cause a loop if we refresh every time we catch the signal,
+		# since self.refresh() calls self.server.reload_presets(), which 
+		# causes the signal to be emitted again.
+		# So the signal comes with a bool that tells us if we should update:
+		if x:
+			yield self.refresh()
 
 	@inlineCallbacks
 	def refresh(self):

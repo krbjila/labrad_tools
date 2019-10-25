@@ -364,9 +364,8 @@ class ElectrodeEditor(QtGui.QDialog):
             presets[idn] = x
         self.presets = presets
 
-    def _update_presets(self, c, updated):
-        if updated:
-            self.update_presets()
+    def _update_presets(self, c, x):
+        self.update_presets()
 
     @inlineCallbacks
     def update_presets(self):

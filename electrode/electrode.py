@@ -88,7 +88,7 @@ class ElectrodeServer(LabradServer):
     		for x in self.presets:
     			print "{}: {}".format(int(x['id']), x['description'])
 
-    		self.presets_changed(True)
+    		self.presets_changed(False)
 
 
     # Only update keys that are currently in the presets dict
@@ -140,7 +140,7 @@ class ElectrodeServer(LabradServer):
     	print "Settings reloaded:"
     	for x in self.presets:
     		print "{}: {}".format(int(x['id']), x['description'])
-    	self.presets_changed(True)
+    	self.presets_changed(False)
 
     def _reload_presets(self):
     	if os.path.exists(self.relative_presets_path):
