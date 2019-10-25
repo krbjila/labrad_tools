@@ -14,6 +14,7 @@ from helpers import substitute_sequence_parameters
 sys.path.append('../')
 from devices.lib.ad5791_ramps import RampMaker
 
+AD5791_PLOT_SCALE = 5 # Scale the thumbnail plots to +/- this value
 
 class NameBox(QtGui.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -78,13 +79,13 @@ class ElectrodeArray(FigureCanvas):
         for i, nl in enumerate(sorted(self.channels, key=lambda nl: nl.split('@')[1])):
             channel_sequence = sequence[nl]
             T, V = self.rampMaker(channel_sequence).get_plottable(scale='step')
-            V = np.array(V) - i*20
+            V = np.array(V) - i*2*AD5791_PLOT_SCALE
             self.axes.plot(T, V)
         for i in range(len(self.channels)-1):
-            self.axes.axhline(-10-i*20, linestyle="--", color='grey')
+            self.axes.axhline(-AD5791_PLOT_SCALE-i*2*AD5791_PLOT_SCALE, linestyle="--", color='grey')
         for i in range(len(sequence[self.config.timing_channel])-1):
             self.axes.axvline(i*99+98, color='grey')
-        self.axes.set_ylim(-20*len(self.channels)+10, 10)
+        self.axes.set_ylim(-2*AD5791_PLOT_SCALE*len(self.channels)+AD5791_PLOT_SCALE, AD5791_PLOT_SCALE)
         self.axes.set_xlim(0, len(T))
         self.draw()
 

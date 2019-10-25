@@ -490,7 +490,7 @@ class ElectrodeEditor(QtGui.QDialog):
         fixed_sequence = self.parseElectrodesSequence(electrode_sequence)
 
         for k, v in fixed_sequence.items():
-            self.sequence.update({k: v})
+            self.sequence.update({self.lookup[k]: v})
         return self.sequence
 
     def replot(self, c=None):
