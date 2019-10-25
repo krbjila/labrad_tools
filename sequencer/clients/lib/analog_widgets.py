@@ -48,10 +48,13 @@ class AnalogNameColumn(QtGui.QWidget):
 
 
 class AnalogArray(FigureCanvas):
+    mouseover = pyqtSignal(int)
+
     def __init__(self, channels, config):
         self.channels = channels
         self.config = config
         self.rampMaker = RampMaker
+        self.mouseover_col = -1
         self.populate()
        
     def populate(self):
@@ -67,6 +70,8 @@ class AnalogArray(FigureCanvas):
         self.axes.get_yaxis().set_visible(False)
         self.setContentsMargins(0, 0, 0, 0)
         self.fig.subplots_adjust(left=0, bottom = 0, right=1, top=1)
+
+        self.on_move_id = self.mpl_connect('motion_notify_event', self.on_move)
 
     def plotSequence(self, sequence):
         self.axes.cla()
@@ -84,6 +89,11 @@ class AnalogArray(FigureCanvas):
         self.axes.set_xlim(0, len(T))
         self.draw()
 
+    def on_move(self, event):
+        col = int(event.xdata / 99)
+        if self.mouseover_col != col:
+            self.mouseover_col = col
+            self.mouseover.emit(self.mouseover_col)
 
 class AnalogControl(QtGui.QWidget):
     def __init__(self, channels, config):
@@ -91,6 +101,7 @@ class AnalogControl(QtGui.QWidget):
         self.channels = channels
         self.config = config
         self.sequence = {}
+        self._tooltips = []
         self.populate()
 
     def populate(self):
@@ -140,6 +151,17 @@ class AnalogControl(QtGui.QWidget):
                          self.vscroll.verticalScrollBar()]
         for vs in self.vscrolls:
             vs.valueChanged.connect(self.adjust_for_vscroll(vs))
+
+        self.array.mouseover.connect(self.tooltipUpdate)
+
+    def _setTooltips(self, tooltips):
+        self._tooltips = tooltips
+
+    def tooltipUpdate(self, c):
+        try:
+            self.setToolTip(self._tooltips[c])
+        except Exception as e:
+            pass
 
     def adjust_for_vscroll(self, scrolled):
         def afv():

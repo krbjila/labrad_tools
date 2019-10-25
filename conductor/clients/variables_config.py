@@ -3,10 +3,10 @@ variables_dict = [
     ['*RbDet', 1.16],
     ['*RbHFBlast', -8.715],
     ['*KDet', 7.83],
-    ['*RbProbeI', -8.1],
-    ['*KProbeI', -4.1],
+    ['*RbProbeI', -7.5],
+    ['*KProbeI', -3.5],
     ['*KHFBlast', 0.58],
-    ['*KMOT', 0.8],
+    ['*KMOT', 2],
     ['*RbMOT', 9.8],
     ['*RbHFOP', 4.7], 
     # QUAD shims
