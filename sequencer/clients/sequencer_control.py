@@ -315,8 +315,22 @@ class SequencerControl(QtGui.QWidget):
 
         if a.exec_():
             self.metadata['descriptions'] = a.getDescriptions()
-        self.sequenceChanged()
+            self.updateDescriptionTooltips()
+            self.sequenceChanged()
 
+    def updateDescriptionTooltips(self):
+        for ad, b, dc, d in zip(self.addDltRow.buttons,
+                                self.durationRow.boxes,
+                                self.digitalControl.array.columns,
+                                self.metadata['descriptions']):
+            ad.setToolTip(str(d))
+            b.setToolTip(str(d))
+            dc.setToolTip(str(d))
+        self.analogControl._setTooltips(self.metadata['descriptions'])
+        self.electrodeControl._setTooltips(self.metadata['descriptions'])
+#
+#        self.analogControl.array.mouseover_col = -1
+#        self.electrodeControl.array.mouseover_col = -1
 
     def onDigitalNameClick(self, channel_name):
         channel_name = str(channel_name)
@@ -509,16 +523,17 @@ class SequencerControl(QtGui.QWidget):
             if not self.metadata.has_key('electrodes'):
                 v = sequence['sequence'][self.config.timing_channel]
                 self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
-
             sequence = sequence['sequence']
-            timestr = time.strftime(self.time_format)
-            directory = self.sequence_directory.format(timestr)
-            filepath = directory + filepath.split('/')[-1].split('#')[0]
-
         else:
             v = sequence[self.config.timing_channel]
             self.metadata['descriptions'] = ['']*len(v)
             self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
+
+        self.updateDescriptionTooltips()
+
+        timestr = time.strftime(self.time_format)
+        directory = self.sequence_directory.format(timestr)
+        filepath = directory + filepath.split('/')[-1].split('#')[0]
 
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))
@@ -598,6 +613,7 @@ class SequencerControl(QtGui.QWidget):
 
             self.metadata['descriptions'].insert(i, '')
             self.metadata['electrodes'].insert(i, deepcopy(self.metadata['electrodes'][i]))
+            self.updateDescriptionTooltips()
         return ac
 
     def dltColumn(self, i):
@@ -609,6 +625,7 @@ class SequencerControl(QtGui.QWidget):
 
             self.metadata['descriptions'].pop(i)
             self.metadata['electrodes'].pop(i)
+            self.updateDescriptionTooltips()
         return dc
 
     def undo(self):
