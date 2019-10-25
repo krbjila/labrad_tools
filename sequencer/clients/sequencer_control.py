@@ -491,13 +491,16 @@ class SequencerControl(QtGui.QWidget):
                 self.metadata['descriptions'] = ['']*len(v)
 
             sequence = sequence['sequence']
-            timestr = time.strftime(self.time_format)
-            directory = self.sequence_directory.format(timestr)
-            filepath = directory + filepath.split('/')[-1].split('#')[0]
         else:
             v = sequence[self.config.timing_channel]
             self.metadata['descriptions'] = ['']*len(v)
+
         self.updateDescriptionTooltips()
+
+        timestr = time.strftime(self.time_format)
+        directory = self.sequence_directory.format(timestr)
+        filepath = directory + filepath.split('/')[-1].split('#')[0]
+
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))
         self.displaySequence(json.loads(sequence))
