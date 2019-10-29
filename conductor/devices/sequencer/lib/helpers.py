@@ -81,31 +81,26 @@ def update_electrode_values(seq, e_seq, presets, channels):
         # If no, don't touch the sequence, we'll just run whatever is in the file
         # If yes, then let's replace the values in the sequence:
         if len(e_seq) == len(s):
+
+            fixed = []
+
             # For each step in the sequence
             for step, e_step in zip(s, e_seq):
                 # Set step = e_step
                 step = deepcopy(e_step)
                 
-                # Get the actual voltage from presets
-                sf = step['vf']
-    
-                if presets.has_key(str(sf)):
-                    step['vf'] = presets[str(sf)][name]
-                else:
-                    step['vf'] = presets['0'][name]
-                    print "Preset {} not found, replaced with 0".format(sf)
-    
-                # Get the actual voltage from presets
-                if step.has_key('vi'):
-                    si = step['vi']
-    
-                    if presets.has_key(str(si)):
-                        step['vi'] = presets[str(si)][name]
-                    else:
-                        step['vi'] = presets['0'][name]
-                        print "Preset {} not found, replaced with 0".format(sf)
-    
-            seq.update({loc: s})
+                for k in ['vf', 'vi']:
+                    if step.has_key(k):
+                        v = str(step[k])
+
+                        # Get the actual voltage from presets
+                        if presets.has_key(v):
+                            step[k] = presets[v][name]
+                        else:
+                            step[k] = presets['0'][name]
+                            print "Preset {} not found, replaced with 0".format(int(v))
+                fixed.append(step)
+            seq.update({loc: fixed})
     return seq
 
 def read_sequence_file(sequence_directory, filename):
@@ -113,7 +108,7 @@ def read_sequence_file(sequence_directory, filename):
     if type(filename).__name__ == 'dict':
         if filename.has_key('sequence'):
             try:
-                return (filename['sequence'], filename['meta']['electrode'])
+                return (filename['sequence'], filename['meta']['electrodes'])
             except:
                 return (filename, [])
         else:
@@ -137,7 +132,7 @@ def read_sequence_file(sequence_directory, filename):
     # Get electrode sequence
     timing = s[TIMING_CHANNEL]
     try:
-        electrode_seq = sequence['meta']['electrode']
+        electrode_seq = sequence['meta']['electrodes']
     except KeyError:
         electrode_seq = []
 
