@@ -29,6 +29,7 @@ class Plot(QtGui.QWidget):
 		self.imageWindow = ImageWindow(self.digital_channels, self.analog_channels, self.timing_channel)
 		self.selector = RegionSelector()
 		self.selector.region_changed.connect(self.setRegion)
+		self.selector.autoscale_changed.connect(self.setAutoscale)
 
 		self.scroll = QtGui.QScrollArea()
 		self.scroll.setWidget(self.imageWindow)
@@ -44,6 +45,9 @@ class Plot(QtGui.QWidget):
 
 	def setRegion(self, start, stop):
 		self.imageWindow.setRegion(start, stop)
+
+	def setAutoscale(self, autoscale):
+		self.imageWindow.setAutoscale(autoscale)
 
 	def setModules(self, sequence_list):
 		self.selector.setModules(sequence_list)
