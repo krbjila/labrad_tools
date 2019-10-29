@@ -28,6 +28,7 @@ SEP = os.path.sep
 
 class RegionSelector(QtGui.QWidget):
 	region_changed = pyqtSignal(float, float)
+	autoscale_changed = pyqtSignal(bool)
 
 	def __init__(self):
 		super(RegionSelector, self).__init__()
@@ -53,6 +54,11 @@ class RegionSelector(QtGui.QWidget):
 		self.spanControl.setRange(-50000, 50000)
 		self.spanControl.valueChanged.connect(self.emit_sig)
 
+		self.autoscaleLabel = QtGui.QLabel("Scale analog channels?")
+		self.autoscaleControl = QtGui.QCheckBox()
+		self.autoscaleControl.setChecked(True)
+		self.autoscaleControl.clicked.connect(self.autoscale)
+
 		row = 0
 		self.layout.addWidget(self.jumpLabel, row, 0, 1, 1)
 		self.layout.addWidget(self.jumpControl, row, 1, 1, 1)
@@ -66,7 +72,13 @@ class RegionSelector(QtGui.QWidget):
 		self.layout.addWidget(self.spanControl, row, 1, 1, 1)
 		row += 1
 
+		self.layout.addWidget(self.autoscaleLabel, row, 0, 1, 1)
+		self.layout.addWidget(self.autoscaleControl, row, 1, 1, 1)
+
 		self.setLayout(self.layout)
+
+	def autoscale(self):
+		self.autoscale_changed.emit(self.autoscaleControl.isChecked())
 
 	def emit_sig(self):
 		ind = self.jumpControl.currentIndex()
@@ -114,6 +126,7 @@ class ImageWindow(QtGui.QWidget):
 	# pixels to scroll per mousewheel event
 	d = {"down" : 30, "up" : -30}
 	region = (0, 1e-3)
+	autoscale = True
 
 	def __init__(self, digital_channels, analog_channels, timing_channel):
 		super(ImageWindow, self).__init__()
@@ -156,11 +169,12 @@ class ImageWindow(QtGui.QWidget):
 		self.update()
 
 	def update(self):
-		cropped_sequence = self.crop(self.sequence)
-		active = {k: cropped_sequence[k] for k in self.active_channels}
-		self.plottable = self.getPlottable(active)
+		# cropped_sequence = self.crop(self.sequence)
+		active = {k: self.sequence[k] for k in self.active_channels}
+		self.plottable = self.crop(self.getPlottable(active))
 
-		self.scaleToView(self.plottable)
+		if self.autoscale:
+			self.scaleToView(self.plottable)
 
 		self.axes[0].clear()
 		self.axes[1].clear()
@@ -177,83 +191,43 @@ class ImageWindow(QtGui.QWidget):
 			ax.set_xlim(*self.region)
 
 		self.axes[0].set_ylabel('Digital')
-		self.axes[1].set_ylim((-1.1, 1.1))
-		self.axes[1].set_yticks([-1, 0, 1])
-		self.axes[1].set_ylabel('Scaled Analog')
+		
+		if self.autoscale:
+			self.axes[1].set_ylim((-1.1, 1.1))
+			self.axes[1].set_yticks([-1, 0, 1])
+			self.axes[1].set_ylabel('Scaled Analog')
+		else:
+			self.axes[1].set_ylabel('Analog')
 		self.axes[1].set_xlabel('Time (s)')
-
 
 		self.canvas.draw()
 
-	def crop(self, sequence):
+	def crop(self, plottable):
 		(start, stop) = self.region
 
-		seq = sequence[self.timing_channel]
+		cropped = {}
+		for kk, vv in plottable.items():
+			x = {}
+			for k, v in vv.items():
+				start_ind = 0
+				stop_ind = len(v)-1
 
-		t = 0
-		start_ind = len(seq) - 1
-		for i, step in enumerate(seq):
-			if t >= start:
-				start_ind = i - 1
-				break
-			t += step['dt']
-		start_ind = max(start_ind, 0)
+				for i, step in enumerate(v):
+					if step[0] >= start:
+						start_ind = i - 1
+						break
+				start_ind = max(start_ind, 0)
 
-		t = 0
-		stop_ind = len(seq)
-		for i, step in enumerate(seq):
-			if t >= stop:
-				stop_ind = i
-				break
-			t += step['dt']
-
-		cropped = deepcopy(sequence)
-		for k, v in cropped.items():
-			cropped[k] = v[start_ind:(stop_ind+i)]
-
+				for i, step in enumerate(v):
+					if step[0] >= stop:
+						stop_ind = i
+						break
+				x.update({k: v[start_ind:(stop_ind+1)]})
+			cropped.update({kk: x})
 		return cropped
 
-
 	def scaleToView(self, plottable):
-		# (start_r, stop_r) = self.region
-
-		# for v in self.plottable['digital'].values():
-		# 	for i, step in enumerate(v):
-		# 		if step[0] >= start:
-		# 			start_ind_temp = i - 1
-		# 			break
-		# 	start_ind = max(min(start_ind_temp, i - 1), 0)
-
-		# 	for i, step in enumerate(v):
-		# 		if step[0] >= stop:
-		# 			stop_ind_temp = i
-		# 			break
-		# 	stop_ind = min(stop_ind_temp, i)
-		# 	v = v[start_ind:(stop_ind+1)]
-
 		for v in self.plottable['analog'].values():
-			# for i, step in enumerate(v):
-			# 	if step[0] >= start:
-			# 		start_ind_temp = i - 1
-			# 		break
-			# start_ind = max(min(start_ind_temp, i - 1), 0)
-
-			# for i, step in enumerate(v):
-			# 	if step[0] >= stop:
-			# 		stop_ind_temp = i
-			# 		break
-			# stop_ind = min(stop_ind_temp, i)
-
-			# max_val = np.max(v[start_ind:(stop_ind+1), 1])
-			# min_val = np.min(v[start_ind:(stop_ind+1), 1])
-
-			# scale = max(np.abs(max_val), np.abs(min_val))
-
-			# v = v[start_ind:(stop_ind+1)]
-			# if scale != 0:
-			# 	v[:,1] = v[:,1]/scale
-
-
 			max_val = np.max(v[:, 1])
 			min_val = np.min(v[:, 1])
 
@@ -261,9 +235,12 @@ class ImageWindow(QtGui.QWidget):
 			if scale != 0:
 				v[:, 1] /= float(scale)
 
-
 	def setRegion(self, start, stop):
 		self.region = (start, stop)
+		self.update()
+
+	def setAutoscale(self, autoscale):
+		self.autoscale = autoscale
 		self.update()
 
 	def getPlottable(self, active):
