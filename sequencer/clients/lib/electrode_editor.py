@@ -403,28 +403,6 @@ class ElectrodeEditor(QtGui.QDialog):
         self.loading = False
         yield self.replot()
 
-    # def add_column(self, i):
-    #     def ac():
-    #         sequence = self.get_sequence()
-	   #  for c in sequence.keys():
-    #             sequence[c].insert(i, sequence[c][i])
-
-    #         scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-    #         self.set_sequence(sequence)
-    #         self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
-    #     return ac
-
-    # def dlt_column(self, i):
-    #     def dc():
-    #         sequence = self.get_sequence()
-	   #  for c in sequence.keys():
-    #             sequence[c].pop(i)
-
-    #         scroll_position = self.ramp_scroll.horizontalScrollBar().value()
-    #         self.set_sequence(sequence)
-    #         self.ramp_scroll.horizontalScrollBar().setValue(scroll_position)
-    #     return dc
-
     def zero_column(self, i):
 
         # QAbstractButton.clicked() sends a bool (for whether the button is checked or not)
@@ -447,7 +425,9 @@ class ElectrodeEditor(QtGui.QDialog):
             self.electrode_sequence = self.getElectrodeSequence()
 
             if i > 0:
+                dt = self.electrode_sequence[i]['dt']
                 self.electrode_sequence[i] = deepcopy(self.electrode_sequence[i-1])
+                self.electrode_sequence[i]['dt'] = dt
                 yield self.set_columns()
         
         return pc
@@ -460,7 +440,9 @@ class ElectrodeEditor(QtGui.QDialog):
             self.electrode_sequence = self.getElectrodeSequence()
 
             if i < len(self.electrode_sequence) - 1:
+                dt = self.electrode_sequence[i]['dt']
                 self.electrode_sequence[i] = deepcopy(self.electrode_sequence[i+1])
+                self.electrode_sequence[i]['dt'] = dt
                 yield self.set_columns()
         
         return nc
@@ -480,10 +462,16 @@ class ElectrodeEditor(QtGui.QDialog):
             sequence[x] = s
         return sequence
 
+    @inlineCallbacks
     def get_plottable_sequence(self):
         sequence = self.ramp_table.get_sequence()
+        parameters_json = json.dumps({'sequencer': get_sequence_parameters(sequence)})
+        pv_json = yield self.conductor.get_parameter_values(parameters_json, True)
+        parameter_values = json.loads(pv_json)['sequencer']
+        sequence = substitute_sequence_parameters(sequence, parameter_values)
+
         fixed_sequence = self.parseElectrodesSequence(sequence)
-        return {key: self.ramp_maker(val).get_plottable() for key, val in fixed_sequence.items()}
+        returnValue({key: self.ramp_maker(val).get_plottable() for key, val in fixed_sequence.items()})
     
     def get_sequence(self):
         electrode_sequence = self.ramp_table.get_sequence()
@@ -493,6 +481,7 @@ class ElectrodeEditor(QtGui.QDialog):
             self.sequence.update({self.lookup[k]: v})
         return self.sequence
 
+    @inlineCallbacks
     def replot(self, c=None):
         if not self.loading:
             self.canvas.clear()
@@ -500,7 +489,8 @@ class ElectrodeEditor(QtGui.QDialog):
             # Update the electrode sequence
             self.electrode_sequence = self.getElectrodeSequence()
 
-            seq = self.get_plottable_sequence()
+            seq = yield self.get_plottable_sequence()
+            print seq
             self.canvas.make_figure(seq)
             # for key, val in seq.items():
             #     (T, V) = val
