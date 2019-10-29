@@ -84,7 +84,7 @@ class MonitorForm(QtGui.QGroupBox):
 			self.labels.append(QtGui.QLabel(str(longname)))
 			self.edits.append(QtGui.QLineEdit())
 			
-			self.edits[i].setEnabled(False)
+			self.edits[i].setReadOnly(True)
 			self.edits[i].setAlignment(QtCore.Qt.AlignRight)
 
 			self.lookup[shortname] = i

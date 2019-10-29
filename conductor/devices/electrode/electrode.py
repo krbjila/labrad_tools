@@ -7,7 +7,7 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 from lib.helpers import *
 
-LABRAD_FOLDER = 'C:/Users/Kyle/Desktop/git_labrad/labrad_tools/'
+LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
 
 sys.path.append(LABRAD_FOLDER + 'electrode/')
 from calibrations import ZEROS

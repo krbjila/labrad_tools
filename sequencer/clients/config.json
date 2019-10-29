@@ -3,7 +3,7 @@
     "conductor_servername": "conductor",
     "electrode_servername": "electrode",
     "timing_channel": "Trigger@D15",
-    "sequence_directory": "C:\\Users\\Kyle\\Desktop\\git_labrad\\test_sequences\\{}\\",
+    "sequence_directory": "/home/bialkali/data/{}/sequences/",
     "time_format": "%Y%m%d",
     "sequencer_update_id": 689223,
     "conductor_update_id": 689222,

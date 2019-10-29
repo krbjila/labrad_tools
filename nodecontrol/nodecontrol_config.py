@@ -5,10 +5,10 @@ node_dict = {
        	'okfpga',
         'arduino',
 #        # electrode gui
-#        'electrode',
+        'electrode',
 	# start device servers next
         'sequencer',
 	# start conductor last
-        'conductor', 
+#        'conductor', 
     ],
 }

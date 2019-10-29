@@ -21,6 +21,7 @@ import sys
 
 import os
 from datetime import datetime
+from copy import deepcopy
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -158,7 +159,7 @@ class ElectrodeServer(LabradServer):
     	self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
 
     @setting(4, returns='s')
-    def get_channels(self):
+    def get_channels(self, c):
     	return json.dumps(self.channels)
 
 

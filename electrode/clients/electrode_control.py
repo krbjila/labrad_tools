@@ -34,13 +34,42 @@ WIDGET_GEOMETRY = {
 	'h' : 800
 }
 
+WINDOW_TITLE = 'Electrode Control'
+
 CXN_ID = 110101
 
-class ElectrodeControl(QtGui.QWidget):
+class ElectrodeWindow(QtGui.QWidget):
 	def __init__(self, reactor, cxn=None):
+		super(ElectrodeWindow, self).__init__()
+		self.reactor = reactor
+		self.cxn = cxn
+		self.populate()
+                self.resize(WIDGET_GEOMETRY['w'], WIDGET_GEOMETRY['h'])
+	
+	def populate(self):
+		self.setWindowTitle(WINDOW_TITLE)
+
+		self.layout = QtGui.QHBoxLayout()
+		self.widget = ElectrodeControl(self.reactor, self, self.cxn)
+
+		self.scroll = QtGui.QScrollArea()
+		self.scroll.setWidget(self.widget)
+		self.scroll.setWidgetResizable(True)
+		self.scroll.setHorizontalScrollBarPolicy(2)
+		self.scroll.setVerticalScrollBarPolicy(2)
+                self.scroll.setFrameShape(0)
+
+		self.layout.addWidget(self.scroll)
+		self.setLayout(self.layout)
+
+
+class ElectrodeControl(QtGui.QWidget):
+	def __init__(self, reactor, parent=None, cxn=None):
 		super(ElectrodeControl, self).__init__()
 		self.reactor = reactor
 		self.cxn = cxn
+
+		self.parent = parent
 
 		self.calculator = ECalculator(fit_coeffs_path)
 
@@ -108,10 +137,16 @@ class ElectrodeControl(QtGui.QWidget):
 		self.unsavedChanges()
 
 	def unsavedChanges(self):
-		self.setWindowTitle("Electrode Control*")
+		if self.parent:
+			self.parent.setWindowTitle(WINDOW_TITLE + '*')
+		else:
+			self.setWindowTitle(WINDOW_TITLE + '*')
 
 	def savedChanges(self):
-		self.setWindowTitle("Electrode Control")
+		if self.parent:
+			self.parent.setWindowTitle(WINDOW_TITLE)
+		else:
+			self.setWindowTitle(WINDOW_TITLE)
 
 	@inlineCallbacks
 	def saveSetting(self):
@@ -129,6 +164,7 @@ class ElectrodeControl(QtGui.QWidget):
 		vals = DACsToVs(vs)
 		self.forms.setValues(vals, comp_shim)
 		self.displays.setValues(vals, comp_shim)
+                self.savedChanges()
 
 	def settingDeleted(self, index):
 		self.presets.pop(index)
@@ -149,16 +185,16 @@ class ElectrodeControl(QtGui.QWidget):
 		yield self.server.reload_presets()
 		self.getPresets()
 
+	def closeEvent(self, x):
+		self.reactor.stop()
+
 
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
-    a.setQuitOnLastWindowClosed(True)
-
     import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
-    widget = ElectrodeControl(reactor)
-
+    widget = ElectrodeWindow(reactor)
     widget.show()
-    reactor.run() 
+    reactor.run()

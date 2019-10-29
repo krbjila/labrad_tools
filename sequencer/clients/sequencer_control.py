@@ -468,7 +468,7 @@ class SequencerControl(QtGui.QWidget):
             self.loadSequence(filepath)
     
     def saveSequence(self):
-        filename = self.loadSaveRun.locationBox.text().split('\\')[-1]
+        filename = self.loadSaveRun.locationBox.text().split(SEP)[-1]
         timestr = time.strftime(self.time_format)
         directory = self.sequence_directory.format(timestr)
         filepath = directory + filename
@@ -530,10 +530,6 @@ class SequencerControl(QtGui.QWidget):
             self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
 
         self.updateDescriptionTooltips()
-
-        timestr = time.strftime(self.time_format)
-        directory = self.sequence_directory.format(timestr)
-        filepath = directory + filepath.split('/')[-1].split('#')[0]
 
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))

@@ -1,7 +1,7 @@
 import sys
 import json
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
@@ -23,8 +23,7 @@ class Sequence(ConductorParameter):
         """ value can be sequence or list of sub-sequences """
         t_advance = 5
         if self.value:
-
-            # Have to do a bit of work here to get the 
+            # Have to do a bit of work here to get the electrode sequence
             (parameterized_sequence, electrode_sequence) = value_to_sequence(self)
             (ret, electrode_presets, e_channels) = yield self.get_e()
 
@@ -32,7 +31,6 @@ class Sequence(ConductorParameter):
             # Otherwise we will just leave the values that are written in
             if ret == 0:
                 parameterized_sequence = update_electrode_values(parameterized_sequence, electrode_sequence, electrode_presets, e_channels)
-
             # This part unchanged from before:
             parameters = get_parameters(parameterized_sequence)
             parameters_json = json.dumps({'sequencer': parameters})
@@ -47,18 +45,18 @@ class Sequence(ConductorParameter):
 
     @inlineCallbacks
     def get_e(self):
-        try:
-            electrode_presets = yield self.cxn.electrode.get_presets()
-            electrode_presets = fix_electrode_presets()
+       try:
+           electrode_presets = yield self.cxn.electrode.get_presets()
+           electrode_presets = fix_electrode_presets(json.loads(electrode_presets))
 
-            e_channels = yield self.cxn.electrode.get_channels()
-            e_channels = json.loads(e_channels)
+           e_channels = yield self.cxn.electrode.get_channels()
+           e_channels = json.loads(e_channels)
 
-            all_channels = yield self.cxn.sequencer.get_channels()
-            all_channels = json.loads(all_channels)
-            e_channels = get_electrode_nameloc(e_channels, all_channels)
+           all_channels = yield self.cxn.sequencer.get_channels()
+           all_channels = json.loads(all_channels)
+           e_channels = get_electrode_nameloc(e_channels, all_channels)
 
-            return (0, electrode_presets, e_channels)
-        except Exception as e:
-            print e
-            return (-1, {}, {})
+           returnValue((0, electrode_presets, e_channels))
+       except Exception as e:
+           print e
+           returnValue((-1, {}, {}))

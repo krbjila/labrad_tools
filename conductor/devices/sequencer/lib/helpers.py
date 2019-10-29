@@ -4,8 +4,14 @@ import os
 from datetime import date, timedelta
 from itertools import chain
 from time import strftime
+from copy import deepcopy
 
 SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
+TIMING_CHANNEL = 'Trigger@D15'
+
+def zero_sequence(dt):
+    return {'dt': dt, 'type': 's', 'vf': 0}
+
 
 def value_to_sequence(sequence):
     if type(sequence.value).__name__ == 'list':
@@ -30,7 +36,7 @@ def value_to_sequence(sequence):
         for x in sequence.value:
             out = read_sequence_file(sequence.sequence_directory, x)
             seqs.append(out[0])
-            e_seqs.append(out[1])
+            e_seqs += out[1]
 
         return (combine_sequences(seqs), e_seqs)
 
@@ -39,15 +45,15 @@ def value_to_sequence(sequence):
         #     for v in sequence.value
         # ])
     else:
-        return value
+        return "Error: Sequence parameter expects list as input"
+
 
 # Presets is the value returned from electrode.get_presets()
-def fix_electrode_presets(self, presets):
+def fix_electrode_presets(presets):
     ret = {}
-    for x in presets:
-        ret[str(x['id'])] = x['value']
+    for p in presets:
+        ret.update({str(p['id']): p['values']})
     return ret
-
 
 
 # e_channels is a dict, {"LP": "S00", etc.}
@@ -72,36 +78,46 @@ def update_electrode_values(seq, e_seq, presets, channels):
         # Get the channel sequence
         s = seq[loc]
 
-        # For each step in the sequence
-        for step, e_step in zip(s, e_seq):
-            # Set step = e_step
-            step = deepcopy(e_step)
-            
-            # Get the actual voltage from presets
-            sf = step['vf']
-
-            if presets.has_key(str(sf)):
-                step['vf'] = presets[str(sf)][name]
-            else:
-                step['vf'] = presets['0'][name]
-                print "Preset {} not found, replaced with 0".format(sf)
-
-            # Get the actual voltage from presets
-            if step.has_key('vi'):
-                si = step['vi']
-
-                if presets.has_key(str(si)):
-                    step['vi'] = presets[str(si)][name]
+        # If no, don't touch the sequence, we'll just run whatever is in the file
+        # If yes, then let's replace the values in the sequence:
+        if len(e_seq) == len(s):
+            # For each step in the sequence
+            for step, e_step in zip(s, e_seq):
+                # Set step = e_step
+                step = deepcopy(e_step)
+                
+                # Get the actual voltage from presets
+                sf = step['vf']
+    
+                if presets.has_key(str(sf)):
+                    step['vf'] = presets[str(sf)][name]
                 else:
-                    step['vi'] = presets['0'][name]
+                    step['vf'] = presets['0'][name]
                     print "Preset {} not found, replaced with 0".format(sf)
-
-        seq.update({loc: s})
+    
+                # Get the actual voltage from presets
+                if step.has_key('vi'):
+                    si = step['vi']
+    
+                    if presets.has_key(str(si)):
+                        step['vi'] = presets[str(si)][name]
+                    else:
+                        step['vi'] = presets['0'][name]
+                        print "Preset {} not found, replaced with 0".format(sf)
+    
+            seq.update({loc: s})
     return seq
 
 def read_sequence_file(sequence_directory, filename):
+    # Sequencer control sends the actual sequence dict
     if type(filename).__name__ == 'dict':
-        return filename
+        if filename.has_key('sequence'):
+            try:
+                return (filename['sequence'], filename['meta']['electrode'])
+            except:
+                return (filename, [])
+        else:
+            return (filename, [])
     if not os.path.exists(filename):
         for i in range(365):
             day = date.today() - timedelta(i)
@@ -112,12 +128,6 @@ def read_sequence_file(sequence_directory, filename):
     with open(filename, 'r') as infile:
          sequence = json.load(infile)
 
-    # if sequence.has_key('sequence'):
-    #     return sequence['sequence']
-    # else:
-    #     return sequence
-
-    # Get sequence:
     s = {}
     try:
         s = sequence['sequence']
@@ -130,10 +140,6 @@ def read_sequence_file(sequence_directory, filename):
         electrode_seq = sequence['meta']['electrode']
     except KeyError:
         electrode_seq = []
-
-    # Ensure that electrode sequence has correct length
-    if len(electrode_seq) != len(timing):
-        electrode_seq = [zero_sequence(v['dt']) for v in s]
 
     return (s, electrode_seq)
 
