@@ -136,6 +136,9 @@ def read_sequence_file(sequence_directory, filename):
     except KeyError:
         electrode_seq = []
 
+    if len(electrode_seq) != len(timing):
+        electrode_seq = [zero_sequence(v['dt']) for v in timing]
+
     return (s, electrode_seq)
 
 
