@@ -46,10 +46,45 @@ class ConfigWrapper(object):
     def __init__(self, **config_entries):
         self.__dict__.update(config_entries)
 
-class VisualizerWindow(QtGui.QWidget):
+class Visualizer(QtGui.QWidget):
+	def __init__(self, reactor, config_path='./config.json'):
+		super(Visualizer, self).__init__()
+		self.reactor = reactor
+		self.config_path = config_path
+		self.load_config(config_path)
+
+		self.populate()
+		self.resize(self.window_width, self.window_height)
+
+	def load_config(self, path=None):
+		if path is not None:
+			self.config_path = path
+		with open(self.config_path, 'r') as infile:
+			config = json.load(infile)
+			self.config = ConfigWrapper(**config)
+			for key, value in config.items():
+				setattr(self, key, value)
+
+	def populate(self):
+		self.layout = QtGui.QHBoxLayout()
+
+		self.visualizer = VisualizerWidget(self.reactor, self.config_path)
+
+		self.scroll = QtGui.QScrollArea()
+		self.scroll.setWidget(self.visualizer)
+		self.scroll.setWidgetResizable(True)
+		self.scroll.setHorizontalScrollBarPolicy(1)
+		self.scroll.setVerticalScrollBarPolicy(2)
+		self.scroll.setFrameShape(0)
+
+		self.layout.addWidget(self.scroll)
+		self.setLayout(self.layout)
+
+
+class VisualizerWidget(QtGui.QWidget):
 	def __init__(self, reactor, config_path='./config.json'):
 
-		super(VisualizerWindow, self).__init__()
+		super(VisualizerWidget, self).__init__()
 		self.reactor = reactor
 		self.load_config(config_path)
 		self.channels = {}
@@ -69,6 +104,7 @@ class VisualizerWindow(QtGui.QWidget):
 		self.setWindowTitle("Sequence visualizer")
 		self.layout = QtGui.QGridLayout()
 
+		self.sequence_select_label = QtGui.QLabel("Sequence selection:")
 		self.sequence_select = SequenceSelect()
 		self.sequence_select.setFixedWidth(self.module_width + self.date_width)
 		self.sequence_select.sequence_table.setColumnWidth(0, self.module_width)
@@ -85,6 +121,7 @@ class VisualizerWindow(QtGui.QWidget):
 		self.sequence_scroll.setVerticalScrollBarPolicy(2)
 		self.sequence_scroll.setFrameShape(0)
 
+		self.channel_select_label = QtGui.QLabel("Channels to display:")
 		self.channel_select = ChannelSelect(self.digital_channels, self.analog_channels)
 		self.channel_select.any_changed.connect(self.channelsChanged)
 
@@ -110,6 +147,13 @@ class VisualizerWindow(QtGui.QWidget):
 
 		#####################################
 
+		self.export_label = QtGui.QLabel("Export data to file:")
+		self.export_csv_button = QtGui.QPushButton("as .csv")
+		self.export_json_button = QtGui.QPushButton("as .json")
+		self.export_csv_button.clicked.connect(self.exportCSV)
+		self.export_json_button.clicked.connect(self.exportJSON)
+
+		self.plot_label = QtGui.QLabel("Plotter:")
 		self.plot = Plot(self.digital_channels, self.analog_channels, self.timing_channel)
 		# self.plot.imageWindow.setFixedSize(*self.plot_dim)
 		self.plot.selector.setFixedSize(*self.selector_dim)
@@ -119,9 +163,26 @@ class VisualizerWindow(QtGui.QWidget):
 		font.setPointSize(10)
 		self.setFont(font)
 
-		self.layout.addWidget(self.sequence_scroll, 0, 0, 1, 1)
-		self.layout.addWidget(self.channel_scroll, 0, 1, 1, 1)
-		self.layout.addWidget(self.plot, 1, 0, 1, 4)
+		headerFont = QtGui.QFont()
+		headerFont.setPointSize(16)
+		headerFont.setBold(True)
+		self.sequence_select_label.setFont(headerFont)
+		self.channel_select_label.setFont(headerFont)
+		self.plot_label.setFont(headerFont)
+		self.export_label.setFont(headerFont)
+
+		self.layout.addWidget(self.sequence_select_label, 0, 0, 1, 1)
+		self.layout.addWidget(self.sequence_scroll, 1, 0, 1, 1)
+
+		self.layout.addWidget(self.channel_select_label, 0, 1, 1, 1)
+		self.layout.addWidget(self.channel_scroll, 1, 1, 1, 1)
+
+		self.layout.addWidget(self.export_label, 2, 0, 1, 1)
+		self.layout.addWidget(self.export_csv_button, 3, 0, 1, 1)
+		self.layout.addWidget(self.export_json_button, 4, 0, 1, 1)
+
+		self.layout.addWidget(self.plot_label, 5, 0, 1, 1)
+		self.layout.addWidget(self.plot, 6, 0, 1, 4)
 
 		self.setLayout(self.layout)
 
@@ -247,10 +308,61 @@ class VisualizerWindow(QtGui.QWidget):
 		active_channels = self.channel_select.getCheckedChannels()
 		self.plot.setActiveChannels(active_channels)
 
+	def exportCSV(self):
+		filepath = QtGui.QFileDialog.getSaveFileName(directory=self.home_directory, filter="CSV Files (*.csv)")
+		
+		if filepath:
+			d = self.plot.imageWindow.getPlottable()
 
-	def build(self):
-		pass
+			x = []
+			for k, v in sorted(d['digital'].items(), key=lambda k: k[0].split('@')[-1]):
+				v = np.array(v)
 
+				if len(x) == 0:
+					x = v
+				else:
+					hx = np.shape(x)[0]
+					hv = np.shape(v)[0]
+
+					if hx > hv:
+						v = np.pad(v, ((0,hx-hv),(0,0)), mode='edge')
+					elif hx < hv:
+						x = np.pad(x, ((0,hv-hx),(0,0)), mode='edge')
+					x = np.hstack((x, np.array(v)))
+
+			for k, v in sorted(d['analog'].items(), key=lambda k: k[0].split('@')[-1]):
+				v = np.array(v)
+
+				if len(x) == 0:
+					x = v
+				else:
+					hx = np.shape(x)[0]
+					hv = np.shape(v)[0]
+
+					if hx > hv:
+						v = np.pad(v, ((0,hx-hv),(0,0)), mode='edge')
+					elif hx < hv:
+						x = np.pad(x, ((0,hv-hx),(0,0)), mode='edge')
+					x = np.hstack((x, np.array(v)))
+
+			with open(filepath, 'w') as f:
+				np.savetxt(f, x, delimiter=',')
+
+	def exportJSON(self):
+		filepath = QtGui.QFileDialog.getSaveFileName(directory=self.home_directory, filter="JSON Files (*.json)")
+		
+		if filepath:
+			d = self.plot.imageWindow.getPlottable()
+
+			for kk, vv in d.items():
+				x = {}
+				for k, v in vv.items():
+					v = np.array(v)
+					x.update({k : {'t': list(v[:,0]), 'v': list(v[:,1])}})
+				d.update({kk: x})
+
+			with open(filepath, 'w') as f:
+				json.dump(d, f, indent=4, sort_keys=True)
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
@@ -258,7 +370,7 @@ if __name__ == '__main__':
     import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
-    widget = VisualizerWindow(reactor)
+    widget = Visualizer(reactor)
 
     widget.show()
     reactor.run()

@@ -32,7 +32,6 @@ class RegionSelector(QtGui.QWidget):
 
 	def __init__(self):
 		super(RegionSelector, self).__init__()
-
 		self.populate()
 
 	def populate(self):
@@ -171,7 +170,7 @@ class ImageWindow(QtGui.QWidget):
 	def update(self):
 		# cropped_sequence = self.crop(self.sequence)
 		active = {k: self.sequence[k] for k in self.active_channels}
-		self.plottable = self.crop(self.getPlottable(active))
+		self.plottable = self.crop(self.toPlottable(active))
 
 		if self.autoscale:
 			self.scaleToView(self.plottable)
@@ -201,6 +200,9 @@ class ImageWindow(QtGui.QWidget):
 		self.axes[1].set_xlabel('Time (s)')
 
 		self.canvas.draw()
+
+	def getPlottable(self):
+		return deepcopy(self.plottable)
 
 	def crop(self, plottable):
 		(start, stop) = self.region
@@ -243,7 +245,7 @@ class ImageWindow(QtGui.QWidget):
 		self.autoscale = autoscale
 		self.update()
 
-	def getPlottable(self, active):
+	def toPlottable(self, active):
 		plottable = {'digital': {}, 'analog': {}}
 
 		for k,v in active.items():
@@ -267,6 +269,7 @@ class ImageWindow(QtGui.QWidget):
 					seq = [(tt, (vv-1.0)*-1.0) for tt, vv in seq]
 
 				plottable['digital'][k] = np.array(seq)
+
 			# If analog channel, have to get fancy
 			else:
 				# If normal analog board
