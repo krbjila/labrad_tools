@@ -490,7 +490,6 @@ class ElectrodeEditor(QtGui.QDialog):
             self.electrode_sequence = self.getElectrodeSequence()
 
             seq = yield self.get_plottable_sequence()
-            print seq
             self.canvas.make_figure(seq)
             # for key, val in seq.items():
             #     (T, V) = val
