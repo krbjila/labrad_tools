@@ -12,6 +12,7 @@ sys.path.append('./forms/')
 from input_forms import InputForms
 from output_forms import OutputForms
 from gui_defaults_helpers import *
+from optimize_dialog import OptimizationDialog
 
 sys.path.append('./../../')
 from calibrations import *

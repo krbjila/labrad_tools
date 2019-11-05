@@ -179,37 +179,30 @@ class ECalculator(object):
 		# J / m^2
 		return -1.0 * units * (E*d2Ddy2 + D*d2Edy2 + 2.0*np.square(self.dEdy(ev)(0,0))*self.dDdE(E))
 
+	def getParameterFunctionTable(self):
+		cx = lambda ev: self.xQuadCoeffU(ev)
+		cy = lambda ev: self.yQuadCoeffU(ev)
+		Ex = lambda ev: -1.0*self.V.d(1,0,ev)(0,0)
+		Ey = lambda ev: -1.0*self.V.d(0,1,ev)(0,0)
+
+		r = {
+			'Bias': lambda ev: float(self.E(ev)(0,0)),
+			'Dipole': lambda ev: float(self.dipole(self.E(ev)(0,0))),
+			'Angle': lambda ev: float(np.arctan2(Ex(ev), Ey(ev)) * 180. / np.pi),
+			'dEdx': lambda ev: float(self.dEdx(ev)(EPSILON, EPSILON)),
+			'dEdy': lambda ev: float(self.dEdy(ev)(EPSILON, EPSILON)),
+			'Fx': lambda ev: float(-self.dUdx(ev) / kB * 1e9 * 1e-6),
+			'Fy': lambda ev: float(-self.dUdy(ev) / kB * 1e9 * 1e-6),
+			'nux': lambda ev: float(np.sign(cx(ev)) * np.sqrt( np.abs(cx(ev)) / (127.0 * amu) / (2*np.pi) )),
+			'nuy': lambda ev: float(np.sign(cy(ev)) * np.sqrt( np.abs(cy(ev)) / (127.0 * amu) / (2*np.pi) ))
+		}
+		return r
+
 	def parametersDump(self, ev):
 		params = {}
-
-		dip = self.dipole(self.E(ev)(0,0)) # Debye
-
-		params['Bias'] = float(self.E(ev)(0,0))
-		params['Dipole'] = float(dip)
-
-		Ex = -1.0*self.V.d(1,0,ev)(0,0)
-		Ey = -1.0*self.V.d(0,1,ev)(0,0)
-		params['Angle'] = float(np.arctan2(Ex, Ey) * 180. / np.pi)
-
-		params['dEdx'] = float(self.dEdx(ev)(EPSILON,EPSILON))
-		params['dEdy'] = float(self.dEdy(ev)(EPSILON,EPSILON))
-		
-		params['Fx'] = float(-self.dUdx(ev) / kB * 1e9 * 1e-6)
-		params['Fy'] = float(-self.dUdy(ev) / kB * 1e9 * 1e-6)
-		
-		cx = self.xQuadCoeffU(ev)
-		signx = np.sign(cx)
-		cx = np.abs(cx)
-
-		cy = self.yQuadCoeffU(ev)
-		signy = np.sign(cy)
-		cy = np.abs(cy)
-
-		params['nux'] = float(signx*np.sqrt(cx / (127.0 * amu) / (2*np.pi) ))
-		params['nuy'] = float(signy*np.sqrt(cy / (127.0 * amu) / (2*np.pi) ))
-
+		for k, v in self.getParameterFunctionTable().items():
+			params[k] = v(ev)
 		return params
-
 
 class Potential(object):
 	def __init__(self, coeffs):

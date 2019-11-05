@@ -18,6 +18,7 @@ from form_widget import FormWidget
 from setting_widget import SettingWidget
 from display_widget import DisplayWidget 
 from calculator import ECalculator
+from optimize_dialog import OptimizationDialog
 
 from helpers import json_loads_byteified
 from gui_defaults_helpers import DACsToVs, VsToDACs
@@ -84,8 +85,12 @@ class ElectrodeControl(QtGui.QWidget):
 		self.layout = QtGui.QVBoxLayout()
 
 		self.settings = SettingWidget()
+                self.optimizeButton = QtGui.QPushButton('Parameter optimization')
 		self.forms = FormWidget(self.calculator)
 		self.displays = DisplayWidget(self.calculator)
+
+		self.optimizeButton.clicked.connect(self.optimize)
+		self.optimizeButton.setFixedWidth(WIDGET_GEOMETRY['w']/4)
 
 		self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
 		self.settings.updateDescriptionSignal.connect(self.descriptionChanged)
@@ -97,6 +102,7 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settings.refreshSignal.connect(self.refresh)
 
 		self.layout.addWidget(self.settings)
+                self.layout.addWidget(self.optimizeButton)
 		self.layout.addWidget(self.forms)
 		self.layout.addWidget(self.displays)
 
@@ -184,6 +190,16 @@ class ElectrodeControl(QtGui.QWidget):
 	def refresh(self):
 		yield self.server.reload_presets()
 		self.getPresets()
+
+
+	def optimize(self):
+		(vals, comp_shim) = self.forms.getValues()
+
+		dialog = OptimizationDialog(self.calculator, vals, comp_shim)
+		if dialog.exec_():
+			results = dialog.getResults()
+			if results:
+				self.forms.setValues(results, comp_shim)
 
 	def closeEvent(self, x):
 		self.reactor.stop()
