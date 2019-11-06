@@ -21,9 +21,9 @@ from helpers import json_load_byteified
 
 from dipole_fit import *
 
-from numpy.polynomial.polynomial import polyval2d
+from numpy.polynomial.polynomial import polyval, polyval2d, polyder
 
-MAX_PARTIALS = 3
+MAX_PARTIALS = 4
 
 DVcmToJ = 3.33564e-28
 kB = 1.38e-23
@@ -31,209 +31,267 @@ amu = 1.66e-27
 
 EPSILON = 1e-9
 
+KEY_ORDER = ['LP', 'UP', 'LW', 'LE', 'UE', 'UW']
+
 class ECalculator(object):
 	def __init__(self, path):
 		self.path = path
-		self.poly = np.flip(np.array(D_POLY_FIT), axis=0)
+		self.poly = np.array(D_POLY_FIT)
+		self.key_order = KEY_ORDER
 		self.getCoeffs()
 
-		self.V = Potential(self.coeffs)
-		self.functionTable = self.generateFunctionTable(MAX_PARTIALS)
+		self.V = Potential(self.coeffs_array)
 
 	def dipole(self, E):
 		# The fit coefficients were calculated for E in kV/cm
-		return np.polyval(self.poly, E/1000.)
+		return polyval(E/1000., self.poly)
 
 	# This is d Dipole / d E 
 	def dDdE(self, E):
-		x = np.flip(deepcopy(self.poly), axis=0)
-		for i in range(len(x)):
-			x[i] *= i
-		x = np.flip(x[1:], axis=0)
-
+		c = polyder(self.poly, 1)
 		# Divide by 1000 because E was in kV/cm for fit
-		return np.polyval(x, E/1000.) / 1000.
+		return polyval(E.ravel()/1000., c) / 1000.
 
 	# This is d^2 dipole / d E^2
 	def d2DdE2(self, E):
-		x = np.flip(deepcopy(self.poly), axis=0)
-		for i in range(len(x)):
-			x[i] *= i*(i-1)
-		x = np.flip(x[2:], axis=0)
-
+		c = polyder(self.poly, 2)
 		# Divide by 1000 because E was in kV/cm for fit
-		return np.polyval(x, E/1000.) / 1000. / 1000.
+		return polyval(E.ravel()/1000., c) / 1000. / 1000.
 
 	def getCoeffs(self):
+		self.coeffs_array = []
 		with open(self.path, 'r') as f:
 			self.coeffs = json_load_byteified(f)
-		for key, val in self.coeffs.items():
-			val = np.array(val)
+		for key in self.key_order:
+			val = np.array(self.coeffs[key])
 			dx = np.shape(val)
 			dx = int(np.sqrt(dx))
-			self.coeffs[key] = val.reshape((dx, dx))
 
-	def generateFunctionTable(self, depth):
-		table = [0]*(depth**2)
-		for i in range(depth):
-			for j in range(depth):
-				table[i*depth + j] = lambda ev: -1.0*self.V.d(j,i,ev)
-		return table
+			val = val.reshape((dx, dx))
+			self.coeffs[key] = val
+			self.coeffs_array.append(val)
+		self.coeffs_array = np.array(self.coeffs_array)
+
+	def EDictToArray(self,ev):
+		return np.array([ev[k] for k in self.key_order])
+
+	def EArrayToDict(self,ea):
+		return {k:v for k,v in zip(self.key_order, ea)}
+
+	def _Ex(self,ea):
+		return self.V.d(1,0,ea)
+
+	def Ex(self,ev):
+		return self._Ex(self.EDictToArray(ev))
+
+	def _Ey(self,ea):
+		return self.V.d(0,1,ea)
+
+	def Ey(self,ev):
+		return self._Ey(self.EDictToArray(ev))
+
+	def _E(self, ea):
+		def fE(x,y):
+			return np.sqrt(np.square(self._Ex(ea)(x,y)) + np.square(self._Ey(ea)(x,y)))
+		return fE
 
 	def E(self, ev):
-		Ex = lambda x,y: -1.0*self.V.d(1,0,ev)(x,y)
-		Ey = lambda x,y: -1.0*self.V.d(0,1,ev)(x,y)
-		return lambda x,y: np.sqrt(np.square(Ex(x,y)) + np.square(Ey(x,y)))
+		return self._E(self.EDictToArray(ev))
 
+	def _U(self, ea):
+		def fU(x,y):
+			return -self.dipole(self._E(ea)(x,y)) * self._E(ea)(x,y) * DVcmToJ * 1e6 / kB
+		return fU
+	
 	def U(self, ev):
-		return lambda x,y: -self.dipole(self.E(ev)(x,y)) * self.E(ev)(x,y) * DVcmToJ * 1e6 / kB
+		return self._U(self.EDictToArray(ev))
+
+	def _dEdx(self, ea):
+		def fdEdx(x,y):
+			Ex = self._Ex(ea)
+			dExdx = self.V.d(2,0,ea)
+			Ey = self._Ey(ea)
+			dEydx = self.V.d(1,1,ea)
+
+			if self._E(ea)(x,y).any() == 0:
+				return 0
+			else:
+				return (Ex(x,y)*dExdx(x,y) + Ey(x,y)*dEydx(x,y))/self._E(ea)(x,y)
+		return fdEdx
 
 	def dEdx(self, ev):
-		Ex = lambda x,y: -1.0*self.V.d(1,0,ev)(x,y)
-		dExdx = lambda x,y: -1.0*self.V.d(2,0,ev)(x,y)
-		Ey = lambda x,y: -1.0*self.V.d(0,1,ev)(x,y)
-		dEydx = lambda x,y: -1.0*self.V.d(1,1,ev)(x,y)
+		return self._dEdx(self.EDictToArray(ev))
 
-		return lambda x,y: 0 if self.E(ev)(x,y).any() == 0 else (Ex(x,y)*dExdx(x,y) + Ey(x,y)*dEydx(x,y))/self.E(ev)(x,y)
+	def _dEdy(self, ea):
+		def fdEdy(x,y):
+			Ex = self._Ex(ea)
+			dExdy = self.V.d(1,1,ea)
+			Ey = self._Ey(ea)
+			dEydy = self.V.d(0,2,ea)
+
+			if self._E(ea)(x,y).any() == 0:
+				return 0
+			else:
+				return (Ex(x,y)*dExdy(x,y) + Ey(x,y)*dEydy(x,y))/self._E(ea)(x,y)
+		return fdEdy
 
 	def dEdy(self, ev):
-		Ex = lambda x,y: -1.0*self.V.d(1,0,ev)(x,y)
-		dExdy = lambda x,y: -1.0*self.V.d(1,1,ev)(x,y)
-		Ey = lambda x,y: -1.0*self.V.d(0,1,ev)(x,y)
-		dEydy = lambda x,y: -1.0*self.V.d(0,2,ev)(x,y)
+		return self._dEdy(self.EDictToArray(ev))
 
-		return lambda x,y: 0 if self.E(ev)(x,y).any() == 0 else (Ex(x,y)*dExdy(x,y) + Ey(x,y)*dEydy(x,y))/self.E(ev)(x,y)
-
-	def dUdx(self, ev):
-		E = self.E(ev)(0,0)
+	def _dUdx(self, ea):
+		E = self._E(ea)(0,0)
 		D = self.dipole(E)
-		dEdx = self.dEdx(ev)(0,0)
+		dEdx = self._dEdx(ea)(0,0)
 		dDdE = self.dDdE(E)
 
 		units = 10. * DVcmToJ
 		return -1.0 * units * (E*dDdE*dEdx + D*dEdx)
+	
+	def dUdx(self, ev):
+		return self._dUdx(self.EDictToArray(ev))
 
-	def dUdy(self, ev):
-		E = self.E(ev)(0,0)
+	def _dUdy(self, ea):
+		E = self._E(ea)(0,0)
 		D = self.dipole(E)
-		dEdy = self.dEdy(ev)(0,0)
+		dEdy = self._dEdy(ea)(0,0)
 		dDdE = self.dDdE(E)
 
 		units = 10. * DVcmToJ
 		return -1.0 * units * (E*dDdE*dEdy + D*dEdy)
-	
-	# Taylor expand around (0,0)
-	def xQuadraticCoeff(self, ev):
-		d2Exdx2 = -1.0*self.V.d(3,0,ev)(0,0)
-		d2Eydx2 = -1.0*self.V.d(2,1,ev)(0,0)
-		dExdx = -1.0*self.V.d(2,0,ev)(0,0)
-		dEydx = -1.0*self.V.d(1,1,ev)(0,0)
-		Ex = -1.0*self.V.d(1,0,ev)(0,0)
-		Ey = -1.0*self.V.d(0,1,ev)(0,0)
 
-		first = -np.square(self.dEdx(ev)(0,0))
+	def dUdy(self, ev):
+		return self._dUdy(self.EDictToArray(ev))
+
+	# Taylor expand around (0,0)
+	def _xQuadraticCoeff(self, ea):
+		d2Exdx2 = self.V.d(3,0,ea)(0,0)
+		d2Eydx2 = self.V.d(2,1,ea)(0,0)
+		dExdx = self.V.d(2,0,ea)(0,0)
+		dEydx = self.V.d(1,1,ea)(0,0)
+		Ex = self._Ex(ea)(0,0)
+		Ey = self._Ey(ea)(0,0)
+
+		first = -np.square(self._dEdx(ea)(0,0))
 		second = (np.square(dExdx) + Ex*d2Exdx2 + np.square(dEydx) + Ey*d2Eydx2)
 
-		if self.E(ev)(0,0).any() == 0:
+		if self._E(ea)(0,0).any() == 0:
 			return 0
 		else:
-			return (first + second) / self.E(ev)(0,0)
+			return (first + second) / self._E(ea)(0,0)
+
+	def xQuadraticCoeff(self, ev):
+		return self._xQuadraticCoeff(self.EDictToArray(ev))
 
 	# Taylor expand around (0,0)
-	def yQuadraticCoeff(self, ev):
-		d2Exdy2 = -1.0*self.V.d(1,2,ev)(0,0)
-		d2Eydy2 = -1.0*self.V.d(0,3,ev)(0,0)
-		dExdy = -1.0*self.V.d(1,1,ev)(0,0)
-		dEydy = -1.0*self.V.d(0,2,ev)(0,0)
-		Ex = -1.0*self.V.d(1,0,ev)(0,0)
-		Ey = -1.0*self.V.d(0,1,ev)(0,0)
+	def _yQuadraticCoeff(self, ea):
+		d2Exdy2 = self.V.d(1,2,ea)(0,0)
+		d2Eydy2 = self.V.d(0,3,ea)(0,0)
+		dExdy = self.V.d(1,1,ea)(0,0)
+		dEydy = self.V.d(0,2,ea)(0,0)
+		Ex = self._Ex(ea)(0,0)
+		Ey = self._Ey(ea)(0,0)
 
-		first = -np.square(self.dEdy(ev)(0,0))
+		first = -np.square(self._dEdy(ea)(0,0))
 		second = (np.square(dExdy) + Ex*d2Exdy2 + np.square(dEydy) + Ey*d2Eydy2)
 
-		if self.E(ev)(0,0).any() == 0:
+		if self._E(ea)(0,0).any() == 0:
 			return 0
 		else:
-			return (first + second) / self.E(ev)(0,0)
+			return (first + second) / self._E(ea)(0,0)
+
+	def yQuadraticCoeff(self, ev):
+		return self._yQuadraticCoeff(self.EDictToArray(ev))
+
+	def _xQuadCoeffU(self, ea):
+		E = self._E(ea)(0,0)
+		D = self.dipole(E)
+
+		d2Edx2 = self._xQuadraticCoeff(ea)
+		d2Ddx2 = self.d2DdE2(E) * np.square(self._dEdx(ea)(0,0)) + self.dDdE(E) * d2Edx2
+
+		units = 100. * DVcmToJ
+		# J / m^2
+		return -1.0 * units * (E*d2Ddx2 + D*d2Edx2 + 2.0*np.square(self._dEdx(ea)(0,0))*self.dDdE(E))
 
 	def xQuadCoeffU(self, ev):
-		E = self.E(ev)(0,0)
+		return self._xQuadCoeffU(self.EDictToArray(ev))
+
+	def _yQuadCoeffU(self, ea):
+		E = self._E(ea)(0,0)
 		D = self.dipole(E)
 
-		d2Edx2 = self.xQuadraticCoeff(ev)
-		d2Ddx2 = self.d2DdE2(E) * np.square(self.dEdx(ev)(0,0)) + self.dDdE(E) * d2Edx2
+		d2Edy2 = self._yQuadraticCoeff(ea)
+		d2Ddy2 = self.d2DdE2(E) * np.square(self._dEdy(ea)(0,0)) + self.dDdE(E) * d2Edy2
 
 		units = 100. * DVcmToJ
+
 		# J / m^2
-		return -1.0 * units * (E*d2Ddx2 + D*d2Edx2 + 2.0*np.square(self.dEdx(ev)(0,0))*self.dDdE(E))
+		return -1.0 * units * (E*d2Ddy2 + D*d2Edy2 + 2.0*np.square(self._dEdy(ea)(0,0))*self.dDdE(E))
 
 	def yQuadCoeffU(self, ev):
-		E = self.E(ev)(0,0)
-		D = self.dipole(E)
+		return self._yQuadCoeffU(self.EDictToArray(ev))
 
-		d2Edy2 = self.yQuadraticCoeff(ev)
-		d2Ddy2 = self.d2DdE2(E) * np.square(self.dEdy(ev)(0,0)) + self.dDdE(E) * d2Edy2
+	def bias(self, ea):
+		return float(self._E(ea)(0,0))
 
-		units = 100. * DVcmToJ
+	def dipole_center(self,ea):
+		return float(self.dipole(self._E(ea)(0,0)))
 
-		# J / m^2
-		return -1.0 * units * (E*d2Ddy2 + D*d2Edy2 + 2.0*np.square(self.dEdy(ev)(0,0))*self.dDdE(E))
+	def angle(self, ea):
+		return float(np.arctan2(self._Ex(ea)(0,0), self._Ey(ea)(0,0)) * 180. / np.pi)
+
+	def dEdx_center(self, ea):
+		return float(self._dEdx(ea)(EPSILON, EPSILON))
+
+	def dEdy_center(self, ea):
+		return float(self._dEdy(ea)(EPSILON, EPSILON))
+
+	def nux(self, ea):
+		cx = self._xQuadCoeffU(ea)
+		return float(np.sign(cx) * np.sqrt(np.abs(cx) / (127.0*amu) / (2*np.pi)))
+
+	def nuy(self, ea):
+		cy = self._yQuadCoeffU(ea)
+		return float(np.sign(cy) * np.sqrt(np.abs(cy) / (127.0*amu)/ (2*np.pi)))
 
 	def getParameterFunctionTable(self):
-		cx = lambda ev: self.xQuadCoeffU(ev)
-		cy = lambda ev: self.yQuadCoeffU(ev)
-		Ex = lambda ev: -1.0*self.V.d(1,0,ev)(0,0)
-		Ey = lambda ev: -1.0*self.V.d(0,1,ev)(0,0)
-
 		r = {
-			'Bias': lambda ev: float(self.E(ev)(0,0)),
-			'Dipole': lambda ev: float(self.dipole(self.E(ev)(0,0))),
-			'Angle': lambda ev: float(np.arctan2(Ex(ev), Ey(ev)) * 180. / np.pi),
-			'dEdx': lambda ev: float(self.dEdx(ev)(EPSILON, EPSILON)),
-			'dEdy': lambda ev: float(self.dEdy(ev)(EPSILON, EPSILON)),
-			'Fx': lambda ev: float(-self.dUdx(ev) / kB * 1e9 * 1e-6),
-			'Fy': lambda ev: float(-self.dUdy(ev) / kB * 1e9 * 1e-6),
-			'nux': lambda ev: float(np.sign(cx(ev)) * np.sqrt( np.abs(cx(ev)) / (127.0 * amu) / (2*np.pi) )),
-			'nuy': lambda ev: float(np.sign(cy(ev)) * np.sqrt( np.abs(cy(ev)) / (127.0 * amu) / (2*np.pi) ))
+			'Bias': self.bias,
+			'Dipole': self.dipole_center,
+			'Angle': self.angle,
+			'dEdx': self.dEdx_center,
+			'dEdy': self.dEdy_center,
+			'Fx': lambda ea: float(-self._dUdx(ea) / kB * 1e9 * 1e-6),
+			'Fy': lambda ea: float(-self._dUdy(ea) / kB * 1e9 * 1e-6),
+			'nux': self.nux, 
+			'nuy': self.nuy 
 		}
 		return r
 
-	def parametersDump(self, ev):
+	def _parametersDump(self, ea):
 		params = {}
 		for k, v in self.getParameterFunctionTable().items():
-			params[k] = v(ev)
+			params[k] = v(ea)
 		return params
+
+	def parametersDump(self, ev):
+		ea = self.EDictToArray(ev)
+		return self._parametersDump(ea)
 
 class Potential(object):
 	def __init__(self, coeffs):
 		self.coeffs = coeffs
 
-	def d(self, xord, yord, ev):
-		valarr = []
-		evarr = []
-		for key,val in self.coeffs.items():
-			evarr.append(ev[key])
-			v = val
-			
-			for i in range(xord):
-				v = self.ddx(v)
-			for j in range(yord):
-				v = self.ddy(v)
-			valarr.append(v)
-
+	# Returns: -1.0 * (d^xord/dx^xord) (d^yord/dy^yord) V
+	def d(self, xord, yord, ev_array):
+		# self.coeffs:
+		#	axis 0: electrode index (LP, UP, LW, LE, UW, UE)
+		#	axis 1: x coeffs
+		#	axis 2: y coeffs
+		valarr = polyder(self.coeffs, xord, axis=1)
+		valarr = polyder(valarr, yord, axis=2)
 		valarr = np.transpose(np.array(valarr), (1,2,0))
-		evarr = np.array(evarr)
-		return lambda x, y: (10.)**(xord+yord)*np.dot(evarr, polyval2d(np.array(x).ravel(),np.array(y).ravel(),valarr))
 
-	def ddx(self, coeffs):
-		x = deepcopy(coeffs)
-		(dy, dx) = np.shape(x)
-
-		for i in range(dy):
-			x[i,:] *= i
-
-		return x[1:,:]
-
-	def ddy(self, coeffs):
-		y = deepcopy(coeffs)
-		return self.ddx(y.T).T
+		def dV(x,y):
+			return -1.0*(10.)**(xord+yord)*np.dot(ev_array, polyval2d(np.array(x).ravel(),np.array(y).ravel(),valarr))
+		return dV

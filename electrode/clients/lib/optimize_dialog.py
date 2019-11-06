@@ -6,6 +6,8 @@ import sys
 
 from copy import deepcopy
 
+import timeit
+
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
@@ -53,12 +55,16 @@ class OptimizationDialog(QtGui.QDialog):
 		self.optimizeButton = QtGui.QPushButton('Optimize!')
 		self.optimizeButton.clicked.connect(self.optimize)
 		self.optimizeButton.setDefault(False)
+		self.optimizeButton.setAutoDefault(False)
 
 		self.okButton = QtGui.QPushButton('Set values')
 		self.okButton.setDefault(False)
+		self.okButton.setAutoDefault(False)
+		self.okButton.setEnabled(False)
 
 		self.cancelButton = QtGui.QPushButton('Cancel')
 		self.cancelButton.setDefault(False)
+		self.cancelButton.setAutoDefault(False)
 
 		self.okButton.clicked.connect(self.accept)
 		self.cancelButton.clicked.connect(self.reject)
@@ -84,9 +90,17 @@ class OptimizationDialog(QtGui.QDialog):
 
 		return vs
 
+	def buttonsEnable(self, enable):
+		self.optimizeButton.setEnabled(enable)
+		self.okButton.setEnabled(enable)
+		self.optimizeButton.repaint()
+		self.okButton.repaint()
+
 	# Very clunky implementation, very slow...
 	# Let's try to fix the speed later...
 	def optimize(self):
+		self.buttonsEnable(False)
+
 		guesses = self.forms.eInput.getValues()
 		ps = self.forms.pInput.getValues()
 		checks = self.forms.pInput.getChecks()
@@ -101,23 +115,25 @@ class OptimizationDialog(QtGui.QDialog):
 
 		(vs_guesses, VsToEvs) = applySymmetries(guesses, symmetries)
 
-		def opt(vs, ks):
+		def opt(vs):
 			ev = VsToEvs(vs)
+			return np.array([ps[k] - table[k](ev) for k in ks])
 
-			res = []
-			for k in ks:
-				res.append(ps[k] - table[k](ev))
-			return np.array(res)
+		start = timeit.default_timer()
+		res = least_squares(opt, vs_guesses)
+		stop = timeit.default_timer()
 
-		res = least_squares(opt, vs_guesses, args=(ks,))
+		print "Fitting complete. n iter: {}, time per iter: {}".format(res.nfev, (stop-start)/float(res.nfev))
 
-		vs_results = VsToEvs(res.x)
+		vs_results = self.calculator.EArrayToDict(VsToEvs(res.x))
 		params_results = self.calculator.parametersDump(vs_results)
 
 		self.forms.pResults.setValues(params_results)
 		self.forms.eResults.setValues(vs_results)
 
 		self.results = self.compShimCorrection(vs_results, (-1.0)*float(self.comp_shim))
+		
+		self.buttonsEnable(True)
 
 	def getResults(self):
 		return self.results
@@ -126,75 +142,38 @@ def applySymmetries(guesses, symmetries):
 	if symmetries['EastWest'] and symmetries['UpperLowerEqual']:
 		vs_guesses = np.array([guesses['LP'], guesses['LW']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[1],
-				'UW': vs[1],
-				'UE': vs[1]
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[1], vs[1], vs[1]]
+
 	elif symmetries['EastWest'] and symmetries['UpperLowerNegative']:
 		vs_guesses = np.array([guesses['LP'], guesses['LW']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[1],
-				'UW': -vs[1],
-				'UE': -vs[1]
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[1], -vs[1], -vs[1]]
+
 	elif symmetries['EastWest']:
 		vs_guesses = np.array([guesses['LP'], guesses['LW'], guesses['UW']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[1],
-				'UW': vs[2],
-				'UE': vs[2]
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[1], vs[2], vs[2]]
+
 	elif symmetries['UpperLowerEqual']:
 		vs_guesses = np.array([guesses['LP'], guesses['LW'], guesses['LE']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[2],
-				'UW': vs[1],
-				'UE': vs[2],
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[2], vs[1], vs[2]]
+
 	elif symmetries['UpperLowerNegative']:
 		vs_guesses = np.array([guesses['LP'], guesses['LW'], guesses['LE']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[2],
-				'UW': -vs[1],
-				'UE': -vs[2],
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[2], -vs[1], -vs[2]]
+
 	else:
 		vs_guesses = np.array([guesses['LP'], guesses['LW'], guesses['LE'], guesses['UW'], guesses['UE']])
 		def VsToEvs(vs):
-			evs = {
-				'LP': vs[0],
-				'UP': -vs[0],
-				'LW': vs[1],
-				'LE': vs[2],
-				'UW': vs[3],
-				'UE': vs[4]
-			}
-			return evs
+			# [LP, UP, LW, LE, UW, UE]
+			return [vs[0], -vs[0], vs[1], vs[2], vs[3], vs[4]]
 	return (vs_guesses, VsToEvs)
 
 
