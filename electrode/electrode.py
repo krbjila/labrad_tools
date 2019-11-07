@@ -137,7 +137,7 @@ class ElectrodeServer(LabradServer):
 		with open(backup_file, 'w') as f:
 			f.write(json.dumps(self.presets, sort_keys=True, indent=4))
 	
-		print "Settings backed up at {}".format(f)
+		print "Settings backed up at {}".format(backup_file)
 
 	@setting(3)
 	def reload_presets(self, c):
