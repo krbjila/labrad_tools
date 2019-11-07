@@ -6,7 +6,6 @@
 *.fls
 *.fdb_latexmk
 *.out
-config.json
 magnetic_evaporation/backup/*.json
 **.jpg
 .gitignore
