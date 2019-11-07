@@ -58,6 +58,7 @@ class InputForms(QtGui.QGroupBox):
 		self.iControl.updateCompShim(comp_shim)
 		self.nControl.updateCompShim(comp_shim)
 		self.crossUpdate(True)
+		self.crossUpdate()
 
 	def doButtonControl(self, ind):
 		def buttonControl():
@@ -111,6 +112,7 @@ class ControlForm(QtGui.QGroupBox):
 			self.edits.append(QtGui.QDoubleSpinBox())
 
 			self.edits[i].setToolTip(self.config['tooltips'][str(f)])
+
 			self.edits[i].editingFinished.connect(self.emitSignal)
 			self.edits[i].setDecimals(self.config['precisions'][i])
 			self.edits[i].setRange(self.config['min'][i], self.config['max'][i])
@@ -152,7 +154,7 @@ class IndependentControl(ControlForm):
 		'precisions' : FIELD_PRECISIONS['i'],
 		'min' : FIELD_MIN['i'],
 		'max' : FIELD_MAX['i'],
-		'step' : FIELD_STEP['i']
+		'step' : FIELD_STEP['i'],
 	}
 	def __init__(self):
 		super(IndependentControl, self).__init__(self.config)
@@ -174,14 +176,6 @@ class IndependentControl(ControlForm):
 	def updateCompShim(self, new_comp_shim):
 		self.comp_shim = new_comp_shim
 
-		# vals = self._getValues()
-		# NMs = VsToNormalModes(vals, self.comp_shim)
-		# self.comp_shim = new_comp_shim
-
-		# NMs['CompShim'] = self.comp_shim
-		# Vs = NormalModesToVs(NMs)
-		# self.setValues(Vs)
-
 	def getValues(self):
 		return (self._getValues(), self.comp_shim)
 
@@ -196,7 +190,7 @@ class NormalControl(ControlForm):
 		'precisions' : FIELD_PRECISIONS['n'],
 		'min' : FIELD_MIN['n'],
 		'max' : FIELD_MAX['n'],
-		'step' : FIELD_STEP['n']
+		'step' : FIELD_STEP['n'], 
 	}
 	def __init__(self):
 		super(NormalControl, self).__init__(self.config)

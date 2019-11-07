@@ -1,11 +1,13 @@
 {
     "sequencer_servername": "sequencer",
     "conductor_servername": "conductor",
+    "electrode_servername": "electrode",
     "timing_channel": "Trigger@D15",
     "sequence_directory": "/home/bialkali/data/{}/sequences/",
     "time_format": "%Y%m%d",
     "sequencer_update_id": 689223,
     "conductor_update_id": 689222,
+    "electrode_update_id": 689221,
     "spacer_width": 65,
     "spacer_height": 15,
     "namecolumn_width": 250,
@@ -20,5 +22,6 @@
         "#00ff00",
         "#0000ff",
         "#8a2be2"
-    ]
+    ],
+    "electrode_channel_map": ["LP", "UP", "LW", "LE", "UW", "UE"]
 }

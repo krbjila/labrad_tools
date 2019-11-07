@@ -19,7 +19,7 @@ from lib.ad5791_widgets import AD5791Control
 from lib.ad5791_editor import AD5791VoltageEditor
 
 from lib.electrode_widgets import ElectrodeControl
-from lib.electrode_editor import ElectrodeEditor
+from lib.electrode_editor import ElectrodeEditor, zero_sequence
 
 from lib.description import DescriptionDialog
 
@@ -28,6 +28,8 @@ from lib.analog_editor import AnalogVoltageEditor
 from lib.analog_manual_control import AnalogVoltageManualControl
 from lib.analog_manual_control import ControlConfig as AnalogControlConfig
 from lib.helpers import get_sequence_parameters, ConfigWrapper
+
+from copy import deepcopy
 
 SEP = os.path.sep
 
@@ -381,17 +383,44 @@ class SequencerControl(QtGui.QWidget):
                 yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
         return oanc
 
+
+    # def onStableNameClick(self, channel_name):
+    #     channel_name = str(channel_name)
+    #     @inlineCallbacks
+    #     def osnc():
+    #         if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
+    #             pass
+    #         elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
+    #             ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
+    #             ave = ElectrodeEditor(*ave_args)
+    #             if ave.exec_():
+    #                 sequence = ave.getEditedSequence().copy()
+    #                 self.displaySequence(sequence)
+
+    #                 # added KM 05/07/2018
+    #                 # star on the title bar for unsaved
+    #                 self.sequenceChanged()
+    #             conductor = yield self.cxn.get_server(self.conductor_servername)
+    #             yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
+    #     return osnc
+
     def onElectrodeNameClick(self, channel_name):
         channel_name = str(channel_name)
         @inlineCallbacks
-        def osnc():
+        def oenc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
                 pass
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
-                ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
+                try:
+                    v = self.metadata['electrodes']
+                except:
+                    v = []
+                ave_args = (self.electrode_channels, self.getSequence(), v, self.config, self.reactor, self.cxn)
                 ave = ElectrodeEditor(*ave_args)
                 if ave.exec_():
-                    sequence = ave.getEditedSequence().copy()
+                    sequence = ave.getEditedSequence()
+
+                    self.metadata['electrodes'] = deepcopy(ave.getElectrodeSequence())
                     self.displaySequence(sequence)
 
                     # added KM 05/07/2018
@@ -399,7 +428,9 @@ class SequencerControl(QtGui.QWidget):
                     self.sequenceChanged()
                 conductor = yield self.cxn.get_server(self.conductor_servername)
                 yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
-        return osnc
+                electrode = yield self.cxn.get_server(self.electrode_servername)
+                yield electrode.removeListener(listener=ave._update_presets, ID=ave.config.electrode_update_id)
+        return oenc
 
 
     def adjustForDVScroll(self):
@@ -437,7 +468,7 @@ class SequencerControl(QtGui.QWidget):
             self.loadSequence(filepath)
     
     def saveSequence(self):
-        filename = self.loadSaveRun.locationBox.text().split('/')[-1]
+        filename = self.loadSaveRun.locationBox.text().split(SEP)[-1]
         timestr = time.strftime(self.time_format)
         directory = self.sequence_directory.format(timestr)
         filepath = directory + filename
@@ -489,17 +520,16 @@ class SequencerControl(QtGui.QWidget):
             if not self.metadata.has_key('descriptions'):
                 v = sequence['sequence'][self.config.timing_channel]
                 self.metadata['descriptions'] = ['']*len(v)
-
+            if not self.metadata.has_key('electrodes'):
+                v = sequence['sequence'][self.config.timing_channel]
+                self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
             sequence = sequence['sequence']
         else:
             v = sequence[self.config.timing_channel]
             self.metadata['descriptions'] = ['']*len(v)
+            self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
 
         self.updateDescriptionTooltips()
-
-        timestr = time.strftime(self.time_format)
-        directory = self.sequence_directory.format(timestr)
-        filepath = directory + filepath.split('/')[-1].split('#')[0]
 
         sequencer = yield self.cxn.get_server(self.sequencer_servername)
         sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))
@@ -560,6 +590,10 @@ class SequencerControl(QtGui.QWidget):
         electrode_sequence = {key: [dict(s.items() + {'dt': dt}.items()) 
                 for s, dt in zip(self.electrodeControl.sequence[key], durations)]
                 for key in self.electrode_channels}
+
+        # Make sure the durations in metadata['electrodes'] are updated!
+        for i, data in enumerate(self.metadata['electrodes']):
+            data.update({'dt': durations[i]})
         sequence = dict(digital_sequence.items() + analog_sequence.items() + electrode_sequence.items())
         return sequence
     
@@ -569,22 +603,24 @@ class SequencerControl(QtGui.QWidget):
     def addColumn(self, i):
         def ac():
             sequence = self.getSequence()
-	    for c in self.channels:
+            for c in self.channels:
                 sequence[c].insert(i, sequence[c][i])
             self.displaySequence(sequence)
 
             self.metadata['descriptions'].insert(i, '')
+            self.metadata['electrodes'].insert(i, deepcopy(self.metadata['electrodes'][i]))
             self.updateDescriptionTooltips()
         return ac
 
     def dltColumn(self, i):
         def dc():
             sequence = self.getSequence()
-	    for c in self.channels:
+            for c in self.channels:
                 sequence[c].pop(i)
             self.displaySequence(sequence)
 
             self.metadata['descriptions'].pop(i)
+            self.metadata['electrodes'].pop(i)
             self.updateDescriptionTooltips()
         return dc
 

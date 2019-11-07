@@ -15,7 +15,7 @@ from connection import connection
 from widgets import SuperSpinBox
 
 sys.path.append('../')
-from calibrations import EFC
+from calibrations import *
 
 from gui_defaults_helpers import *
 
@@ -41,9 +41,24 @@ class OutputForms(QtGui.QGroupBox):
 
 		self.setLayout(self.layout)
 
-	def update(self, vals):
+	def update(self, vals, comp_shim):
 		self.cMonitor.convertAndPopulate(vals)
-		self.pMonitor.convertAndPopulate(vals)
+		self.pMonitor.convertAndPopulate(self.compShimCorrection(vals, comp_shim))
+
+	def compShimCorrection(self, values, comp_shim):
+		vs = deepcopy(values)
+
+		PlateSpan = vs['LP'] - vs['UP']
+		bias = float(PlateSpan) / PLATE_SEPARATION * RODS_CORRECTION
+
+		dEdx = comp_shim * bias / NORMALIZATION_FIELD
+
+		vs['LW'] -= (-1.0)*dEdx
+		vs['LE'] += (-1.0)*dEdx
+		vs['UW'] += (-1.0)*dEdx
+		vs['UE'] -= (-1.0)*dEdx
+
+		return vs
 
 class MonitorForm(QtGui.QGroupBox):
 
@@ -69,7 +84,7 @@ class MonitorForm(QtGui.QGroupBox):
 			self.labels.append(QtGui.QLabel(str(longname)))
 			self.edits.append(QtGui.QLineEdit())
 			
-			self.edits[i].setEnabled(False)
+			self.edits[i].setReadOnly(True)
 			self.edits[i].setAlignment(QtCore.Qt.AlignRight)
 
 			self.lookup[shortname] = i

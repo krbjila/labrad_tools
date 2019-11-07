@@ -18,6 +18,7 @@ from form_widget import FormWidget
 from setting_widget import SettingWidget
 from display_widget import DisplayWidget 
 from calculator import ECalculator
+from optimize_dialog import OptimizationDialog
 
 from helpers import json_loads_byteified
 from gui_defaults_helpers import DACsToVs, VsToDACs
@@ -34,11 +35,42 @@ WIDGET_GEOMETRY = {
 	'h' : 800
 }
 
-class ElectrodeControl(QtGui.QWidget):
+WINDOW_TITLE = 'Electrode Control'
+
+CXN_ID = 110101
+
+class ElectrodeWindow(QtGui.QWidget):
 	def __init__(self, reactor, cxn=None):
+		super(ElectrodeWindow, self).__init__()
+		self.reactor = reactor
+		self.cxn = cxn
+		self.populate()
+                self.resize(WIDGET_GEOMETRY['w'], WIDGET_GEOMETRY['h'])
+	
+	def populate(self):
+		self.setWindowTitle(WINDOW_TITLE)
+
+		self.layout = QtGui.QHBoxLayout()
+		self.widget = ElectrodeControl(self.reactor, self, self.cxn)
+
+		self.scroll = QtGui.QScrollArea()
+		self.scroll.setWidget(self.widget)
+		self.scroll.setWidgetResizable(True)
+		self.scroll.setHorizontalScrollBarPolicy(2)
+		self.scroll.setVerticalScrollBarPolicy(2)
+                self.scroll.setFrameShape(0)
+
+		self.layout.addWidget(self.scroll)
+		self.setLayout(self.layout)
+
+
+class ElectrodeControl(QtGui.QWidget):
+	def __init__(self, reactor, parent=None, cxn=None):
 		super(ElectrodeControl, self).__init__()
 		self.reactor = reactor
 		self.cxn = cxn
+
+		self.parent = parent
 
 		self.calculator = ECalculator(fit_coeffs_path)
 
@@ -53,9 +85,12 @@ class ElectrodeControl(QtGui.QWidget):
 		self.layout = QtGui.QVBoxLayout()
 
 		self.settings = SettingWidget()
+                self.optimizeButton = QtGui.QPushButton('Parameter optimization')
 		self.forms = FormWidget(self.calculator)
-		# self.compShim = CompShimForm()
 		self.displays = DisplayWidget(self.calculator)
+
+		self.optimizeButton.clicked.connect(self.optimize)
+		self.optimizeButton.setFixedWidth(WIDGET_GEOMETRY['w']/4)
 
 		self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
 		self.settings.updateDescriptionSignal.connect(self.descriptionChanged)
@@ -66,10 +101,8 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settings.settingDeletedSignal.connect(self.settingDeleted)
 		self.settings.refreshSignal.connect(self.refresh)
 
-		# self.compShim.compShimSignal.connect(self.setCompShim)
-
 		self.layout.addWidget(self.settings)
-		# self.layout.addWidget(self.compShim)
+                self.layout.addWidget(self.optimizeButton)
 		self.layout.addWidget(self.forms)
 		self.layout.addWidget(self.displays)
 
@@ -87,6 +120,8 @@ class ElectrodeControl(QtGui.QWidget):
 		self.context = yield self.cxn.context()
 		self.server = yield self.cxn.get_server(SERVERNAME)
 
+		yield self.server.signal__presets_changed(CXN_ID)
+		yield self.server.addListener(listener=self._refresh, source=None, ID=CXN_ID)
 		self.getPresets()
 
 	@inlineCallbacks
@@ -104,18 +139,20 @@ class ElectrodeControl(QtGui.QWidget):
 		dac = VsToDACs(vals)
 		self.presets[self.settings.currentSetting]['values'] = dac
 		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
-		self.displays.setValues(vals)
+		self.displays.setValues(vals, comp_shim)
 		self.unsavedChanges()
 
-	# def setCompShim(self, comp_shim):
-	# 	self.forms.setCompShim(comp_shim)
-	# 	self.inputFormChanged(self)
-
 	def unsavedChanges(self):
-		self.setWindowTitle("Electrode Control*")
+		if self.parent:
+			self.parent.setWindowTitle(WINDOW_TITLE + '*')
+		else:
+			self.setWindowTitle(WINDOW_TITLE + '*')
 
 	def savedChanges(self):
-		self.setWindowTitle("Electrode Control")
+		if self.parent:
+			self.parent.setWindowTitle(WINDOW_TITLE)
+		else:
+			self.setWindowTitle(WINDOW_TITLE)
 
 	@inlineCallbacks
 	def saveSetting(self):
@@ -132,11 +169,22 @@ class ElectrodeControl(QtGui.QWidget):
 		comp_shim = self.presets[self.settings.currentSetting]['compShim']
 		vals = DACsToVs(vs)
 		self.forms.setValues(vals, comp_shim)
-		self.displays.setValues(vals)
+		self.displays.setValues(vals, comp_shim)
+                self.savedChanges()
 
 	def settingDeleted(self, index):
 		self.presets.pop(index)
 		self.unsavedChanges()
+
+	@inlineCallbacks
+	def _refresh(self, c, x):
+		# The signal is emitted every time the presets are changed or reloaded.
+		# We will cause a loop if we refresh every time we catch the signal,
+		# since self.refresh() calls self.server.reload_presets(), which 
+		# causes the signal to be emitted again.
+		# So the signal comes with a bool that tells us if we should update:
+		if x:
+			yield self.refresh()
 
 	@inlineCallbacks
 	def refresh(self):
@@ -144,16 +192,25 @@ class ElectrodeControl(QtGui.QWidget):
 		self.getPresets()
 
 
+	def optimize(self):
+		(vals, comp_shim) = self.forms.getValues()
+
+		dialog = OptimizationDialog(self.calculator, vals, comp_shim)
+		if dialog.exec_():
+			results = dialog.getResults()
+			if results:
+				self.forms.setValues(results, comp_shim)
+
+	def closeEvent(self, x):
+		self.reactor.stop()
+
+
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
-    a.setQuitOnLastWindowClosed(True)
-
     import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
-    widget = ElectrodeControl(reactor)
-
+    widget = ElectrodeWindow(reactor)
     widget.show()
-    reactor.runReturn()
-    sys.exit(a.exec_()) 
+    reactor.run()

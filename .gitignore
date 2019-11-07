@@ -11,4 +11,5 @@ magnetic_evaporation/backup/*.json
 **.jpg
 .gitignore
 **.swp
-electrode/backup/
+electrode/backup/*
+electrode/values.json

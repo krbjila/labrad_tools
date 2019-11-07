@@ -11,8 +11,6 @@ from twisted.internet.defer import inlineCallbacks
 sys.path.append('../../')
 from calibrations import *
 
-NORMALIZATION_FIELD = 3000.0
-
 # Form fields (short names)
 FORM_FIELDS = {
 	'i' : ['LP', 'UP', 'LW', 'LE', 'UW', 'UE'],
@@ -25,7 +23,7 @@ TOOLTIPS = {
 	'i' : {i : 'slope = {}, offset = {}'.format(EFC[i]['m'], EFC[i]['b']) for i in FORM_FIELDS['i']},
 	'n' : {
 		'GlobalOffset': 'V, global shift from 0',
-		'Bias' : 'V/cm, nominal for flat field, includes 0.955 empirical factor',
+		'Bias' : 'V/cm, nominal for flat field, includes {:0.5f} empirical factor'.format(RODS_CORRECTION),
 		'RodScale' : 'rod_scale',
 		'CompShim': 'V*Bias/{}, dE/dx, old comp_shim'.format(int(NORMALIZATION_FIELD)), 
 		'HGrad' : 'V, dE/dx, old evap_grad',

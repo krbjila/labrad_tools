@@ -14,10 +14,13 @@ ZEROS = {x : -EFC[x]['b']/EFC[x]['m'] for x in EFC.keys()}
 PLATE_SEPARATION = 0.6 # cm
 
 # Fudge factor away from parallel plate capacitor
-RODS_CORRECTION = 0.955
+RODS_CORRECTION = 0.96079
 
 # Safety limit for DACs; HV is limited to 2000x this value
 DAC_LIMIT = 2
 
 # Default comp shim
 COMP_SHIM_DEFAULT = 1.5
+
+# Field we normalize comp_shim to
+NORMALIZATION_FIELD = 3000.0
