@@ -312,7 +312,7 @@ class ECalculator(object):
 
 	def Fy(self, ea):
 		# nK/micron
-		return float(-self._dUdy(ea) / kB * 1e9 * 1e-6),
+		return float(-self._dUdy(ea) / kB * 1e9 * 1e-6)
 
 	def nux(self, ea):
 		cx = self._xQuadCoeffU(ea)
