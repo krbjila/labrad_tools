@@ -58,21 +58,35 @@ class RegionSelector(QtGui.QWidget):
 		self.autoscaleControl.setChecked(True)
 		self.autoscaleControl.clicked.connect(self.autoscale)
 
+		self.export_csv_button = QtGui.QPushButton("Export as .csv")
+		self.export_json_button = QtGui.QPushButton("Export as .json")
+
 		row = 0
-		self.layout.addWidget(self.jumpLabel, row, 0, 1, 1)
-		self.layout.addWidget(self.jumpControl, row, 1, 1, 1)
+		col = 0
+		self.layout.addWidget(self.jumpLabel, row, col, 1, 1)
+		col += 1
+		self.layout.addWidget(self.jumpControl, row, col, 1, 1)
+		col += 1
+
+		self.layout.addWidget(self.dtLabel, row, col, 1, 1)
+		col += 1
+		self.layout.addWidget(self.dtControl, row, col, 1, 1)
+		col += 1
+
+		self.layout.addWidget(self.spanLabel, row, col, 1, 1)
+		col += 1
+		self.layout.addWidget(self.spanControl, row, col, 1, 1)
+		col += 1
+
+		self.layout.addWidget(self.autoscaleLabel, row, col, 1, 1)
+		col += 1
+		self.layout.addWidget(self.autoscaleControl, row, col, 1, 1)
+		col = 0
 		row += 1
 
-		self.layout.addWidget(self.dtLabel, row, 0, 1, 1)
-		self.layout.addWidget(self.dtControl, row, 1, 1, 1)
-		row += 1
-
-		self.layout.addWidget(self.spanLabel, row, 0, 1, 1)
-		self.layout.addWidget(self.spanControl, row, 1, 1, 1)
-		row += 1
-
-		self.layout.addWidget(self.autoscaleLabel, row, 0, 1, 1)
-		self.layout.addWidget(self.autoscaleControl, row, 1, 1, 1)
+		self.layout.addWidget(self.export_csv_button, row, col, 1, 2)
+		col += 2
+		self.layout.addWidget(self.export_json_button, row, col, 1, 2)
 
 		self.setLayout(self.layout)
 

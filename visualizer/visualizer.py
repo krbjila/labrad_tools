@@ -147,17 +147,12 @@ class VisualizerWidget(QtGui.QWidget):
 
 		#####################################
 
-		self.export_label = QtGui.QLabel("Export data to file:")
-		self.export_csv_button = QtGui.QPushButton("as .csv")
-		self.export_json_button = QtGui.QPushButton("as .json")
-		self.export_csv_button.clicked.connect(self.exportCSV)
-		self.export_json_button.clicked.connect(self.exportJSON)
-
 		self.plot_label = QtGui.QLabel("Plotter:")
 		self.plot = Plot(self.digital_channels, self.analog_channels, self.timing_channel)
-		# self.plot.imageWindow.setFixedSize(*self.plot_dim)
 		self.plot.selector.setFixedSize(*self.selector_dim)
 		self.plot.scroll.setFixedSize(*self.plot_dim)
+		self.plot.export_csv.connect(self.exportCSV)
+		self.plot.export_json.connect(self.exportJSON)
 
 		font = QtGui.QFont()
 		font.setPointSize(10)
@@ -169,17 +164,12 @@ class VisualizerWidget(QtGui.QWidget):
 		self.sequence_select_label.setFont(headerFont)
 		self.channel_select_label.setFont(headerFont)
 		self.plot_label.setFont(headerFont)
-		self.export_label.setFont(headerFont)
 
 		self.layout.addWidget(self.sequence_select_label, 0, 0, 1, 1)
 		self.layout.addWidget(self.sequence_scroll, 1, 0, 1, 1)
 
 		self.layout.addWidget(self.channel_select_label, 0, 1, 1, 1)
 		self.layout.addWidget(self.channel_scroll, 1, 1, 1, 1)
-
-		self.layout.addWidget(self.export_label, 2, 0, 1, 1)
-		self.layout.addWidget(self.export_csv_button, 3, 0, 1, 1)
-		self.layout.addWidget(self.export_json_button, 4, 0, 1, 1)
 
 		self.layout.addWidget(self.plot_label, 5, 0, 1, 1)
 		self.layout.addWidget(self.plot, 6, 0, 1, 4)

@@ -14,6 +14,9 @@ from plot_widgets import *
 SEP = os.path.sep
 
 class Plot(QtGui.QWidget):
+	export_csv = pyqtSignal()
+	export_json = pyqtSignal()
+
 	def __init__(self, digital_channels, analog_channels, timing_channel):
 		super(Plot, self).__init__()
 
@@ -31,6 +34,9 @@ class Plot(QtGui.QWidget):
 		self.selector.region_changed.connect(self.setRegion)
 		self.selector.autoscale_changed.connect(self.setAutoscale)
 
+		self.selector.export_csv_button.clicked.connect(self.exportCSV)
+		self.selector.export_json_button.clicked.connect(self.exportJSON)
+
 		self.scroll = QtGui.QScrollArea()
 		self.scroll.setWidget(self.imageWindow)
 		self.scroll.setWidgetResizable(True)
@@ -42,6 +48,12 @@ class Plot(QtGui.QWidget):
 		self.layout.addWidget(self.selector)
 		self.layout.addWidget(self.scroll)
 		self.setLayout(self.layout)
+
+	def exportCSV(self):
+		self.export_csv.emit()
+
+	def exportJSON(self):
+		self.export_json.emit()
 
 	def setRegion(self, start, stop):
 		self.imageWindow.setRegion(start, stop)
