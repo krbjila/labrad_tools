@@ -1,0 +1,10 @@
+{
+	"sequence_path": "/home/kyle/data/{}/sequences/",
+	"time_format": "%Y%m%d",
+	"version_suffix": "_",
+	"electrode_servername": "electrode",
+	"sequencer_servername": "sequencer",
+	"conductor_servername": "conductor",
+	"electrode_presets_changed_id": 1010101,
+	"conductor_parameters_updated_id": 151515
+}
