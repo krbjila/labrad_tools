@@ -633,7 +633,7 @@
                 },
                 {
                     "loc": ["F", 8],
-                    "name": "Lower West Rod Servo",
+                    "name": "TTL F8 (Dead)",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 1
@@ -668,24 +668,24 @@
                 },
                 {
                     "loc": ["F", 13],
-                    "name": "TTL F13",
+                    "name": "Lower West Rod Servo",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 14],
                     "name": "TTL F14",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["F", 15],
                     "name": "TTL F15",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["G", 0],

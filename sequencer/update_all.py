@@ -39,19 +39,24 @@ for folder in dates:
     for k in sequences:
         with open(k, 'r') as infile:
             c = json.load(infile)
-            #print(c)
+            if c.has_key("sequence"):
+                d = c["sequence"]
+            else:
+                d = c
+#            print(c)
 	FileUpdate = False
-        for val in c:
+        for val in d:
             (old_name, address) = val.split('@')
 	    channel_name = getname(current_parameters, address)
 	
             if not channel_name == old_name:
 		print("Discrepancy found in {0} at address {1}.".format(k.split('/')[-1], address))
                 print("Changing {0} to {1}.".format(old_name, channel_name))
-		c[channel_name + '@' +  address] = c.pop(old_name + '@' + address) #Replace entry in dictionary
+		d[channel_name + '@' +  address] = d.pop(old_name + '@' + address) #Replace entry in dictionary
 		FileUpdate = True
 	
         if FileUpdate:
+            # Due to aliasing -- c has the changes to d
 	    with open(k, 'w') as outfile:
 	        json.dump(c, outfile)
 	    print("{} successfully updated".format(k))
