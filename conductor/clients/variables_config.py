@@ -10,10 +10,10 @@ variables_dict = [
     ['*RbMOT', 9.8],
     ['*RbHFOP', 4.7], 
     # QUAD shims
-    ['*NWhigh', 4.61],
-    ['*NWlow', 4.34],
-    ['*SWhigh', 4.69],
-    ['*SWlow',4.54],
+    ['*NWhigh', 4.45],
+    ['*NWlow', 4.44],
+    ['*SWhigh', 4.8],
+    ['*SWlow',4.645],
    # Plug PZTs
     ['*PLUGV', 0],
    # Plug Power
@@ -25,7 +25,7 @@ variables_dict = [
     ['*QuadV2', -2.2], # was -2.2, was -1.9, was -2.4
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
-    ['*BIASI', 0.041], # was 0.044
+    ['*BIASI', 0.04], # was 0.044
     ['*LowField', 0.457], # was 0.465
     ['*HighField', 8.45],
     ['*HighFieldV', -4.3], # was -3.6 before moving stuff to back corridor
@@ -44,16 +44,17 @@ variables_dict = [
     ['*VOTBottom', 0],
     ['*VOTFull', 0],
     ['*VOTFinal', 0],
+    ['*VLattPhase', 0],
     # Optical traps
-    ['*HOTLoad', 3.77], # was 5.2 before calibration changed
-    ['*HOTMid', 0.9], # was 1.6 (7/11/19); was 1.8 before calibration changed
+    ['*HOTLoad', 3.6], # was 3.77 (11/27/19); was 5.2 before calibration changed
+    ['*HOTMid', 0.8], # was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
     ['*HOTBottom', 0.4],
     ['*HOTRecom', 0.42],
     ['*HOTFilter', 0.4],
-    ['*MARIALoad', 2.34], # was 2.6
-    ['*MARIAMid', 0.7], # was 1.0 (7/11/19); was 1
-    ['*MARIAFinal', 0.43], # was 0.5
+    ['*MARIALoad', 4.5], # was 2.34 (11/27/19); was 2.6
+    ['*MARIAMid', 0.9], # was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
+    ['*MARIAFinal', 0.7], # was 0.5
     ['*MARIABottom', 0.344],
     ['*MARIARecom', 0.4],
     ['*MARIAFilter', 0.4],
