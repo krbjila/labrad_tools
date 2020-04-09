@@ -1,0 +1,77 @@
+{% extends "base_visualizer.html" %}
+
+{% block subtitle %}
+Load sequences
+{% endblock %}
+
+{% block subcontent %}
+  <div class="row flex-fill" style="min-height:0">
+    <div class="col-sm">
+      <h3>Available sequences</h3>
+      <p>Jump to letter:
+        {% for x in anchors %}
+          <a href="#header-{{x.v}}">{{x.k}}</a>
+        {% endfor %}
+      </p>
+    </div>
+  
+    <div class="col-sm">
+      <h3>Sequence to view</h3>
+      <button class="btn btn-primary">Load experiment</button>
+      <button class="btn btn-primary">Save sequence</button>
+    </div>
+  </div>
+  
+  <div class="row flex-fill" style="min-height:0">
+    <div class="col-sm visualizer-load" style="overflow-y: scroll;">
+      <div class="accordion" id="sequences">
+        {% for seq in sequences %}
+          <div class="card">
+            <div class="card-header" id="header-{{seq.k}}">
+              <h5 class="mb-0">
+                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-{{seq.k}}" aria-expanded="false" aria-controls="collapse-{{seq.k}}">
+                  {{seq.k}}
+                  <span class="badge badge-primary badge-pill">
+                    {{seq.v|length}}
+                  </span>
+                </button>
+              </h5>
+            </div>
+          </div>
+    
+          <div id="collapse-{{seq.k}}" class="collapse" aria-labelledby="header-{{seq.k}}" data-parent="#sequences">
+            <div class="card-body">
+              <div class="list-group">
+                {% for x in seq.v %}
+                  <button class="list-group-item list-group-item-action sequence-selector" id="{{seq.k}}-{{x}}">
+                    {{x}}
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  
+    <div class="col-sm visualizer-load" style="overflow-y: scroll;">
+      <div class="list-group sequence-list"></div>
+    </div>
+  </div>
+
+  <script>
+    /* Put items from the sequence-selector list into
+      the sequence-list on click */
+    $(".sequence-selector").click(function() {
+      var id = $(this).attr('id');
+      $(".sequence-list").append("<button class=\"list-group-item list-group-item-action sequence-member\" id=\"" + id + "\">" + id + "</li>");
+    });
+
+    /* Remove items from the sequence-list on click
+        Here it's important to use a delegated handler because
+        .sequence-member does not initially exist in the document */
+    $(".sequence-list").on("click", ".sequence-member", function() {
+      $(this).remove();
+    });
+  </script>
+{% endblock %}

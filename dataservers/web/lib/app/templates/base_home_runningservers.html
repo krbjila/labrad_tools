@@ -1,0 +1,41 @@
+{% extends "base_home.html" %}
+
+{% block title %}
+Running servers
+{% endblock %}
+
+{% block subcontent %}
+  <!-- For a subtitle
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  </div>
+  -->
+  
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Node</th>
+          <th scope="col">Server name</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in labrad_servers %}
+          {% if s.status == "running" %}
+            <tr class="server-running">
+              <th scope="row">{{ s.node }}</th>
+              <td>{{ s.name }}</td>
+              <td>{{ s.status }}</td>
+             </tr>
+          {% else %}
+            <tr class="server-not-running">
+              <th scope="row">{{ s.node }}</th>
+              <td>{{ s.name }}</td>
+              <td>{{ s.status }}</td>
+            </tr>
+          {% endif %}
+        {% endfor %}  
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

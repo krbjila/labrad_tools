@@ -1,0 +1,53 @@
+{% extends "base_home.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block subcontent %}
+  <!-- Status circle -->
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h2>Experiment status</h2>
+  </div>
+
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    {% if status == "running" %}
+      <div class="status-circle status-running rounded-circle"></div>
+    {% elif status == "ready" %}
+      <div class="status-circle status-ready rounded-circle"></div>
+    {% elif status == "warning" %}
+      <div class="status-circle status-warning rounded-circle"></div>
+    {% elif status == "off" %}
+      <div class="status-circle status-off rounded-circle"></div>
+    {% endif %}
+  </div>
+
+  <!-- Conductor parameters -->
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h2>Conductor devices</h2>
+  </div>
+
+  <div class="accordion" id="conductor-devices">
+    {% for item in pvs %}
+      <div class="card">
+        <div class="card-header" id="header-{{item.k}}">
+          <h5 class="mb-0">
+            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-{{item.k}}" aria-expanded="false" aria-controls="collapse-{{item.k}}">
+              {{item.k}}
+            </button>
+          </h5>
+        </div>
+      </div>
+
+      <div id="collapse-{{item.k}}" class="collapse" aria-labelledby="header-{{item.k}}" data-parent="#conductor-devices">
+        <div class="card-body">
+          <ul>
+            {% for x in item.v %}
+              <li>{{x.k}}: {{x.v}}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

@@ -1,0 +1,27 @@
+.server-running {
+  background-color: #D0F0C0;
+}
+.server-not-running {
+  background-color: #FFCCCB;
+}
+
+.status-circle {
+  height: 300px;
+  width: 300px;
+}
+.status-running {
+  background-color: red;
+}
+.status-ready {
+  background-color: green;
+}
+.status-warning {
+  background-color: pink;
+}
+.status-off {
+  background-color: black;
+}
+
+.visualizer-load {
+  height: 80vh;
+}
