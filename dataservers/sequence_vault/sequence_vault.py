@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = SequenceVault
+name = sequencevault
 version = 1.0
 description = 
-instancename SequenceVault
+instancename = sequencevault
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -29,7 +29,7 @@ class SequenceVault(LabradServer):
     """
     Data server for compiling experimental sequences and tracking sequence versions
     """
-    name = "SequenceVault"
+    name = "sequencevault"
 
     def __init__(self, config_path='./config.json'):
         self.load_config(config_path)
@@ -167,7 +167,14 @@ class SequenceVault(LabradServer):
         Get the sequencer parameters from conductor
         """
         conductor_parameters = yield self.conductor_server.get_parameter_values()
-        self.sequencer_parameters = json.loads(conductor_parameters)['sequencer']
+        try:
+            self.sequencer_parameters = json.loads(conductor_parameters)['sequencer']
+        # This will happen when SequenceVault initializes,
+        # if conductor has not yet loaded the sequencer parameters
+        except KeyError:
+            pass
+        except Exception as e:
+            print e
 
     @setting(1, "Refresh", returns='i')
     def refresh(self, c):
