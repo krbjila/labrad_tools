@@ -6,7 +6,8 @@ Load sequences
 
 {% block subcontent %}
   <div class="row flex-fill" style="min-height:0">
-    <div class="col-sm">
+    <!-- 
+    <div class="col-sm visualizer-load-header">
       <h3>Available sequences</h3>
       <p>Jump to letter:
         {% for x in anchors %}
@@ -14,64 +15,208 @@ Load sequences
         {% endfor %}
       </p>
     </div>
-  
-    <div class="col-sm">
-      <h3>Sequence to view</h3>
-      <button class="btn btn-primary">Load experiment</button>
-      <button class="btn btn-primary">Save sequence</button>
+    -->
+
+    <div class="col-sm-4">
+      <h3>Experiment to view</h3>
+    </div>
+
+    <div class="col-sm-4">
+      <h3>Sequence list</h3>
     </div>
   </div>
-  
-  <div class="row flex-fill" style="min-height:0">
-    <div class="col-sm visualizer-load" style="overflow-y: scroll;">
-      <div class="accordion" id="sequences">
-        {% for seq in sequences %}
-          <div class="card">
-            <div class="card-header" id="header-{{seq.k}}">
-              <h5 class="mb-0">
-                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-{{seq.k}}" aria-expanded="false" aria-controls="collapse-{{seq.k}}">
-                  {{seq.k}}
-                  <span class="badge badge-primary badge-pill">
-                    {{seq.v|length}}
-                  </span>
-                </button>
-              </h5>
-            </div>
-          </div>
-    
-          <div id="collapse-{{seq.k}}" class="collapse" aria-labelledby="header-{{seq.k}}" data-parent="#sequences">
-            <div class="card-body">
-              <div class="list-group">
-                {% for x in seq.v %}
-                  <button class="list-group-item list-group-item-action sequence-selector" id="{{seq.k}}-{{x}}">
-                    {{x}}
-                  </button>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
+
+  <div class="row flex-fill">
+    <div class="col-sm-4">
+      <form>
+        <div class="row">
+          <label>Experiment name</label>
+          <select class="form-control select-expt"></select>
+        </div>
+      
+        <div class="row">
+          <label>Date</label>
+          <select class="form-control select-date"></select>
+        </div>
+      
+        <div class="row">
+          <label>Version</label>
+          <select class="form-control select-version"></select>
+        </div>
+      </form>
     </div>
-  
+
     <div class="col-sm visualizer-load" style="overflow-y: scroll;">
-      <div class="list-group sequence-list"></div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Date</th>
+            <th scope="col">Time (ms)</th>
+          </tr>
+        </thead>
+        <tbody class="table-sequence"></tbody>
+      </table>
     </div>
   </div>
 
   <script>
-    /* Put items from the sequence-selector list into
-      the sequence-list on click */
+    var experimentData;
+    $.getJSON( "./load/experiments")
+      .done(function( data ) {
+        experimentData = data;
+        populateExperiments(data);
+    });
+
+    $(".select-expt").change(function() {
+      if (experimentData) {
+        var $elts = $(".select-expt option:selected");
+        var $target = $(".select-date");
+
+        var expt = $elts.val();
+        console.log(expt);
+        $target.empty();
+
+        Object.keys(experimentData.experiments[expt])
+          .sort()
+          .forEach(function(k, i) {
+            var opt = new Option(k,k);
+            opt.setAttribute("data-expt", expt);
+            $target.append(opt);
+          });
+      }
+    });
+
+    $(".select-date").change(function() {
+      if (experimentData) {
+        var $elts = $(".select-date option:selected");
+        var $target = $(".select-version");
+
+        var d = $elts.val();
+        var expt = $elts.attr("data-expt");
+        
+        console.log(expt+"-"+d);
+        $target.empty();
+
+        Object.keys(experimentData.experiments[expt][d])
+          .sort(function(a,b) {
+            return b-a;
+          })
+          .forEach(function(k, i) {
+            var opt = new Option(k,k);
+            opt.setAttribute("data-expt", expt);
+            opt.setAttribute("data-date", d);
+            $target.append(opt);
+          });
+      }
+    });
+
+    $(".select-version").change(function() {
+      if (experimentData) {
+        var $elt = $(".select-version option:selected");
+
+        var v = $elt.val()
+        var d = $elt.attr("data-date");
+        var expt = $elt.attr("data-expt");
+    
+        console.log(expt+"-"+d+"-"+v);
+
+        var params = {
+          experiment: expt,
+          date: d,
+          version: v
+        };
+
+        var qstr = $.param(params);
+
+        $.getJSON("./load/experiments?" + qstr)
+          .done(function(data) {
+            populateSequences(data);
+          });
+      }
+    });
+
+    // Populate
+    function populateExperiments(data) {
+      var experiments = data.experiments;
+      Object.keys(experiments)
+        .sort(function(a,b) {
+          return a.toLowerCase().localeCompare(b.toLowerCase());
+        })
+        .forEach(function(k,i) {
+          $(".select-expt").append(
+            new Option(k,k)
+          );
+        });
+    };
+
+    // Populate
+    function populateSequences(data) {
+      const $t = $(".table-sequence");
+      $t.empty();
+      for (let i=0; i < data.length; i++) {
+        var tr = $('<tr/>').appendTo($t);
+        var th = $('<th/>')
+          .attr('scope', "row")
+          .text(i)
+          .appendTo(tr);
+        $('<td/>').text(data[i].name).appendTo(tr);
+        $('<td/>').text(data[i].date).appendTo(tr);
+
+        var duration = parseFloat(data[i].duration[0])*1000;
+        var vars = data[i].duration[1];
+        console.log(duration);
+        duration = Number(duration.toFixed(3))
+        if (Number.isInteger(duration)) {
+          duration = duration.toFixed(0);
+        }
+        else {
+          duration = duration.toFixed(3);
+        }
+        for (let i=0; i < vars.length; i++) {
+          duration += " + " + vars[i];
+        }
+        $('<td/>').text(duration).appendTo(tr);
+        tr.appendTo($t);
+      }
+    };
+
+    /*
+    // Put items from the sequence-selector list into
+    // the sequence-list on click
     $(".sequence-selector").click(function() {
       var id = $(this).attr('id');
       $(".sequence-list").append("<button class=\"list-group-item list-group-item-action sequence-member\" id=\"" + id + "\">" + id + "</li>");
     });
 
-    /* Remove items from the sequence-list on click
-        Here it's important to use a delegated handler because
-        .sequence-member does not initially exist in the document */
+    // Remove items from the sequence-list on click
+    // Here it's important to use a delegated handler because
+    // .sequence-member does not initially exist in the document
     $(".sequence-list").on("click", ".sequence-member", function() {
       $(this).remove();
     });
+
+    // Make dates visible when sequence selected
+    $(".select-expt").change(function() {
+      var expt = $(".select-expt option:selected").val();
+      $(".option-date").hide();
+      $(".option-placeholder-date").hide();
+      $("#option-" + expt).show();
+    });
+
+    // Make dates visible when sequence selected //
+    $(".select-date").change(function() {
+      var d = $(this).val();
+      var expt = $(".select-date option:selected").attr('data-expt')
+      $(".option-version").hide();
+      $(".option-placeholder-version").hide();
+      $("#option-" + expt + "-" + d).show();
+    });
+
+    $(".select-version").click(function() {
+    });
+
+    */
   </script>
 {% endblock %}

@@ -79,6 +79,7 @@ class KRbWebTools(LabradServer):
 
         self.visualizer = Visualizer()
         self.visualizer_load = VisualizerLoad(self.client)
+        self.visualizer_load_experiments = VisualizerLoadExperiments(self.client)
         self.visualizer_show = VisualizerShow(self.client)
     
         root.putChild("krbtools", self.base)
@@ -94,6 +95,8 @@ class KRbWebTools(LabradServer):
         self.base.putChild("visualizer", self.visualizer)
         self.visualizer.putChild("load", self.visualizer_load)
         self.visualizer.putChild("show", self.visualizer_show)
+
+        self.visualizer_load.putChild("experiments", self.visualizer_load_experiments)
 
         d = datetime.now()
         datestring = d.strftime("%Y%m%d_%H%M%S")

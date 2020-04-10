@@ -192,11 +192,11 @@ class Visualizer(DjTemplateResource):
     def __init__(self):
         DjTemplateResource.__init__(self, self.path)
 
-class VisualizerLoad(LabradDjTemplateResource):
-    path = "base_visualizer_load.html"
-
-    def __init__(self, cxn=None):
-        LabradDjTemplateResource.__init__(self, self.path, cxn)
+class VisualizerLoadExperiments(Resource):
+    def __init__(self, cxn):
+        Resource.__init__(self)
+        self.cxn = cxn
+        self.template_context = {}
 
     def render_GET(self, request):
         self._render_sequences(request)
@@ -204,8 +204,91 @@ class VisualizerLoad(LabradDjTemplateResource):
 
     @inlineCallbacks
     def _render_sequences(self, request):
+        (expts, dates, versions) = yield self._get_experiments()
+        if all(k in request.args.keys() for k in ['experiment', 'date', 'version']):
+            expt = request.args['experiment'][0]
+            date = request.args['date'][0]
+            v = int(request.args['version'][0])
+
+            if v in versions[expt][date]:
+                ret = yield self._get_experiment_parameters(expt, date, v)
+                sequences = ret['experiment']['sequencer']['sequence'][0]
+                durations = yield self._get_sequence_durations(sequences, date)
+                arr = [{'name': s, 'date': d, 'duration': dd} for s, d, dd in zip(sequences, ret['dates'], durations)] 
+                request.write(json.dumps(arr))
+        else:
+            self.template_context['sequences'] = yield self._get_available_sequences()
+            self.template_context['experiments'] = versions
+            request.write(json.dumps(self.template_context))
+        if not request.finished:
+            request.finish()
+
+    @inlineCallbacks
+    def _get_sequence_durations(self, sequences, date):
+        sequence_vault = yield self.cxn.servers['sequencevault']
+        durations = yield sequence_vault.get_sequence_durations(sequences, date)
+        returnValue(json.loads(durations))
+
+    @inlineCallbacks
+    def _get_experiment_parameters(self, experiment, date, version):
+        experiment_vault = yield self.cxn.servers['experimentvault']
+        expt = yield experiment_vault.get_experiment_data(experiment, date, version)
+        returnValue(json.loads(expt))
+
+    @inlineCallbacks
+    def _get_available_sequences(self):
+        sequence_vault = yield self.cxn.servers['sequencevault']
+        ss = yield sequence_vault.get_sequences()
+
+        ret = []
+        for s in ss:
+            dates = yield sequence_vault.get_dates(s)
+            ret.append({'k': s, 'v': list(reversed(dates))})
+        returnValue(ret)
+
+    def _get_link_anchors(self, sequences):
+        ret = []
+        c = 'a'
+        for s in sequences:
+            if ord(s['k'][0].lower()) >= ord(c):
+                ret.append({'k': s['k'][0].lower(), 'v': s['k']})
+                c = chr(ord(s['k'][0].lower()) + 1)
+        return ret
+
+    @inlineCallbacks
+    def _get_experiments(self):
+        experiment_vault = yield self.cxn.servers['experimentvault']
+        expts = yield experiment_vault.get_available_experiments()
+        expts = json.loads(expts)
+
+        e_list = sorted(expts.keys(), key=lambda x: x[0].lower())
+        e_dates = {k: sorted(v.keys()) for k,v in expts.items()}
+        e_versions = expts
+        returnValue((e_list, e_dates, e_versions))
+
+
+class VisualizerLoad(LabradDjTemplateResource):
+    path = "base_visualizer_load.html"
+
+    def __init__(self, cxn=None):
+        LabradDjTemplateResource.__init__(self, self.path, cxn)
+
+    def render_GET(self, request):
+    #    self._render_sequences(request)
+        return bytes(self.template.render(self.template_context))
+
+#    def render_GET(self, request):
+#        self._render_sequences(request)
+#        return NOT_DONE_YET
+
+    @inlineCallbacks
+    def _render_sequences(self, request):
         self.template_context['sequences'] = yield self._get_available_sequences()
         self.template_context['anchors'] = self._get_link_anchors(self.template_context['sequences'])
+        (expts, dates, versions) = yield self._get_experiments()
+        self.template_context['experiments'] = expts
+        self.template_context['dates'] = dates
+        self.template_context['versions'] = versions
         request.write(bytes(self.template.render(self.template_context)))
         if not request.finished:
             request.finish()
@@ -229,6 +312,18 @@ class VisualizerLoad(LabradDjTemplateResource):
                 ret.append({'k': s['k'][0].lower(), 'v': s['k']})
                 c = chr(ord(s['k'][0].lower()) + 1)
         return ret
+
+    @inlineCallbacks
+    def _get_experiments(self):
+        experiment_vault = yield self.cxn.servers['experimentvault']
+        expts = yield experiment_vault.get_available_experiments()
+        expts = json.loads(expts)
+
+        e_list = sorted(expts.keys(), key=lambda x: x[0].lower())
+        e_dates = {k: sorted(v.keys()) for k,v in expts.items()}
+        e_versions = expts
+        returnValue((e_list, e_dates, e_versions))
+
 
 class VisualizerShow(LabradDjTemplateResource):
     path = "base_visualizer_show.html"

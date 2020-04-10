@@ -23,5 +23,9 @@
 }
 
 .visualizer-load {
+  height: 60vh;
+}
+
+.visualizer {
   height: 80vh;
 }
