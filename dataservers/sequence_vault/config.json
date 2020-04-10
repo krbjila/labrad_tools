@@ -6,5 +6,6 @@
 	"sequencer_servername": "sequencer",
 	"conductor_servername": "conductor",
 	"electrode_presets_changed_id": 1010101,
-	"conductor_parameters_updated_id": 151515
+	"conductor_parameters_updated_id": 151515,
+	"timing_channel": "Trigger@D15"
 }

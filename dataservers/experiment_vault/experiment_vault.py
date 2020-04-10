@@ -125,7 +125,9 @@ class ExperimentVault(LabradServer):
             version: int, e.g. 9 for "highfield#9". version=-1 returns the most recent file
 
         Returns:
-            List of experiment names
+            {"experiment": experiment_file, "dates": dates):
+                experiment_file: json.dumps'ed contents of experiment file
+                dates: list of most_recent_date for each sequence
         """
         try:
             if version == -1:
@@ -137,10 +139,14 @@ class ExperimentVault(LabradServer):
             with open(path, 'r') as f:
                 data = json.load(f)
             
-            return json.dumps(data)
+            sequence_list = data['sequencer']['sequence'][0]
+            sequence_vault = yield self.client.servers['sequencevault']
+            dates = yield sequence_vault.get_versions_snapshot(sequence_list, date)
+            returnValue(json.dumps({"experiment": data, "dates": dates}))
         except Exception as e:
+            print e
             print "Exception in ExperimentVault.get_experiment_data: " + e 
-            return []
+            returnValue("")
 
 if __name__ == "__main__":
     from labrad import util

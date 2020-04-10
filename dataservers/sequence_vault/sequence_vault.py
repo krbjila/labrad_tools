@@ -20,7 +20,7 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 import json
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import os
 from copy import copy, deepcopy
 from itertools import chain
@@ -345,6 +345,71 @@ class SequenceVault(LabradServer):
         joined = self.join_sequences(sequences, date)
         returnValue(json.dumps(joined))
 
+
+    @setting(10, "Get versions snapshot", sequences='*s', date='s', returns='*s')
+    def get_versions_snapshot(self, c, sequences, date):
+        """ Provides snapshot of the most recent version of each sequence in sequences, as of date
+            
+           Input:
+                sequences: list of sequence names
+                date: date of snapshot
+            Output:
+                list of dates, corresponding to the most recent version of the sequnece as of date
+        """
+        return self._get_versions_snapshot(sequences, date)
+
+    @setting(11, "Get sequence durations", sequences='*s', date='s', returns='s')
+    def get_sequence_durations(self, c, sequences, date):
+        """ Gets the duration of each sequence as of date
+            Input:
+                sequences: list of sequence names
+                date: date of snapshot
+            Output:
+                list of strings, corresponding to the length of each sequence
+                these strings may not be convertible to floats! (if the time columns contain variables)
+        """
+        dates = self._get_versions_snapshot(sequences, date)
+        durations = []
+        for s, d in zip(sequences, dates):
+            path = self.sequence_path.format(d) + s
+
+            with open(path, 'r') as f:
+                data = json.load(f)
+                timing = data['sequence'][self.timing_channel]
+
+                duration = 0
+                variables = []
+                for step in timing:
+                    try:
+                        float(step['dt'])
+                        duration += step['dt']
+                    except:
+                        variables.append(step['dt'])
+                durations.append([duration, variables])
+        return json.dumps(durations)
+
+
+    def _get_versions_snapshot(self, sequences, date):
+        return [self.get_historical_sequence(s, date) for s in sequences]
+
+    def get_historical_sequence(self, sequence, date):
+        # List of dates from newest to oldest
+        dates = reversed(sorted(self.sequences[sequence].keys()))
+    
+        if date == None:
+            return dates[0]
+
+        # The target date
+        target_date = datetime.strptime(date, self.time_format)
+        
+        # Step through sequence dates
+        for d in dates:
+            # For the first date that is the same or older than target_date,
+            # get the sequence path
+            if datetime.strptime(d, self.time_format) <= target_date:
+                return d
+        return dates[-1]
+
     def join_sequences(self, sequences, date=None):
         """
         Joins a list of sequences
@@ -359,25 +424,10 @@ class SequenceVault(LabradServer):
             json.dumps(joined_sequence):
         """
         seqs = []
+        dates = self._get_versions_snapshot(sequences, date)
 
-        for s in sequences:
-            if date == None:
-                # Get most recent version for now
-                d = sorted(self.sequences[s].keys())[-1]
-                path = self.sequence_path.format(d) + s
-            else:
-                # List of dates from newest to oldest
-                dates = reversed(sorted(self.sequences[s].keys()))
-                # The target date
-                target_date = datetime.datetime.strptime(date, self.time_format)
-                
-                # Step through sequence dates
-                for d in dates:
-                    # For the first date that is the same or older than target_date,
-                    # get the sequence path
-                    if d <= target_date:
-                        path = self.sequence_path.format(d) + s
-                        break
+        for s, d in zip(sequences, dates):
+            path = self.sequence_path.format(d) + s
 
             # Load the sequence file
             with open(path, 'r') as f:
