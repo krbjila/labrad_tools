@@ -33,6 +33,7 @@ from itertools import chain
 import sys
 sys.path.append('./lib/backend/python/')
 from krbtools_resources import *
+from api import *
 
 class KRbWebTools(LabradServer):
     """
@@ -77,28 +78,32 @@ class KRbWebTools(LabradServer):
         self.running_servers = RunningServers(self.client)
         self.other = Other(self.client)
 
-        self.visualizer = Visualizer()
-        self.visualizer_load = VisualizerLoad(self.client)
-        self.visualizer_load_experiments = VisualizerLoadExperiments(self.client)
-        self.visualizer_show = VisualizerShow(self.client)
-        self.visualizer_sequence = VisualizerSequence(self.client)
+        self.api = KRbSequenceAPI(self.client)
+
+        self.visualizer = Visualizer(self.client)
+        # self.visualizer_load = VisualizerLoad(self.client)
+        # self.visualizer_load_experiments = VisualizerLoadExperiments(self.client)
+        # self.visualizer_show = VisualizerShow(self.client)
+        # self.visualizer_sequence = VisualizerSequence(self.client)
     
         root.putChild("krbtools", self.base)
         self.base.putChild("home", self.home)
         self.base.putChild("styles", self.styles)
         self.base.putChild("scripts", self.scripts)
         self.base.putChild("images", self.images)
+
+        self.base.putChild("api", self.api)
         
         self.home.putChild("dashboard", self.dashboard)
         self.home.putChild("runningservers", self.running_servers)
         self.home.putChild("other", self.other)
 
         self.base.putChild("visualizer", self.visualizer)
-        self.visualizer.putChild("load", self.visualizer_load)
-        self.visualizer.putChild("show", self.visualizer_show)
-        self.visualizer.putChild("sequence", self.visualizer_sequence)
+        # self.visualizer.putChild("load", self.visualizer_load)
+        # self.visualizer.putChild("show", self.visualizer_show)
+        # self.visualizer.putChild("sequence", self.visualizer_sequence)
 
-        self.visualizer_load.putChild("experiments", self.visualizer_load_experiments)
+        # self.visualizer_load.putChild("experiments", self.visualizer_load_experiments)
 
         d = datetime.now()
         datestring = d.strftime("%Y%m%d_%H%M%S")

@@ -1,0 +1,117 @@
+<div class="row flex-fill">
+  <div class="col-sm">
+    <div id="accordion-da" class="visualizer-channels">
+      {% for l in digital %}
+        <div class="card">
+          <div class="card-header p-0" id="heading-{{l.device}}">
+            <h5 class="mb-0">
+              <button class="btn btn-link" data-toggle="collapse" data-target="#collapse-{{l.device}}" aria-expanded="false" aria-controls="collapse-{{l.device}}">
+                {{l.device}}
+              </button>
+            </h5>
+          </div>
+      
+          <div id="collapse-{{l.device}}" class="collapse" aria-labelledby="heading-{{l.device}}" data-parent="#accordion-da">
+            <div class="card-body">
+              <div class="form-check">
+                <button class="btn btn-primary btn-channel-enable" data-device="{{l.device}}">
+                  All on
+                </button>
+                <button class="btn btn-secondary btn-channel-disable" data-device="{{l.device}}">
+                  All off
+                </button>
+              </div>
+              {% for loc in l.channels %}
+                <div class="form-check">
+                  <input class="form-check-input check-channel check-channel-{{l.device}}" type="checkbox" value={{loc.loc}} id="channel-check-{{loc.loc}}" data-nameloc="{{loc.name}}@{{loc.loc}}" data-type="digital">
+                  <label class="form-check-label" for="channel-check-{{loc.loc}}">
+                     {{loc.loc}}: {{loc.name}}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for l in analog %}
+        <div class="card">
+          <div class="card-header p-0" id="heading-{{l.device}}">
+            <h5 class="mb-0">
+              <button class="btn btn-link" data-toggle="collapse" data-target="#collapse-{{l.device}}" aria-expanded="false" aria-controls="collapse-{{l.device}}">
+                {{l.device}}
+              </button>
+            </h5>
+          </div>
+      
+          <div id="collapse-{{l.device}}" class="collapse" aria-labelledby="heading-{{l.device}}" data-parent="#accordion-da">
+            <div class="card-body">
+              <div class="form-check">
+                <button class="btn btn-primary btn-channel-enable" data-device="{{l.device}}">
+                  All on
+                </button>
+                <button class="btn btn-secondary btn-channel-disable" data-device="{{l.device}}">
+                  All off
+                </button>
+              </div>
+              {% for loc in l.channels %}
+                <div class="form-check">
+                  <input class="form-check-input check-channel check-channel-{{l.device}}" type="checkbox" value={{loc.loc}} id="channel-check-{{loc.loc}}" data-nameloc="{{loc.name}}@{{loc.loc}}" data-type="analog">
+                  <label class="form-check-label" for="channel-check-{{loc.loc}}">
+                    {{loc.name}}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-sm">
+    <div class="row flex-fill">
+      <button class="btn btn-primary btn-channel-all-on">
+        All channels on
+      </button>
+      <button class="btn btn-secondary btn-channel-all-off">
+        All channels off
+      </button>
+    </div>
+
+    <div class="container-fluid">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="select-jump">
+            Jump to sequence:
+          </label>
+          <select class="form-control" id="select-jump">
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="col">
+          <label for="input-time-start">
+            Start (ms)
+          </label>
+          <input class="form-control input-time" type="text" id="input-time-start">
+        </div>
+        <div class="col">
+          <label for="input-time-stop">
+            Stop (ms)
+          </label>
+          <input class="form-control input-time" type="text" id="input-time-stop">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-check">
+          <input class="form-check-input check-scale" type="checkbox" id="check-scale" value="" checked>
+          <label class="form-check-label" for="check-scale">
+            Scale values over view?
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/krbtools/scripts/visualizer_channels.js"></script>

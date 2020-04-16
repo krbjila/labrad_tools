@@ -9,22 +9,31 @@ KRbTools -- Visualizer
   <div class="row">
     <nav class="col-md-2 d-none d-md-block bg-light sidebar">
       <div class="sidebar-sticky">
-        <ul class="nav flex-column">
-          <li class="nav-item">
-              <a class="nav-link" href="/krbtools/visualizer/load">Load sequence</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/krbtools/visualizer/show">Plot waveforms</a>
-          </li>
-        </ul>
+        <div class="flex-column">
+          <div class="list-group" id="list-tab" role="tablist">
+            <a class="list-group-item list-group-item-action active" id="list-load-list" data-toggle="tab" href="#list-load" role="tab" aria-controls="load">Load</a>
+            <a class="list-group-item list-group-item-action" id="list-channels-list" data-toggle="tab" href="#list-channels" role="tab" aria-controls="channels">Select channels</a>
+            <a class="list-group-item list-group-item-action" id="list-plots-list" data-toggle="tab" href="#list-plots" role="tab" aria-controls="plots">Plots</a>
+          </div>
+        </div>
       </div>
     </nav>
     <main class="col-md-9 ml-sm-auto col-lg-10 px-4 visualizer" role="main">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-      	<h1>{% block subtitle %}{% endblock %}</h1>
-      </div>
       <div class="container-fluid h-100 d-flex flex-column">
-      	{% block subcontent %}{% endblock %}
+        <div class="tab-content" id="nav-tabContent">
+
+          <div class="tab-pane fade show active" id="list-load" role="tabpanel" aria-labelledby="list-load-list">
+            {% include "base_visualizer_load.html" %}
+          </div>
+
+          <div class="tab-pane fade" id="list-channels" role="tabpanel" aria-labelledby="list-channels-list">
+            {% include "base_visualizer_channels.html" %}
+          </div>
+          <div class="tab-pane fade" id="list-plots" role="tabpanel" aria-labelledby="list-plots-list">
+            Plot
+          </div>
+
+      	</div>
       </div>
     </main>
   </div>
