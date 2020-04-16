@@ -23,6 +23,7 @@ Load sequences
 
     <div class="col-sm-4">
       <h3>Sequence list</h3>
+      <h4 class="header-sequence-list"></h4>
     </div>
   </div>
 
@@ -66,8 +67,10 @@ Load sequences
     $.getJSON( "./load/experiments")
       .done(function( data ) {
         experimentData = data;
-        populateExperiments(data);
+        populateExperiments(data.experiments);
+        processSessionData(data.session);
     });
+    
 
     $(".select-expt").change(function() {
       if (experimentData) {
@@ -75,16 +78,17 @@ Load sequences
         var $target = $(".select-date");
 
         var expt = $elts.val();
-        console.log(expt);
         $target.empty();
 
         Object.keys(experimentData.experiments[expt])
           .sort()
+          .reverse()
           .forEach(function(k, i) {
             var opt = new Option(k,k);
             opt.setAttribute("data-expt", expt);
             $target.append(opt);
           });
+        $target.change()
       }
     });
 
@@ -95,8 +99,6 @@ Load sequences
 
         var d = $elts.val();
         var expt = $elts.attr("data-expt");
-        
-        console.log(expt+"-"+d);
         $target.empty();
 
         Object.keys(experimentData.experiments[expt][d])
@@ -109,6 +111,7 @@ Load sequences
             opt.setAttribute("data-date", d);
             $target.append(opt);
           });
+        $target.change()
       }
     });
 
@@ -120,7 +123,8 @@ Load sequences
         var d = $elt.attr("data-date");
         var expt = $elt.attr("data-expt");
     
-        console.log(expt+"-"+d+"-"+v);
+        var s = d + "/" + expt + "#" + v;
+        $(".header-sequence-list").text(s); 
 
         var params = {
           experiment: expt,
@@ -139,8 +143,7 @@ Load sequences
 
     // Populate
     function populateExperiments(data) {
-      var experiments = data.experiments;
-      Object.keys(experiments)
+      Object.keys(data)
         .sort(function(a,b) {
           return a.toLowerCase().localeCompare(b.toLowerCase());
         })
@@ -149,6 +152,24 @@ Load sequences
             new Option(k,k)
           );
         });
+    };
+
+    // Populate
+    function processSessionData(data) {
+      if (data[0]) {
+        $(".select-expt option[value=" + data[0] + "]").attr('selected', 'selected');
+        $(".select-expt").change();
+
+        if (data[1]) {
+          $(".select-date option[value=" + data[1] + "]").attr('selected', 'selected');
+          $(".select-date").change();
+
+          if (data[2]) {
+            $(".select-version option[value=" + data[2] + "]").attr('selected', 'selected');
+            $(".select-version").change();
+          }
+        }
+      }
     };
 
     // Populate
@@ -166,7 +187,6 @@ Load sequences
 
         var duration = parseFloat(data[i].duration[0])*1000;
         var vars = data[i].duration[1];
-        console.log(duration);
         duration = Number(duration.toFixed(3))
         if (Number.isInteger(duration)) {
           duration = duration.toFixed(0);
@@ -182,41 +202,5 @@ Load sequences
       }
     };
 
-    /*
-    // Put items from the sequence-selector list into
-    // the sequence-list on click
-    $(".sequence-selector").click(function() {
-      var id = $(this).attr('id');
-      $(".sequence-list").append("<button class=\"list-group-item list-group-item-action sequence-member\" id=\"" + id + "\">" + id + "</li>");
-    });
-
-    // Remove items from the sequence-list on click
-    // Here it's important to use a delegated handler because
-    // .sequence-member does not initially exist in the document
-    $(".sequence-list").on("click", ".sequence-member", function() {
-      $(this).remove();
-    });
-
-    // Make dates visible when sequence selected
-    $(".select-expt").change(function() {
-      var expt = $(".select-expt option:selected").val();
-      $(".option-date").hide();
-      $(".option-placeholder-date").hide();
-      $("#option-" + expt).show();
-    });
-
-    // Make dates visible when sequence selected //
-    $(".select-date").change(function() {
-      var d = $(this).val();
-      var expt = $(".select-date option:selected").attr('data-expt')
-      $(".option-version").hide();
-      $(".option-placeholder-version").hide();
-      $("#option-" + expt + "-" + d).show();
-    });
-
-    $(".select-version").click(function() {
-    });
-
-    */
   </script>
 {% endblock %}

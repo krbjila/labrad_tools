@@ -81,6 +81,7 @@ class KRbWebTools(LabradServer):
         self.visualizer_load = VisualizerLoad(self.client)
         self.visualizer_load_experiments = VisualizerLoadExperiments(self.client)
         self.visualizer_show = VisualizerShow(self.client)
+        self.visualizer_sequence = VisualizerSequence(self.client)
     
         root.putChild("krbtools", self.base)
         self.base.putChild("home", self.home)
@@ -95,6 +96,7 @@ class KRbWebTools(LabradServer):
         self.base.putChild("visualizer", self.visualizer)
         self.visualizer.putChild("load", self.visualizer_load)
         self.visualizer.putChild("show", self.visualizer_show)
+        self.visualizer.putChild("sequence", self.visualizer_sequence)
 
         self.visualizer_load.putChild("experiments", self.visualizer_load_experiments)
 

@@ -375,7 +375,12 @@ class SequenceVault(LabradServer):
 
             with open(path, 'r') as f:
                 data = json.load(f)
-                timing = data['sequence'][self.timing_channel]
+
+                if 'sequence' in data:
+                    timing = data['sequence'][self.timing_channel]
+                # Old versions of modules that don't have 'sequence' key
+                else:
+                    timing = data[self.timing_channel]
 
                 duration = 0
                 variables = []

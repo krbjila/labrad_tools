@@ -29,3 +29,19 @@
 .visualizer {
   height: 80vh;
 }
+
+.visualizer-channels {
+  height: 40vh;
+}
+
+.line {
+  fill: none;
+  stroke: #ed3700;
+}
+
+.visualizer-canvas {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  height: 60 vh;
+}
+
