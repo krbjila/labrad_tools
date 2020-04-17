@@ -299,7 +299,7 @@ class SequenceVault(LabradServer):
         # Make sure parameters are up to date
         yield self._refresh()
         # Join sequences
-        joined = self.join_sequences(sequences, date)
+        joined = yield self.join_sequences(sequences, date)
         # Get electrode sequence
         (sequence, electrode_seq) = (joined['sequence'], joined['meta']['electrodes'])
 
@@ -342,7 +342,7 @@ class SequenceVault(LabradServer):
         # Make sure parameters are up to date
         yield self._refresh()
         # Join sequences
-        joined = self.join_sequences(sequences, date)
+        joined = yield self.join_sequences(sequences, date)
         returnValue(json.dumps(joined))
 
 
@@ -415,6 +415,7 @@ class SequenceVault(LabradServer):
                 return d
         return dates[-1]
 
+    @inlineCallbacks
     def join_sequences(self, sequences, date=None):
         """
         Joins a list of sequences
@@ -428,6 +429,17 @@ class SequenceVault(LabradServer):
         Returns:
             json.dumps(joined_sequence):
         """
+
+        # Need to be careful if the channel names have changed
+        channels = yield self.client.servers['sequencer'].get_channels()
+        channels = json.loads(channels)
+
+        # Channel map keys are locs (e.g., "A00") and values are
+        # the CURRENT namelocs (e.g., "MOT Shutter@A00")
+        channel_map = {}
+        for k,v in channels.items():
+            channel_map[v['loc']] = k
+
         seqs = []
         dates = self._get_versions_snapshot(sequences, date)
 
@@ -438,13 +450,30 @@ class SequenceVault(LabradServer):
             with open(path, 'r') as f:
                 seqs.append(json.load(f))
 
-        # Join
+        # Very old sequences may not have the current format
+        for x in seqs:
+            if not 'meta' in x:
+                x = {'meta': {}, 'sequence': x}
+                timing = x['sequence'][self.timing_channel]
+                x['meta']['descriptions'] = ["" for s in timing]
+                x['meta']['electrodes'] = [{'dt': s['dt'], 'vf': 0, 'type': s} for s in timing]
+                
+        # Make sure sequence keys are consistent
         out = seqs[0]
+        for k in out['sequence'].keys():
+            realkey = channel_map[k.split('@')[-1]]
+            if k != realkey:
+                out['sequence'][realkey] = out['sequence'].pop(k)
+
+        # Join
         for x in seqs[1:]:
-            for key in out.keys():
-                for k in out[key].keys():
-                    out[key][k] += x[key][k]
-        return out
+            for key in x.keys():
+                for k in x[key].keys():
+                    if key == 'sequence':
+                        out[key][channel_map[k.split('@')[-1]]] += x[key][k]
+                    else:
+                        out[key][k] += x[key][k]
+        returnValue(out)
 
 
     def update_electrodes(self, seq, e_seq, presets, channels):

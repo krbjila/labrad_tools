@@ -48,7 +48,7 @@ class KRbSequenceAPI(Resource):
         self.plottables = ExperimentPlottables(cxn)
 
         self.experiments.putChild("sequences", self.sequence_versions)
-        self.experiments.putChild("plottable", ExperimentPlottables(cxn))
+        self.experiments.putChild("plottable", self.plottables)
 
 class ExperimentsBase(Resource):
     def __init__(self, cxn):
@@ -117,7 +117,6 @@ class ExperimentsBase(Resource):
         e_dates = {k: sorted(v.keys()) for k,v in expts.items()}
         e_versions = expts
         returnValue((e_list, e_dates, e_versions))
-
 
 
 class Experiments(ExperimentsBase):

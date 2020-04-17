@@ -31,7 +31,7 @@
 }
 
 .visualizer-channels {
-  height: 60vh;
+  width: 40vh;
 }
 
 .line {
@@ -40,8 +40,7 @@
 }
 
 .visualizer-canvas {
-  overflow-x: scroll;
-  overflow-y: scroll;
-  height: 60 vh;
+  height: 80 vh;
+  width: 80 vh;
 }
 

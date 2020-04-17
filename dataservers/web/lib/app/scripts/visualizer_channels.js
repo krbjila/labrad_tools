@@ -4,6 +4,10 @@ var checkState = {
   lookupList: []
 };
 
+var toggleState = true;
+var deviceToggleState = {};
+
+populateToggleStates();
 generateLookup();
 
 // Implement shift-click
@@ -42,26 +46,59 @@ $(document).keydown(function(event) {
 });
 
 // Enables all channels in a device
-$(".btn-channel-enable").click(function() {
+$(".btn-device-toggle").click(function() {
   const dev = $(this).attr("data-device");
-  $(".check-channel-"+dev).prop("checked", true);
+  const $btn = $(this);
+  if (toggleState) {
+    $(".check-channel-" + dev).prop("checked", true);
+    $btn.text("All off");
+    $btn.removeClass("btn-dark");
+    $btn.addClass("btn-success");
+    toggleState = false;
+  }
+  else {
+    $(".check-channel-" + dev).prop("checked", false);
+    $btn.text("All on");
+    $btn.removeClass("btn-success");
+    $btn.addClass("btn-dark");
+    toggleState = true;
+  }
+   $(".check-channel").each(function(i, elt) {
+    if (i === 0) {
+      $(this).change();
+    }
+  });
 });
 
-// Disables all channels in a device
-$(".btn-channel-disable").click(function() {
-  const dev = $(this).attr("data-device");
-  $(".check-channel-"+dev).prop("checked", false);
+// Enables/Disables all channels
+$(".btn-all-toggle").click(function() {
+  const $btn = $(this);
+  if (toggleState) {
+    $(".check-channel").prop("checked", true);
+    $btn.text("Turn all channels off");
+    $btn.removeClass("btn-dark");
+    $btn.addClass("btn-success");
+    toggleState = false;
+  }
+  else {
+    $(".check-channel").prop("checked", false);
+    $btn.text("Turn all channels on");
+    $btn.removeClass("btn-success");
+    $btn.addClass("btn-dark");
+    toggleState = true;
+  }
+  $(".check-channel").each(function(i, elt) {
+    if (i === 0) {
+      $(this).change();
+    }
+  });
 });
 
-// Disables all channels
-$(".btn-channel-all-off").click(function() {
-  $(".check-channel").prop("checked", false);
-});
-
-// Disables all channels
-$(".btn-channel-all-on").click(function() {
-  $(".check-channel").prop("checked", true);
-});
+function populateToggleStates() {
+  $("btn-device-toggle").each(function(i, elt) {
+    deviceToggleState[$(this).attr("data-device")] = false;
+  });
+}
 
 // Generate the list of channels
 function generateLookup() {

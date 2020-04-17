@@ -1,0 +1,30 @@
+<div class="col flex-fill pt-4">
+  <div class="row">
+    <div class="form-check">
+      <input class="form-check-input check-scale" type="checkbox" value="" id="check-scale">
+      <label class="form-check-label" for="check-scale">
+        Scale waveforms in view?
+      </label>
+    </div>
+  </div>
+  <div class="row">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-primary">
+        <input type="radio" name="plot-options" id="option1" autocomplete="off">Ridgeline
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="plot-options" id="option2" autocomplete="off">Digital + Analog
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="plot-options" id="option3" autocomplete="off">One axes
+      </label>
+    </div>
+  </div>
+  <div class="row flex-fill">
+    <div class="visualizer-canvas flex-fill"> 
+      <svg></svg>
+    </div>
+  </div>
+</div>
+          
+<script src="./scripts/visualizer_plots.js"></script>
