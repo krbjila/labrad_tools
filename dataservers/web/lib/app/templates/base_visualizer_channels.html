@@ -87,7 +87,7 @@
                 </div>
                 {% for loc in l.channels %}
                   <div class="form-check">
-                    <input class="form-check-input check-channel check-channel-{{l.device}}" type="checkbox" value={{loc.loc}} id="channel-check-{{loc.loc}}" data-nameloc="{{loc.name}}@{{loc.loc}}" data-type="analog">
+                    <input class="form-check-input check-channel check-channel-{{l.device}}" type="checkbox" value={{loc.loc}} id="channel-check-{{loc.loc}}" data-nameloc="{{loc.name}}@{{loc.loc}}" data-type="ad5791">
                     <label class="form-check-label" for="channel-check-{{loc.loc}}">
                       {{loc.name}}
                     </label>
