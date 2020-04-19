@@ -10,6 +10,8 @@
   var svg = d3.select("svg");
   var line, x, y, z, xAxis, yAxis;
 
+  var xm, ym;
+
   const digital_colors = [
     "#ff0000",
     "#ff7700",
@@ -22,9 +24,10 @@
 
   var focusSet = false;
   var focusIndex;
+  var mouseInFrame = false;
 
   const width = 1000;
-  const height = 300;
+  const height = 450;
   const margins = {
     left: 30,
     right: 20,
@@ -168,9 +171,18 @@
             .attr("fill", "none")
             .attr("clip-path", "url(#clip-rect)")
             .attr("stroke-width", 3)
-            .attr("stroke", d => colorLookup[d.nameloc])
             .attr("d", d => line(d.scaledData));
+
+      if (focusSet) {
+        path.attr("stroke", (d, i) => i === focusIndex ? colorLookup[d.nameloc] : "#ddd")
+          .filter((d,i) => i === focusIndex)
+            .raise();
+      }
+      else {
+        path.attr("stroke", d => colorLookup[d.nameloc]);
+      }
       svg.call(mouseActions, path);
+      svg.call(keyActions, path);
     }
   }
 
@@ -202,6 +214,41 @@
           .attr("y2", d => height - margins.bottom);
   }
 
+  /* Tab through which channel has focus */
+  function keyActions(svg, path) {
+    d3.select("body").on("keydown", keyDown);
+    d3.select("body").on("keyup", keyUp);
+
+    const dot = svg.select("g.dot");
+
+    var shiftPressed = false;
+
+    function keyDown() {
+      const key = d3.event.keyCode;
+      // 9 is tab
+      if (focusSet && mouseInFrame) {
+        if (key === 9) {
+          d3.event.preventDefault();
+          const increment = shiftPressed ? -1 : 1;
+          focusIndex = (focusIndex + increment) % sequence_array.length;
+          if (focusIndex < 0) {
+            focusIndex += sequence_array.length;
+          }
+          handleLinesFocus(xm, ym, dot, path)
+        }
+        else if (d3.event.shiftKey) {
+          shiftPressed = true;
+        }
+      }
+    }
+    function keyUp () {
+      const key = d3.event.keyCode;
+      // 16 is shift
+      if (key === 16) { shiftPressed = false; }
+    }
+  }
+
+
   function mouseActions(svg, path) {
     svg.on("mousemove", moved)
       .on("click", clicked)
@@ -215,8 +262,8 @@
 
     function moved() {
       d3.event.preventDefault();
-      const ym = y.invert(d3.event.layerY - margins.top);
-      const xm = x.invert(d3.event.layerX - margins.left);
+      ym = y.invert(d3.event.layerY - margins.top);
+      xm = x.invert(d3.event.layerX - margins.left);
 
       if (xm >= x.domain()[1]) {
         return;
@@ -246,51 +293,7 @@
         .attr("width", x(time1) - x(time0));
       sequenceBackground.lower();
 
-      // Next handle lines
-      if (focusSet) {
-        const channelData = sequence_array[focusIndex].scaledData;
-        const i0 = d3.bisectLeft(channelData.map(x => x[0]), xm, 1);
-        const i1 = i0 - 1;
-        var inner = channelData[i0][0] - xm < xm - channelData[i1][0] ? i0 : i1;
-      }
-      else {
-            // Yikes! This looks gnarly but is not so bad
-        // We need to get the closest x-axis data value to our mouse
-        // If we have an ordered array ts = [t0, t1, t2, ...], bisectLeft(ts, t)
-        // returns the index where we can insert t
-        // However need to do several maps over this to get into the correct arrays
-        const i0s = sequence_array.map(d => d3.bisectLeft(d.scaledData.map(x => x[0]), xm, 1));
-        const i1s = i0s.map(d => d - 1);
-
-        // Again looks gnarly. Just want to find whether xm is closer to i0s[i] or i1s[i]
-        // for each i
-        const is = sequence_array.map(
-          (d,i) => (d.scaledData[i0s[i]][0] - xm < xm - d.scaledData[i1s[i]][0]) ? i0s[i] : i1s[i]
-        );
-        const dys = sequence_array.map((d, i) => Math.abs(ym - d.scaledData[is[i]][1]));
-
-        focusIndex = 0;
-        let temp = dys[0];
-        for (let j=0; j < dys.length; j++) {
-          if (dys[j] < temp) {
-            temp = dys[j];
-            focusIndex = j;
-          }
-        }
-        var inner = is[focusIndex];
-      }
-      const val = sequence_array[focusIndex].scaledData[inner];
-
-      dot.attr("transform", "translate("+ x(val[0]) + "," + y(val[1]) + ")")
-        .raise();
-      svg.select("#text-dot-name")
-        .text(sequence_array[focusIndex].name);
-      // Put the real voltage out
-      svg.select("#text-dot-voltage")
-        .text(sequence_array[focusIndex].data[inner][1].toFixed(3) + " V");
-
-      path.attr("stroke", (d,i) => focusIndex === i ? colorLookup[d.nameloc] : "#ddd")
-        .filter((d,i) => focusIndex === i).raise();
+      handleLinesFocus(xm, ym, dot, path);
     }
     function clicked() {
       if (margins.top < d3.event.layerY
@@ -304,6 +307,8 @@
       sequenceTag.attr("display", null);
       sequenceBackground.attr("display", null);
 
+      mouseInFrame = true;
+
       if (!focusSet) {
         path.attr("stroke", "#ddd");
       }
@@ -313,12 +318,62 @@
       sequenceTag.attr("display", "none");
       sequenceBackground.attr("display", "none");
 
+      mouseInFrame = false;
+
       if (!focusSet){
         path.attr("stroke", d => colorLookup[d.nameloc]);
       }
     }
   }
 
+
+  function handleLinesFocus(xm, ym, dot, path) {
+    // Next handle lines
+    if (focusSet) {
+      const channelData = sequence_array[focusIndex].scaledData;
+      const i0 = d3.bisectLeft(channelData.map(x => x[0]), xm, 1);
+      const i1 = i0 - 1;
+      var inner = channelData[i0][0] - xm < xm - channelData[i1][0] ? i0 : i1;
+    }
+    else {
+          // Yikes! This looks gnarly but is not so bad
+      // We need to get the closest x-axis data value to our mouse
+      // If we have an ordered array ts = [t0, t1, t2, ...], bisectLeft(ts, t)
+      // returns the index where we can insert t
+      // However need to do several maps over this to get into the correct arrays
+      const i0s = sequence_array.map(d => d3.bisectLeft(d.scaledData.map(x => x[0]), xm, 1));
+      const i1s = i0s.map(d => d - 1);
+
+      // Again looks gnarly. Just want to find whether xm is closer to i0s[i] or i1s[i]
+      // for each i
+      const is = sequence_array.map(
+        (d,i) => (d.scaledData[i0s[i]][0] - xm < xm - d.scaledData[i1s[i]][0]) ? i0s[i] : i1s[i]
+      );
+      const dys = sequence_array.map((d, i) => Math.abs(ym - d.scaledData[is[i]][1]));
+
+      focusIndex = 0;
+      let temp = dys[0];
+      for (let j=0; j < dys.length; j++) {
+        if (dys[j] < temp) {
+          temp = dys[j];
+          focusIndex = j;
+        }
+      }
+      var inner = is[focusIndex];
+    }
+    const val = sequence_array[focusIndex].scaledData[inner];
+
+    dot.attr("transform", "translate("+ x(val[0]) + "," + y(val[1]) + ")")
+      .raise();
+    svg.select("#text-dot-name")
+      .text(sequence_array[focusIndex].name);
+    // Put the real voltage out
+    svg.select("#text-dot-voltage")
+      .text(sequence_array[focusIndex].data[inner][1].toFixed(3) + " V");
+
+    path.attr("stroke", (d,i) => focusIndex === i ? colorLookup[d.nameloc] : "#ddd")
+      .filter((d,i) => focusIndex === i).raise();
+  }
 
   // Generate the list of channels
   function generateLookup() {
