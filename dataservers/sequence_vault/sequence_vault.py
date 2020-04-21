@@ -315,7 +315,8 @@ class SequenceVault(LabradServer):
         # with parameter_values
         try:
             # deepcopy to avoid changing self.sequencer_parameters
-            pv = deepcopy(self.sequencer_parameters).update(json.loads(parameter_values))
+            pv = deepcopy(self.sequencer_parameters)
+            pv.update(json.loads(parameter_values))
         except:
             pv = self.sequencer_parameters
 
@@ -399,7 +400,7 @@ class SequenceVault(LabradServer):
 
     def get_historical_sequence(self, sequence, date):
         # List of dates from newest to oldest
-        dates = reversed(sorted(self.sequences[sequence].keys()))
+        dates = list(reversed(sorted(self.sequences[sequence].keys())))
     
         if date == None:
             return dates[0]

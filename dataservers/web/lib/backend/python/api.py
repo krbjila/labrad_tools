@@ -173,19 +173,50 @@ class ExperimentSequences(ExperimentsBase):
         returnValue(json.dumps(arr, sort_keys=True, indent=4, separators=(',', ': ')))
 
 class ExperimentPlottables(ExperimentsBase):
+    def render_POST(self, request):
+        self._render_post(request)
+        return NOT_DONE_YET
+
     @inlineCallbacks
-    def _get_substituted_sequence(self, sequences, date):
+    def _render_post(self, request):
+        out = ""
+
+        (expts, dates, versions) = yield self._get_experiments()
+
+        if all(k in request.args.keys() for k in ['name', 'date', 'version']):
+            expt = request.args['name'][0]
+            date = request.args['date'][0]
+            v = int(request.args['version'][0])
+
+            if v in versions[expt][date]:
+                parameters = {}
+                for kk in request.args.keys():
+                    if kk[0] == "*":
+                        parameters[kk] = float(request.args[kk][0])
+                out = yield self.resourceFound(expt, date, v, json.dumps(parameters))
+            else:
+                out = json.dumps({"message": "not found"}, sort_keys=True, indent=4, separators=(',', ': '))
+
+        else:
+            out = yield self.noQueryString()
+        request.write(bytes(out))
+
+        if not request.finished:
+            request.finish()
+
+    @inlineCallbacks
+    def _get_substituted_sequence(self, sequences, date, parameters=""):
         sequence_vault = yield self.cxn.servers['sequencevault']
-        subbed = yield sequence_vault.get_substituted_sequence(sequences, date)
+        subbed = yield sequence_vault.get_substituted_sequence(sequences, date, parameters)
         returnValue(json.loads(subbed))
 
     @inlineCallbacks
-    def resourceFound(self, expt, date, version):
+    def resourceFound(self, expt, date, version, parameters=""):
         data = yield self._get_experiment_parameters(expt, date, version)
         sequence_list = data['experiment']['sequencer']['sequence'][0]
 
         sequence = yield self._get_joined_sequence(sequence_list, date)
-        substituted_sequence = yield self._get_substituted_sequence(sequence_list, date)
+        substituted_sequence = yield self._get_substituted_sequence(sequence_list, date, parameters)
         plottable = yield self.get_plottable(substituted_sequence)
         out = {'meta': sequence['meta'], 'plottable': plottable}
         returnValue(json.dumps(out, sort_keys=True, indent=4, separators=(',', ': ')))

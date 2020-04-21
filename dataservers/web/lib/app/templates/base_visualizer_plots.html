@@ -34,8 +34,14 @@
 
   <div class="form-row">
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-light" data-toggle="modal" data-target="#exampleModalCenter">
-      Sequencer parameters
+    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#exampleModalCenter">
+      Sequencer parameters dialog
+    </button>
+    <button type="button" class="btn btn-outline-dark btn-reset-parameters">
+      Reset parameters
+    </button>
+    <button type="button" class="btn btn-outline-dark btn-update-parameters">
+      Use current parameters
     </button>
 
     <!-- Modal -->
@@ -50,22 +56,23 @@
           </div>
           <div class="modal-body">
             <div class="form-group">
-              <div class="form-row">
+              <div class="form-row border-bottom pb-3">
                 <label for="#input-parameters">
                   Select a parameter to track:
                 </label>
 
-                <input class="form-control" type="text" id="input-parameters" placeholder="*KRb">
+                <input class="form-control" type="text" id="input-parameters" placeholder="*your_variable">
               </div>
 
-              <div class="form-row parameter-list">
+              <div class="form-row parameter-list pt-3">
+                <ul class="ul-parameters list-group">
+                </ul>
               </div>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-secondary">Reset parameters</button>
-            <button type="button" class="btn btn-primary">Set parameters and replot</button>
+            <button type="button" class="btn btn-primary btn-set-parameters" data-dismiss="modal">Set parameters and replot</button>
           </div>
         </div>
       </div>

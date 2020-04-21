@@ -4,7 +4,9 @@
   var colorLookup = {};
   var sequenceBoundaries = [];
 
-  var parameters;
+  var currentParameters = {};
+  var previousParameters = {};
+  var userParameters = {};
 
   var sequence; var meta;
   var sequence_list;
@@ -42,9 +44,7 @@
 
   const TIMING_CHANNEL = "Trigger@D15";
 
-  generateLookup();
-  getSequence();
-  getParameters();
+  setupPlots();
 
   $(".check-channel").change(function() {
     updatePlot();
@@ -58,6 +58,15 @@
   $(".select-jump").change(function() {
     updateX();
     updatePlot();
+  });
+
+  $(".select-version").change(function() {
+    generateLookup();
+    getSequence();
+    getParameters();
+    resetXControls();
+    updateX();
+    updatePlot(true);
   });
 
   $("#input-time-start").change(function () {
@@ -99,6 +108,14 @@
       updatePlot();
     }
   });
+
+  function resetXControls() {
+    $(".select-jump option:selected").prop("selected", false);
+    $(".select-jump option:first").prop("selected", "selected");
+
+    $("#input-time-start").val(0);
+    $("#input-time-span").val(2000);
+  }
 
   function updateY() {
     if (sequence) {
@@ -231,6 +248,7 @@
 
   function drawSequenceBoundaries() {
     sequenceBoundaries = KRbVisualizer.sequenceBoundaries;
+
     svg.select("g.sequence-lines")
       .selectAll("line")
         .data(sequenceBoundaries)
@@ -332,10 +350,11 @@
       }
     }
     function clicked() {
-      if (margins.top < d3.event.layerY
-          && d3.event.layerY < height - margins.bottom 
-          && margins.left < d3.event.layerX
-          && d3.event.layerX < width - margins.right)
+      const coords = d3.mouse(svg.node());
+      if (margins.top < coords[1]
+          && coords[1] < height - margins.bottom 
+          && margins.left < coords[0]
+          && coords[0] < width - margins.right)
         focusSet = !focusSet;
     }
     function entered() {
@@ -444,34 +463,172 @@
       version: Cookies.get("KRB_EXPERIMENT_VERSION")
     }; 
     var qstr = $.param(session);
-    $.getJSON("./api/experiments/plottable?" + qstr)
-      .done(function(data) {
-        sequence = data.plottable;
-        meta = data.meta;
 
-        setupPlots();
+    $.getJSON("./api/experiments?" + qstr)
+      .done(function(data) {
+        previousParameters = data.data.sequencer;
+
+        // data.data.sequencer has values that are lists
+        // For simplicity we'll take the first value in each list
+        // Also the post request gets messed up if they are lists
+        // because the keys in the dict become e.g. "*RbDet[]"
+        // instead of "*RbDet"
+        Object.keys(previousParameters)
+          .forEach(function(k, i) {
+            previousParameters[k] = previousParameters[k][0];
+          });
+
+        setupAutocomplete();
+
+        $.post("./api/experiments/plottable?" + qstr, previousParameters)
+          .done(function(data) {
+            var s = JSON.parse(data);
+            sequence = s.plottable;
+            meta = s.meta;
+          });
       });
   }
 
   function getParameters() {
     $.getJSON("./api/parameters")
       .done(function(data) {
-        parameters = data.sequencer;
-        setupAutocomplete();
+        currentParameters = data.sequencer;
       });
   }
 
   function setupAutocomplete() {
-    const p = Object.keys(parameters);
+    const p = Object.keys(previousParameters);
     const $input = $("#input-parameters");
     $input.autocomplete({
       source: p
     });
     $input.autocomplete("option", "appendTo", ".parameter-list");
-    $input.on("autocompleteselect", function (event, ui) {
-      console.log(ui.item.label);
-    });
   }
+
+  $("#input-parameters").change(function(){
+    const $val = $(this).val();
+    const $ul = $(".ul-parameters");
+
+    if ($val in previousParameters) {
+      if (!($val in userParameters)) {
+        var $li = $("<li />")
+          .attr("class", "list-group-item li-parameters")
+          .attr("id", "li-parameters-" + $val.slice(1,-1))
+          .attr("data-parameter", $val)
+          .appendTo($ul);
+        var $row = $("<div />")
+          .attr("class", "row")
+          .appendTo($li);
+        var $col0 = $("<div />")
+          .attr("class", "col-sm-1")
+          .appendTo($row);
+        var $col1 = $("<div />")
+          .attr("class", "col-sm-3")
+          .appendTo($row);
+        var $col2 = $("<div />")
+          .attr("class", "col-sm-3")
+          .appendTo($row);
+        var $col3 = $("<div />")
+          .attr("class", "col-sm-2")
+          .appendTo($row);
+        var $col4 = $("<div />")
+          .attr("class", "col-sm-2")
+          .appendTo($row);
+
+        var $btn = $("<button />")
+          .attr("type", "button")
+          .attr("class", "close btn-parameter-remove")
+          .attr("id", "btn-parameter-remove-" + $val.slice(1,-1))
+          .attr("aria-label", "Close")
+          .attr("data-parameter", $val)
+          .appendTo($col0);
+
+        $("<span />")
+          .attr("aria-hidden", "true")
+          .html("&times;")
+          .appendTo($btn);
+
+        $("<button />")
+          .attr("type", "button")
+          .attr("class", "btn btn-outline-secondary btn-parameter-set-current")
+          .attr("id", "btn-parameter-set-current-" + $val.slice(1,-1))
+          .attr("data-parameter", $val)
+          .text("Current")
+          .appendTo($col4);
+
+        $("<button />")
+          .attr("type", "button")
+          .attr("class", "btn btn-outline-primary btn-parameter-reset")
+          .attr("id", "btn-parameter-reset-" + $val.slice(1,-1))
+          .attr("data-parameter", $val)
+          .text("Default")
+          .appendTo($col3);
+
+        $("<input />")
+          .text($val)
+          .attr("class", "form-control input-change-parameters")
+          .attr("id", "input-change-parameters-" + $val.slice(1,-1))
+          .attr("data-parameter", $val)
+          .attr("type", "text")
+          .val(previousParameters[$val])
+          .appendTo($col2);
+        $("<label />")
+          .text($val)
+          .attr("for", "#input-change-parameters-" + $val.slice(1,-1))
+          .appendTo($col1);
+
+        userParameters[$val] = previousParameters[$val];
+
+        $("#input-change-parameters-" + $val.slice(1,-1)).change(function () {
+          const $v = parseFloat($(this).val());
+          const $p = $(this).attr("data-parameter");
+          if ($v) {
+            userParameters[$p] = $v;
+          }
+        });
+        $("#btn-parameter-remove-" + $val.slice(1,-1)).click(function () {
+          const $p = $(this).attr("data-parameter");
+          delete userParameters[$p];
+          $("#li-parameters-" + $p.slice(1,-1)).remove();
+        });
+        $("#btn-parameter-set-current-" + $val.slice(1,-1)).click(function() {
+          const $p = $(this).attr("data-parameter");
+
+          if ($p in currentParameters) {
+            userParameters[$p] = currentParameters[$p];
+            $("#input-change-parameters-" + $val.slice(1,-1)).val(parseFloat(currentParameters[$p]));
+          }
+        });
+        $("#btn-parameter-reset-" + $val.slice(1,-1)).click(function() {
+          const $p = $(this).attr("data-parameter");
+
+          if ($p in previousParameters) {
+            userParameters[$p] = previousParameters[$p];
+            $("#input-change-parameters-" + $val.slice(1,-1)).val(parseFloat(previousParameters[$p]));
+          }
+        });
+      }
+    }
+  });
+
+  $(".btn-set-parameters").click(function() {
+    const session = {
+      name: Cookies.get("KRB_EXPERIMENT_NAME"),
+      date: Cookies.get("KRB_EXPERIMENT_DATE"),
+      version: Cookies.get("KRB_EXPERIMENT_VERSION")
+    }; 
+    var qstr = $.param(session);
+    $.post("./api/experiments/plottable?" + qstr, userParameters)
+      .done(function(data) {
+        var s = JSON.parse(data);
+        sequence = s.plottable;
+        updatePlot(true);
+      });
+  });
+
+  $(".btn-reset-parameters").click(function() {
+    console.log("hi");
+  });
 
   function setupPlots() {
     svg.attr('width', width)
