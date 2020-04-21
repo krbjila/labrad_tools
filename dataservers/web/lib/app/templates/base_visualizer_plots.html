@@ -1,6 +1,6 @@
 <div class="col flex-fill pt-4">
   <div class="form-row">
-    <div class="form-group col-md-6">
+    <div class="form-group col-md-5">
       <label for="select-jump">
         Jump to sequence:
       </label>
@@ -8,9 +8,9 @@
       </select>
     </div>
 
-    <div class="form-group col-md-2">
+    <div class="form-group col-md-3">
       <label for="input-time-start">
-        Start time (ms)
+        Offset from sequence (ms)
       </label>
       <input class="form-control input-time" type="text" id="input-time-start" value="0">
     </div>
@@ -23,7 +23,13 @@
     </div>
   </div>
 
-  <div class="form-row">
+  <div class="form-row pb-2">
+    <button class="btn btn-outline-primary btn-full-view" type="button">
+      Set view to full sequence
+    </button>
+  </div>
+
+  <div class="form-row pb-2">
     <div class="form-check">
       <input class="form-check-input check-scale" type="checkbox" value="" id="check-scale">
       <label class="form-check-label" for="check-scale">
@@ -74,6 +80,15 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="form-row pt-2">
+    <a role="button" class="btn btn-outline-info btn-save-json">
+      Export view as .json (Python, etc.)
+    </a>
+    <a type="button" class="btn btn-outline-info btn-save-csv">
+      Export view as .csv (Origin, etc.)
+    </a>
   </div>
    
   <div class="row flex-fill">

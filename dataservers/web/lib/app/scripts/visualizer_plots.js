@@ -56,8 +56,8 @@
   });
 
   $(".select-jump").change(function() {
-    updateX();
-    updatePlot();
+    $("#input-time-start").change();
+    $("#input-time-span").change();
   });
 
   $(".select-version").change(function() {
@@ -115,16 +115,25 @@
 
     $("#input-time-start").val(0);
     $("#input-time-span").val(2000);
+
+    $(".select-jump").change();
   }
 
   function updateY() {
     if (sequence) {
       if ($(".check-scale").is(":checked")) {
         sequence_array.forEach(function(d,i) {
+          // Want to scale over view, so need to get max/min
+          const xs = x.domain();
+          const i0 = d3.bisectRight(d.data.map(x => x[0]), xs[0], 1);
+          const i1 = d3.bisectLeft(d.data.map(x => x[0]), xs[1], 1);
+          const trimmed_data = d.data.slice(i0, i1).map(x => x[1]);
+
           // Remember that each step in d.data is [time, value]
-          let max = Math.max(-1.0*d3.min(d.data, x => x[1]), d3.max(d.data, x => x[1]));
+          var max = Math.max(-1.0*d3.min(trimmed_data), d3.max(trimmed_data));
+          
           // Avoid divide by zero
-          max = Math.max(1, max);
+          max = Math.max(1e-3, max);
           sequence_array[i].scaledData = d.data.map(x => [x[0], x[1] / max]);
         });
 
@@ -194,7 +203,7 @@
 
       updateY();
 
-      if (flag) {
+      if (flag || $(".check-scale").is("checked")) {
         yScaled = y;
 
         yAxis = d3.axisLeft(y);
@@ -646,6 +655,21 @@
         }
       });
     setParameters();
+  });
+
+  $(".btn-save-json").click(function() {
+
+  });
+
+  $(".btn-save-csv").click(function() {
+
+  });
+
+  $(".btn-full-view").click(function() {
+    resetXControls();
+    const maxtime = sequence[TIMING_CHANNEL].slice(-1)[0][0];
+    $("#input-time-span").val(maxtime * 1e3);
+    $(".select-jump").change();
   });
 
   function setupPlots() {
