@@ -612,22 +612,40 @@
   });
 
   $(".btn-set-parameters").click(function() {
+    setParameters();
+  });
+
+  function setParameters() {
     const session = {
       name: Cookies.get("KRB_EXPERIMENT_NAME"),
       date: Cookies.get("KRB_EXPERIMENT_DATE"),
       version: Cookies.get("KRB_EXPERIMENT_VERSION")
     }; 
     var qstr = $.param(session);
-    $.post("./api/experiments/plottable?" + qstr, userParameters)
+
+    // This is like python dict.update()
+    const ps = Object.assign(previousParameters, userParameters);
+
+    // Post to API
+    $.post("./api/experiments/plottable?" + qstr, ps)
       .done(function(data) {
         var s = JSON.parse(data);
         sequence = s.plottable;
         updatePlot(true);
       });
-  });
+  }
 
   $(".btn-reset-parameters").click(function() {
-    console.log("hi");
+    Object.keys(previousParameters)
+      .forEach(function(k, i) {
+        if (k in userParameters) {
+          userParameters[k] = previousParameters[k];
+
+          $("#input-change-parameters-" + k.slice(1,-1))
+            .val(userParameters[k]);
+        }
+      });
+    setParameters();
   });
 
   function setupPlots() {
