@@ -39,16 +39,46 @@ class KRbSequenceAPI(Resource):
         self.experiments = Experiments(cxn)
         self.sequences = Sequences(cxn)
         self.channels = Channels(cxn)
+        self.parameters = Parameters(cxn)
 
         self.putChild("experiments", self.experiments)
         self.putChild("sequences", self.sequences)
         self.putChild("channels", self.channels)
+        self.putChild("parameters", self.parameters)
 
         self.sequence_versions = ExperimentSequences(cxn)
         self.plottables = ExperimentPlottables(cxn)
+        self.parameterized = ExperimentParameterized(cxn)
 
         self.experiments.putChild("sequences", self.sequence_versions)
         self.experiments.putChild("plottable", self.plottables)
+        self.experiments.putChild("parameterized", self.parameterized)
+
+class Parameters(Resource):
+    def __init__(self, cxn):
+        Resource.__init__(self)
+        self.cxn = cxn
+        self.template_context = {}
+
+    def render_GET(self, request):
+        self._render_get(request)
+        return NOT_DONE_YET
+
+    @inlineCallbacks
+    def _render_get(self, request):
+        conductor = yield self.cxn.servers['conductor']
+        pvs = yield conductor.get_parameter_values()
+        pvs = json.loads(pvs)
+        out = json.dumps(pvs, sort_keys=True, indent=4, separators=(',', ': '))
+        
+        if not "application/json" in request.getHeader('accept'):
+            out = PRE_OPEN + out + PRE_CLOSE
+            
+        request.write(bytes(out))
+
+        if not request.finished:
+            request.finish()
+
 
 class ExperimentsBase(Resource):
     def __init__(self, cxn):
@@ -57,11 +87,11 @@ class ExperimentsBase(Resource):
         self.template_context = {}
 
     def render_GET(self, request):
-        self._render_sequences(request)
+        self._render_get(request)
         return NOT_DONE_YET
 
     @inlineCallbacks
-    def _render_sequences(self, request):
+    def _render_get(self, request):
         out = ""
 
         (expts, dates, versions) = yield self._get_experiments()
@@ -118,6 +148,12 @@ class ExperimentsBase(Resource):
         e_versions = expts
         returnValue((e_list, e_dates, e_versions))
 
+    @inlineCallbacks
+    def _get_joined_sequence(self, sequences, date):
+        sequence_vault = yield self.cxn.servers['sequencevault']
+        joined = yield sequence_vault.get_joined_sequence(sequences, date)
+        returnValue(json.loads(joined))
+
 
 class Experiments(ExperimentsBase):
     @inlineCallbacks
@@ -137,12 +173,6 @@ class ExperimentSequences(ExperimentsBase):
         returnValue(json.dumps(arr, sort_keys=True, indent=4, separators=(',', ': ')))
 
 class ExperimentPlottables(ExperimentsBase):
-    @inlineCallbacks
-    def _get_joined_sequence(self, sequences, date):
-        sequence_vault = yield self.cxn.servers['sequencevault']
-        joined = yield sequence_vault.get_joined_sequence(sequences, date)
-        returnValue(json.loads(joined))
-
     @inlineCallbacks
     def _get_substituted_sequence(self, sequences, date):
         sequence_vault = yield self.cxn.servers['sequencevault']
@@ -219,6 +249,15 @@ class ExperimentPlottables(ExperimentsBase):
                     out[k] = zip(times, values)
         return out
 
+class ExperimentParameterized(ExperimentsBase):
+    @inlineCallbacks
+    def resourceFound(self, expt, date, version):
+        data = yield self._get_experiment_parameters(expt, date, version)
+        sequence_list = data['experiment']['sequencer']['sequence'][0]
+
+        sequence = yield self._get_joined_sequence(sequence_list, date)
+        parameterized_sequence = yield self._get_joined_sequence(sequence_list, date)
+        returnValue(json.dumps(parameterized_sequence, sort_keys=True, indent=4, separators=(',', ': ')))
 
 class SequencesBase(Resource):
     def __init__(self, cxn):
@@ -227,11 +266,11 @@ class SequencesBase(Resource):
         self.template_context = {}
 
     def render_GET(self, request):
-        self._render_sequences(request)
+        self._render_get(request)
         return NOT_DONE_YET
 
     @inlineCallbacks
-    def _render_sequences(self, request):
+    def _render_get(self, request):
         out = ""
 
         available = yield self._get_sequence_versions()
@@ -312,12 +351,11 @@ class Channels(Resource):
         self.template_context = {}
 
     def render_GET(self, request):
-        session = request.getSession()
-        self._render_sequences(request)
+        self._render_get(request)
         return NOT_DONE_YET
 
     @inlineCallbacks
-    def _render_sequences(self, request):
+    def _render_get(self, request):
         out = ""
 
         all_channels = yield self._get_channels()
@@ -378,304 +416,3 @@ class Channels(Resource):
         sequencer = yield self.cxn.servers['sequencer']
         channels = yield sequencer.get_channels()
         returnValue(json.loads(channels))
-
-# class Experiments(Resource):
-#     def __init__(self, cxn):
-#         Resource.__init__(self)
-#         self.cxn = cxn
-#         self.template_context = {}
-
-#     def render_GET(self, request):
-#         session = request.getSession()
-#         self._render_sequences(request)
-#         return NOT_DONE_YET
-
-#     @inlineCallbacks
-#     def _render_sequences(self, request):
-#         no_resource = False
-#         out = ""
-
-#         (expts, dates, versions) = yield self._get_experiments()
-
-#         if all(k in request.args.keys() for k in ['experiment', 'date', 'version']):
-#             expt = request.args['experiment'][0]
-#             date = request.args['date'][0]
-#             v = int(request.args['version'][0])
-
-#             if v in versions[expt][date]:
-#                 # setSessionExperiment(request, expt, date, v)
-
-#                 ret = yield self._get_experiment_parameters(expt, date, v)
-#                 out = {"name": expt, "date": date, "version": v, "data": ret['experiment']}
-#                 out = json.dumps(out, sort_keys=True, indent=4, separators=(',', ': '))                   
-#             else:
-#                 no_resource = True
-#                 out = json.dumps({"message": "not found", "error": 404}, sort_keys=True, indent=4, separators=(',', ': '))
-
-#         else:
-#             out = json.dumps(versions, sort_keys=True, indent=4, separators=(',', ': '))
-
-#         if not "application/json" in request.getHeader('accept'):
-#             out = PRE_OPEN + out + PRE_CLOSE
-
-#         if no_resource:
-#             request.setResponseCode(404)
-
-#         request.write(bytes(out))
-
-#         if not request.finished:
-#             request.finish()
-
-#     # @inlineCallbacks
-#     # def _get_sequence_durations(self, sequences, date):
-#     #     sequence_vault = yield self.cxn.servers['sequencevault']
-#     #     durations = yield sequence_vault.get_sequence_durations(sequences, date)
-#     #     returnValue(json.loads(durations))
-
-#     @inlineCallbacks
-#     def _get_experiment_parameters(self, experiment, date, version):
-#         experiment_vault = yield self.cxn.servers['experimentvault']
-#         expt = yield experiment_vault.get_experiment_data(experiment, date, version)
-#         returnValue(json.loads(expt))
-
-#     @inlineCallbacks
-#     def _get_experiments(self):
-#         experiment_vault = yield self.cxn.servers['experimentvault']
-#         expts = yield experiment_vault.get_available_experiments()
-#         expts = json.loads(expts)
-
-#         e_list = sorted(expts.keys(), key=lambda x: x[0].lower())
-#         e_dates = {k: sorted(v.keys()) for k,v in expts.items()}
-#         e_versions = expts
-#         returnValue((e_list, e_dates, e_versions))
-
-# class SequenceVersions(Resource):
-#     def __init__(self, cxn):
-#         Resource.__init__(self)
-#         self.cxn = cxn
-#         self.template_context = {}
-
-#     def render_GET(self, request):
-#         session = request.getSession()
-#         self._render_sequences(request)
-#         return NOT_DONE_YET
-
-#     @inlineCallbacks
-#     def _render_sequences(self, request):
-#         no_resource = False
-#         out = ""
-
-#         (expts, dates, versions) = yield self._get_experiments()
-
-#         if all(k in request.args.keys() for k in ['experiment', 'date', 'version']):
-#             expt = request.args['experiment'][0]
-#             date = request.args['date'][0]
-#             v = int(request.args['version'][0])
-
-#             if v in versions[expt][date]:
-#                 # setSessionExperiment(request, expt, date, v)
-
-#                 ret = yield self._get_experiment_parameters(expt, date, v)
-#                 sequences = ret['experiment']['sequencer']['sequence'][0]
-#                 durations = yield self._get_sequence_durations(sequences, date)
-#                 arr = [{'name': s, 'date': d, 'duration': dd} for s, d, dd in zip(sequences, ret['dates'], durations)] 
-#                 request.write(json.dumps(arr))
-#             else:
-#                 request.write("Cant find")
-#         else:
-#             request.write("incomplete query")
-#         if not request.finished:
-#             request.finish()
-
-#     @inlineCallbacks
-#     def _get_sequence_durations(self, sequences, date):
-#         sequence_vault = yield self.cxn.servers['sequencevault']
-#         durations = yield sequence_vault.get_sequence_durations(sequences, date)
-#         returnValue(json.loads(durations))
-
-#     @inlineCallbacks
-#     def _get_experiment_parameters(self, experiment, date, version):
-#         experiment_vault = yield self.cxn.servers['experimentvault']
-#         expt = yield experiment_vault.get_experiment_data(experiment, date, version)
-#         returnValue(json.loads(expt))
-
-#     @inlineCallbacks
-#     def _get_experiments(self):
-#         experiment_vault = yield self.cxn.servers['experimentvault']
-#         expts = yield experiment_vault.get_available_experiments()
-#         expts = json.loads(expts)
-
-#         e_list = sorted(expts.keys(), key=lambda x: x[0].lower())
-#         e_dates = {k: sorted(v.keys()) for k,v in expts.items()}
-#         e_versions = expts
-#         returnValue((e_list, e_dates, e_versions))
-
-class VisualizerLoad(LabradDjTemplateResource):
-    path = "base_visualizer_load.html"
-
-    def __init__(self, cxn=None):
-        LabradDjTemplateResource.__init__(self, self.path, cxn)
-
-class SSequences(Resource):
-    def __init__(self, cxn=None):
-        Resource.__init__(self)
-        self.cxn = cxn
-
-    def render_GET(self, request):
-        self._render(request)
-        return NOT_DONE_YET
-
-    @inlineCallbacks
-    def _render(self, request):
-        try:
-            experiment = request.args['experiment'][0]
-            date = request.args['date'][0]
-            version = int(request.args['version'][0])
-
-            experiment_vault = yield self.cxn.servers['experimentvault']
-            data = yield experiment_vault.get_experiment_data(experiment, date, version)
-            data = json.loads(data)
-            sequence_list = data['experiment']['sequencer']['sequence'][0]
-
-            sequence_vault = yield self.cxn.servers['sequencevault']
-
-            sequence = yield sequence_vault.get_joined_sequence(sequence_list, date)
-            sequence = json.loads(sequence)
-
-            substituted_sequence = yield sequence_vault.get_substituted_sequence(sequence_list, date)
-            substituted_sequence = json.loads(substituted_sequence)
-
-            plottable = yield self.get_plottable(substituted_sequence)
-
-            out = {'meta': sequence['meta'], 'plottable': plottable}
-            request.write(bytes(json.dumps(out)))
-        except Exception as e:
-            print e
-        if not request.finished:
-            request.finish()
-
-    @inlineCallbacks
-    def get_plottable(self, sequence):
-        sequencer = yield self.cxn.servers['sequencer']
-        channels = yield sequencer.get_channels()
-        channels = json.loads(channels)
-        returnValue(self.sequence_to_plottable(channels, sequence))
-
-    def map_channel_names(self, channels):
-        lookup = {}
-        for k,v in channels.items():
-            lookup[v['loc']] = k
-        return lookup
-
-    def sequence_to_plottable(self, channels, sequence):
-        lookup = self.map_channel_names(channels)
-
-        out = {}
-        for k,v in sequence.items():
-            kk = lookup[k.split('@')[-1]]
-
-            if channels[kk]['channel_type'] == 'digital':
-                times = [0]
-                values = [0]
-
-                for step in v:
-                    # Needed to make square edges on waveform
-                    if step['out'] != values[-1]:
-                        times.append(round(times[-1], TIME_PRECISION))
-                        values.append(step['out'])
-
-                    times.append(round(times[-1] + step['dt'], TIME_PRECISION))
-                    values.append(step['out'])
-
-                if channels[kk]['invert']:
-                    values = [-1.0*(vv-1.0) for vv in values]
-                out[k] = zip(times, values)
-            else:
-                if channels[kk]['board_name'] != 'S':
-                    r = analogRampMaker(v)
-                    s = r.get_programmable()
-
-                    times = [0]
-                    values = [0]
-                    for step in s:
-                        times.append(round(times[-1] + step['dt'], TIME_PRECISION))
-                        values.append(values[-1] + step['dv'])
-                    out[k] = zip(times, values) 
-                else:
-                    r = stableRampMaker(v)
-                    s = r.get_programmable()
-
-                    times = [0]
-                    values = [0]
-                    for step in s:
-                        times.append(round(times[-1] + step['dt'], TIME_PRECISION))
-                        values.append(step['v'])
-                    out[k] = zip(times, values)
-        return out
-
-class VisualizerShow(LabradDjTemplateResource):
-    path = "base_visualizer_show.html"
-
-    def __init__(self, cxn=None):
-        LabradDjTemplateResource.__init__(self, self.path, cxn)
-
-    def render_GET(self, request):
-        self._render(request)
-        return NOT_DONE_YET
-
-    @inlineCallbacks
-    def _render(self, request):
-        ses = getSessionExperiment(request)
-
-        if all(ses):
-            sequence_list = yield self._get_sequence_list(*ses)
-            sequence = yield self._get_sequence(sequence_list, ses[1])
-            (digital, analog) = self._get_channels(sequence)
-            self.template_context['session'] = list(ses)
-            self.template_context['digital'] = digital
-            self.template_context['analog'] = analog
-        else:
-            self.template_context['session'] = ['','',0]
-
-        request.write(bytes(self.template.render(self.template_context)))
-        if not request.finished:
-            request.finish()
-
-    def _get_channels(self, sequence):
-        channels = {} 
-        for x in sequence['sequence'].keys():
-            sp = x.split('@')
-            channels[sp[-1]] = sp[0]
-        
-        locs = {}
-        for x in sorted(channels.keys()):
-            if x[0] in locs:
-                locs[x[0]].append({'loc': x, 'name': channels[x]})
-            else:
-                locs[x[0]] = [{'loc': x, 'name': channels[x]}]
-        for k in locs.keys():
-            locs[k] = sorted(locs[k], key=lambda x: x['loc'])
-        ls = [{"device": k, "channels": locs[k]} for k in sorted(locs.keys())]
-
-        d = []
-        a = []
-        for l in ls:
-            if l["device"] in DIGITAL_CHANNELS:
-                d.append(l)
-            else:
-                a.append(l)
-        return (d, a)
-
-    @inlineCallbacks
-    def _get_sequence_list(self, experiment, date, version):
-        if experiment and date and version:
-            experiment_vault = yield self.cxn.servers['experimentvault']
-            data = yield experiment_vault.get_experiment_data(experiment, date, version)
-            data = json.loads(data)
-            returnValue(data['experiment']['sequencer']['sequence'][0])
-
-    @inlineCallbacks
-    def _get_sequence(self, sequences, date):
-        sequence_vault = yield self.cxn.servers['sequencevault']
-        sequence = yield sequence_vault.get_joined_sequence(sequences, date)
-        returnValue(json.loads(sequence))

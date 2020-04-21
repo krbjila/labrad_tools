@@ -1,5 +1,6 @@
 var KRbVisualizer = {
-  sequences: []
+  sequences: [],
+  sequenceBoundaries: []
 };
 
 (function() {
@@ -78,21 +79,41 @@ var KRbVisualizer = {
         .done(function(data) {
           KRbVisualizer.sequences = data;
           populateSequences(data);
-          populateSequenceJump(data);
+
+          $.getJSON("/krbtools/api/parameters")
+            .done(function (pvs) {
+              const pv_data = pvs.sequencer;
+              populateSequenceJump(data, pv_data);
+            });
         });
     }
   });
 
-  function populateSequenceJump(data) {
+  function populateSequenceJump(data, pv_data) {
     $select = $(".select-jump");
     $select.empty();
+    KRbVisualizer.sequenceBoundaries.length = 0;
 
     var ctime = 0;
     data.forEach(function(d,i) {
       var opt = new Option(d.name + " (" + ctime.toFixed(3) + " s)", ctime);
+      var duration = d.duration;
+
+      d.time_variables.forEach(function(k, i) {
+        console.log(k);
+        if (k in pv_data) {
+          duration += pv_data[k];
+        }
+      });
       opt.setAttribute("data-time", ctime);
       opt.setAttribute("data-duration", d.duration);
       $select.append(opt);
+
+      KRbVisualizer.sequenceBoundaries.push({
+        name: d.name,
+        time: ctime
+      });
+
       ctime += d.duration;
     });
   }

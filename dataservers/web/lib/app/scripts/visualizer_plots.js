@@ -4,13 +4,17 @@
   var colorLookup = {};
   var sequenceBoundaries = [];
 
+  var parameters;
+
   var sequence; var meta;
   var sequence_list;
   var sequence_array = [];
   var svg = d3.select("svg");
-  var line, x, y, z, xAxis, yAxis;
+  var line, x, y, yScaled, z, xAxis, yAxis;
 
   var xm, ym;
+
+  var previousScale = 1;
 
   const digital_colors = [
     "#ff0000",
@@ -29,27 +33,30 @@
   const width = 1000;
   const height = 450;
   const margins = {
-    left: 30,
+    left: 55,
     right: 20,
     top: 20,
-    bottom: 20
-  };
+    bottom: 40
+  }
   const TTL_HIGH = 5;
 
   const TIMING_CHANNEL = "Trigger@D15";
 
   generateLookup();
   getSequence();
+  getParameters();
 
   $(".check-channel").change(function() {
     updatePlot();
   });
 
   $(".check-scale").change(function() {
-    updatePlot();
+    updateX();
+    updatePlot(true);
   });
 
   $(".select-jump").change(function() {
+    updateX();
     updatePlot();
   });
 
@@ -69,6 +76,8 @@
         $val = 1e3 * maxnegtime;
       }
       $(this).val($val.toFixed(3));
+
+      updateX();
       updatePlot();
     }
   });
@@ -85,11 +94,13 @@
         $val = 1e3 * maxtime;
       }
       $(this).val($val.toFixed(3));
+
+      updateX();
       updatePlot();
     }
   });
 
-  function updateAxes() {
+  function updateY() {
     if (sequence) {
       if ($(".check-scale").is(":checked")) {
         sequence_array.forEach(function(d,i) {
@@ -101,12 +112,12 @@
         });
 
         y = d3.scaleLinear()
-          .domain([-1.1, 1.1])
-          .range([height - margins.top, margins.bottom]);
-        yAxis = d3.axisLeft(y);
+          .domain([-1.2, 1.2])
+          .range([height - margins.bottom, margins.top]);
 
-        svg.select("g.y.axis")
-            .call(yAxis);
+        svg.select("g.y.label")
+          .select("text")
+            .text("Scaled Voltage");
       }
       else {
         sequence_array.forEach(function(d,i) {
@@ -117,14 +128,18 @@
         });
 
         y = d3.scaleLinear()
-          .domain([-11, 11])
-          .range([height - margins.top, margins.bottom]);
-        yAxis = d3.axisLeft(y);
+          .domain([-12, 12])
+          .range([height - margins.bottom, margins.top]);
 
-        svg.select("g.y.axis")
-            .call(yAxis);
+        svg.select("g.y.label")
+          .select("text")
+            .text("Voltage");
       }
+    }
+  }
 
+  function updateX() {
+    if (sequence) {
       const $offset = parseFloat($(".select-jump").val());
       const $start = 1e-3 * parseFloat($("#input-time-start").val());
       const $span = 1e-3 * parseFloat($("#input-time-span").val());
@@ -140,11 +155,10 @@
 
       svg.select("g.x.axis")
         .call(xAxis);
-
     }
   }
 
-  function updatePlot() {
+  function updatePlot(flag = false) {
     if (sequence) {
       // Empty array
       sequence_array.length = 0;
@@ -161,7 +175,16 @@
         );
       });
 
-      updateAxes();
+      updateY();
+
+      if (flag) {
+        yScaled = y;
+
+        yAxis = d3.axisLeft(y);
+        svg.select("g.y.axis")
+          .call(yAxis);
+      }
+
       drawSequenceBoundaries();
 
       const path = svg.select("g.lines")
@@ -183,21 +206,31 @@
       }
       svg.call(mouseActions, path);
       svg.call(keyActions, path);
+
+      svg.call(d3.zoom()
+        .extent([[0,0], [width, height]])
+        .scaleExtent([1,10])
+        .on("zoom", zoomed));
     }
   }
 
+  function zoomed() {
+    const path = d3.select("g.lines").selectAll("path");
+
+    yScaled = d3.event.transform.rescaleY(y).nice(); 
+    yAxis = d3.axisLeft(yScaled);
+    svg.select("g.y.axis")
+      .call(yAxis);
+
+    line = d3.line()
+      .x(d => x(d[0]))
+      .y(d => yScaled(d[1]));
+
+    path.attr("d", d => line(d.scaledData));
+  }
+
   function drawSequenceBoundaries() {
-    sequenceBoundaries.length = 0;
-
-    var time = 0;
-    KRbVisualizer.sequences.forEach(function(d, i) {
-      sequenceBoundaries.push({
-        name: d.name,
-        time: time
-      });
-      time += d.duration;
-    });
-
+    sequenceBoundaries = KRbVisualizer.sequenceBoundaries;
     svg.select("g.sequence-lines")
       .selectAll("line")
         .data(sequenceBoundaries)
@@ -217,34 +250,23 @@
   /* Tab through which channel has focus */
   function keyActions(svg, path) {
     d3.select("body").on("keydown", keyDown);
-    d3.select("body").on("keyup", keyUp);
 
     const dot = svg.select("g.dot");
-
-    var shiftPressed = false;
 
     function keyDown() {
       const key = d3.event.keyCode;
       // 9 is tab
-      if (focusSet && mouseInFrame) {
+      if (focusSet && mouseInFrame && sequence_array) {
         if (key === 9) {
           d3.event.preventDefault();
-          const increment = shiftPressed ? -1 : 1;
+          const increment = d3.event.shiftKey ? -1 : 1;
           focusIndex = (focusIndex + increment) % sequence_array.length;
           if (focusIndex < 0) {
             focusIndex += sequence_array.length;
           }
           handleLinesFocus(xm, ym, dot, path)
         }
-        else if (d3.event.shiftKey) {
-          shiftPressed = true;
-        }
       }
-    }
-    function keyUp () {
-      const key = d3.event.keyCode;
-      // 16 is shift
-      if (key === 16) { shiftPressed = false; }
     }
   }
 
@@ -262,8 +284,11 @@
 
     function moved() {
       d3.event.preventDefault();
-      ym = y.invert(d3.event.layerY - margins.top);
-      xm = x.invert(d3.event.layerX - margins.left);
+
+      const coords = d3.mouse(svg.node());
+
+      ym = yScaled.invert(coords[1]);
+      xm = x.invert(coords[0]);
 
       if (xm >= x.domain()[1]) {
         return;
@@ -288,12 +313,23 @@
         .select("text")
           .text(sequenceBoundaries[iseq0].name);
 
+      const bbox = sequenceTag.select("text").node().getBBox();
+      sequenceTag
+        .select("rect")
+          .attr("x", bbox.x)
+          .attr("y", bbox.y)
+          .attr("width", bbox.width)
+          .attr("height", bbox.height)
+          .lower();
+
       sequenceBackground.select("rect")
         .attr("x", x(time0))
         .attr("width", x(time1) - x(time0));
       sequenceBackground.lower();
 
-      handleLinesFocus(xm, ym, dot, path);
+      if (sequence_array.length) {
+        handleLinesFocus(xm, ym, dot, path);
+      }
     }
     function clicked() {
       if (margins.top < d3.event.layerY
@@ -363,10 +399,11 @@
     }
     const val = sequence_array[focusIndex].scaledData[inner];
 
-    dot.attr("transform", "translate("+ x(val[0]) + "," + y(val[1]) + ")")
+    dot.attr("transform", "translate("+ x(val[0]) + "," + yScaled(val[1]) + ")")
       .raise();
     svg.select("#text-dot-name")
       .text(sequence_array[focusIndex].name);
+
     // Put the real voltage out
     svg.select("#text-dot-voltage")
       .text(sequence_array[focusIndex].data[inner][1].toFixed(3) + " V");
@@ -416,25 +453,45 @@
       });
   }
 
+  function getParameters() {
+    $.getJSON("./api/parameters")
+      .done(function(data) {
+        parameters = data.sequencer;
+        setupAutocomplete();
+      });
+  }
+
+  function setupAutocomplete() {
+    const p = Object.keys(parameters);
+    const $input = $("#input-parameters");
+    $input.autocomplete({
+      source: p
+    });
+    $input.autocomplete("option", "appendTo", ".parameter-list");
+    $input.on("autocompleteselect", function (event, ui) {
+      console.log(ui.item.label);
+    });
+  }
+
   function setupPlots() {
     svg.attr('width', width)
       .attr('height', height);
 
     x = d3.scaleLinear()
-      .domain([0, 40])
+      .domain([0, 2])
       .range([margins.left, width - margins.right]);
     xAxis = d3.axisBottom(x);
 
     y = d3.scaleLinear()
-      .domain([-5, 5])
-      .range([height - margins.top, margins.bottom]);
+      .domain([-12, 12]).nice()
+      .range([height - margins.bottom, margins.top]);
     yAxis = d3.axisLeft(y);
+
+    yScaled = y;
 
     line = d3.line()
     	.x(d => x(d[0]))
-    	.y(d => y(d[1]));
-
-    svg.attr("transform", "translate(" + margins.left + "," + margins.top + ")");
+    	.y(d => yScaled(d[1]));
 
     svg.append("g")
       .attr("class", "x axis")
@@ -442,9 +499,30 @@
       .call(xAxis);
 
     svg.append("g")
+      .attr("class", "x label")
+      .attr("transform", "translate(" + ((width + margins.left - margins.right)/2) + "," + (height - margins.bottom) + ")")
+      .append("text")
+        .attr("text-anchor", "middle")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", 16)
+        .attr("y", 35)
+        .text("Time (s)");
+
+    svg.append("g")
       .attr("class", "y axis")
       .attr("transform", "translate(" + margins.left + ",0)")
       .call(yAxis);
+
+    svg.append("g")
+      .attr("class", "y label")
+      .attr("transform", "translate(0," + ((height + margins.top - margins.bottom)/2) + ")")
+      .append("text")
+        .attr("text-anchor", "middle")
+        .attr("font-family", "sans-serif")
+        .attr("font-size", 16)
+        .attr("y",20)
+        .attr("transform", "rotate(-90)")
+        .text("Voltage");
 
     svg.append("g")
       .attr("class", "lines");
@@ -478,10 +556,13 @@
       .attr("text-anchor", "middle")
       .attr("y", 15);
 
-    svg.append("g")
+    const tag = svg.append("g")
       .attr("class", "sequence-tag")
-      .attr("display", "none")
-      .append("text")
+      .attr("display", "none");
+    tag.append("rect")
+        .attr("fill", "#eee")
+        .attr("stroke", "none");
+    tag.append("text")
         .attr("font-family", "sans-serif")
         .attr("font-size", 12)
         .attr("text-anchor", "middle")
