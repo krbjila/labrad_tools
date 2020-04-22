@@ -70,42 +70,46 @@
   });
 
   $("#input-time-start").change(function () {
-    $val = parseFloat($(this).val());
-    if ($val === NaN) {
-      alert("Please put a number here!");
-    }
-    else {
-      const maxpostime = sequence[TIMING_CHANNEL].slice(-1)[0][0] - x.domain()[0];
-      const maxnegtime = -1 * x.domain()[0];
-
-      if ($val*1e-3 > maxpostime) {
-        $val = 1e3 * maxpostime;
+    if (sequence) {
+      $val = parseFloat($(this).val());
+      if ($val === NaN) {
+        alert("Please put a number here!");
       }
-      else if ($val*1e-3 < maxnegtime) {
-        $val = 1e3 * maxnegtime;
-      }
-      $(this).val($val.toFixed(3));
+      else {
+        const maxpostime = sequence[TIMING_CHANNEL].slice(-1)[0][0] - x.domain()[0];
+        const maxnegtime = -1 * x.domain()[0];
 
-      updateX();
-      updatePlot();
+        if ($val*1e-3 > maxpostime) {
+          $val = 1e3 * maxpostime;
+        }
+        else if ($val*1e-3 < maxnegtime) {
+          $val = 1e3 * maxnegtime;
+        }
+        $(this).val($val.toFixed(3));
+
+        updateX();
+        updatePlot();
+      }
     }
   });
 
   $("#input-time-span").change(function () {
-    $val = parseFloat($(this).val());
-    if ($val === NaN || $val < 0) {
-      alert("Please put a nonnegative number here!");
-    }
-    else {
-      const maxtime = sequence[TIMING_CHANNEL].slice(-1)[0][0] - x.domain()[0];
-
-      if ($val*1e-3 > maxtime) {
-        $val = 1e3 * maxtime;
+    if (sequence) {
+      $val = parseFloat($(this).val());
+      if ($val === NaN || $val < 0) {
+        alert("Please put a nonnegative number here!");
       }
-      $(this).val($val.toFixed(3));
+      else {
+        const maxtime = sequence[TIMING_CHANNEL].slice(-1)[0][0] - x.domain()[0];
 
-      updateX();
-      updatePlot();
+        if ($val*1e-3 > maxtime) {
+          $val = 1e3 * maxtime;
+        }
+        $(this).val($val.toFixed(3));
+
+        updateX();
+        updatePlot();
+      }
     }
   });
 
@@ -125,13 +129,13 @@
         sequence_array.forEach(function(d,i) {
           // Want to scale over view, so need to get max/min
           const xs = x.domain();
-          const i0 = d3.bisectRight(d.data.map(x => x[0]), xs[0], 1);
-          const i1 = d3.bisectLeft(d.data.map(x => x[0]), xs[1], 1);
+          const i0 = d3.bisectRight(d.data.map(x => x[0]), xs[0], 0);
+          const i1 = d3.bisectLeft(d.data.map(x => x[0]), xs[1], 0);
           const trimmed_data = d.data.slice(i0, i1).map(x => x[1]);
 
           // Remember that each step in d.data is [time, value]
           var max = Math.max(-1.0*d3.min(trimmed_data), d3.max(trimmed_data));
-          
+
           // Avoid divide by zero
           max = Math.max(1e-3, max);
           sequence_array[i].scaledData = d.data.map(x => [x[0], x[1] / max]);
@@ -658,12 +662,92 @@
   });
 
   $(".btn-save-json").click(function() {
+    const s = getTrimmedSequence();
+    var out = {};
 
+    s.forEach(function(d, i) {
+      out[d.name] = {
+        nameloc: d.nameloc,
+        t: d.data.map(x => x[0]),
+        v: d.data.map(x => x[1])
+      }
+    });
+    var b = new Blob([JSON.stringify(out, null, 2)], {type: "application/json"});
+    saveFile(b, "view.json");
   });
 
   $(".btn-save-csv").click(function() {
+    const s = getTrimmedSequence();
+    var out = [];
+
+    // Need to first make an array that
+    // is convenient for making the csv
+    var long = 0;
+    var names = [];
+    var labels = [];
+    s.forEach(function(d,i) {
+      if (d.data.length > long) {
+        long = d.data.length;
+      }
+
+      names.push(d.name);
+      names.push(d.name);
+      labels.push("Time (s)");
+      labels.push("Voltage (V)");
+    });
+    out.push(names);
+    out.push(labels);
+
+    for (let i=0; i < long; i++) {
+      var row = [];
+      s.forEach(function(d,j) {
+        if (i < d.data.length) {
+          row.push(d.data[i][0]);
+          row.push(d.data[i][1]);
+        }
+        else {
+          row.push("");
+          row.push("");
+        }
+      });
+
+      out.push(row);
+    }
+
+    // Now make things into a bit long string
+    const dstr = out.map(r => r.join(",")).join("\n");
+    const b = new Blob([dstr], {type: "text/csv"});
+    saveFile(b, "view.csv");
 
   });
+
+  function saveFile(fileblob, name) {
+    var a = window.document.createElement("a");
+    a.href = window.URL.createObjectURL(fileblob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function getTrimmedSequence() {
+    const xs = x.domain();
+
+    console.log(xs);
+
+    var out = [];
+    sequence_array.forEach(function(d,i) {
+      const i0 = d3.bisectLeft(d.data.map(x => x[0]), xs[0], 0);
+      const i1 = d3.bisectRight(d.data.map(x => x[0]), xs[1], 0);
+
+      out.push({
+        name: d.name,
+        nameloc: d.nameloc,
+        data: d.data.slice(i0, i1)
+      });
+    });
+    return out;
+  }
 
   $(".btn-full-view").click(function() {
     resetXControls();
