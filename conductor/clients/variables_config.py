@@ -45,6 +45,8 @@ variables_dict = [
     ['*VOTFull', 0],
     ['*VOTFinal', 0],
     ['*VLattPhase', 0],
+    ['*VLattPhaseFinal', 0],
+    ['*VLattInitialPhase', 0],
     # Optical traps
     ['*HOTLoad', 3.6], # was 3.77 (11/27/19); was 5.2 before calibration changed
     ['*HOTMid', 0.8], # was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
@@ -61,6 +63,7 @@ variables_dict = [
     ['*Latt1Load', 0],
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
+    ['*LSLFinal', 0.03],
     # Electric Fields
     ['*LowerPlate', 0.0],
     ['*UpperPlate', 0.0],
