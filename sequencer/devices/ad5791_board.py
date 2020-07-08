@@ -7,8 +7,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from server_tools.device_server import DeviceWrapper
 from lib.ad5791_ramps import RampMaker
 
-(VREFN, VREFP) = (-10., 10.)
-(VMIN, VMAX) = (-5, 5)
+(VREFN, VREFP) = (-5., 5.)
+(VMIN, VMAX) = (-4., 4.)
 DAC_BITS = 20
 DT_BITS = 28
 
