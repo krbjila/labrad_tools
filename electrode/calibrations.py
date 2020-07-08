@@ -17,7 +17,7 @@ PLATE_SEPARATION = 0.6 # cm
 RODS_CORRECTION = 0.96079
 
 # Safety limit for DACs; HV is limited to 2000x this value
-DAC_LIMIT = 2
+DAC_LIMIT = 2.5
 
 # Default comp shim
 COMP_SHIM_DEFAULT = 1.5

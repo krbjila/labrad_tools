@@ -8,7 +8,7 @@ from server_tools.device_server import DeviceWrapper
 from lib.ad5791_ramps import RampMaker
 
 (VREFN, VREFP) = (-5., 5.)
-(VMIN, VMAX) = (-4., 4.)
+(VMIN, VMAX) = (-2.6, 2.6)
 DAC_BITS = 20
 DT_BITS = 28
 
