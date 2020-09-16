@@ -78,5 +78,7 @@ if  __name__ == '__main__':
     qt4reactor.install()
     from twisted.internet import reactor
     widget = MainClient(reactor)
+    widget.setWindowTitle('Experiment Status')
+    widget.setWindowIcon(QIcon('./circle.png'))
     widget.show()
     reactor.run()

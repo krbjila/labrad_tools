@@ -301,6 +301,7 @@ if __name__ == "__main__":
     MainWindow = QtGui.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
+    MainWindow.setWindowIcon(QtGui.QIcon('./icon.png'))
     MainWindow.show()
     sys.exit(app.exec_())
 

@@ -212,5 +212,6 @@ if __name__ == '__main__':
     qt4reactor.install()
     from twisted.internet import reactor
     widget = ElectrodeWindow(reactor)
+    widget.setWindowIcon(QtGui.QIcon('./lib/icon.png'))
     widget.show()
     reactor.run()

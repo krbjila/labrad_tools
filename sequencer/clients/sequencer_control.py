@@ -657,5 +657,6 @@ if __name__ == '__main__':
     qt4reactor.install()
     from twisted.internet import reactor
     widget = SequencerControl(reactor)
+    widget.setWindowIcon(QtGui.QIcon('./lib/sq.png'))
     widget.show()
     reactor.run() 
