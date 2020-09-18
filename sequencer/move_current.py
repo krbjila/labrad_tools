@@ -20,7 +20,7 @@ if not os.path.exists(todays_path):
 
 dates.sort(reverse=True)
 all_sequences = []
-for k in range(len(dates)):
+for k in range(1, len(dates)):
     current_path = sequences_path.format(dates[k])
     current_sequences = glob.glob(current_path+'*')
     for kk in current_sequences:
