@@ -243,6 +243,7 @@ class Ui_MainWindow(object):
 	
         self.graph.axes.clear()
         self.graph.axes.plot(T,F)
+	print(F[-1])
         fick = "Evap. Time: {0:.2f} s".format(MaxTime)
 	self.graph.axes.set_title(fick)
         self.graph.draw()

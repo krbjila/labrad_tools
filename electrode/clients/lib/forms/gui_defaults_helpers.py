@@ -42,17 +42,19 @@ FIELD_PRECISIONS = {
 	# 'cs': [2]
 }
 
+MAX_FIELD = 2*DAC_LIMIT*2000./PLATE_SEPARATION*RODS_CORRECTION
+
 # Field mins for numeric entry
 FIELD_MIN = {
 	'i' : [-DAC_LIMIT*2000.]*6,
-	'n' : [-3000., -13333., -5., -100., -1000., -1000., -3000.],
+	'n' : [-5000., -MAX_FIELD, -5., -100., -5000., -5000., -5000.],
 	# 'cs': [-100.]
 }
 
 # Field mins for numeric entry
 FIELD_MAX = {
 	'i' : [DAC_LIMIT*2000.]*6,
-	'n' : [3000., 13333., 5., 100., 1000., 1000., 3000.],
+	'n' : [5000., MAX_FIELD, 5., 100., 5000., 5000., 5000.],
 	# 'cs' : [100.]
 }
 

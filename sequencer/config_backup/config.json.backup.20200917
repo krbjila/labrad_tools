@@ -232,14 +232,14 @@
                 },
                 {
                     "loc": ["C", 0],
-                    "name": "Conrad Laser AOM",
+                    "name": "TTL C0",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 1],
-                    "name": "Conrad Laser Shutter",
+                    "name": "TTL C1",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -274,7 +274,7 @@
                 },
                 {
                     "loc": ["C", 6],
-                    "name": "V. Latt. Phase Stab.",
+                    "name": "TTL C6",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -359,7 +359,7 @@
                 },
                 {
                     "loc": ["D", 2],
-                    "name": "Ximea Trig.",
+                    "name": "Princeton Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -429,14 +429,14 @@
                 },
                 {
                     "loc": ["D", 12],
-                    "name": "Axial iXon Trig.",
+                    "name": "Andor Camera Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["D", 13],
-                    "name": "Vertical iXon Trig.",
+                    "name": "TTL D13",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -465,7 +465,7 @@
             "channels": [
                 {
                     "loc": ["E", 0],
-                    "name": "Ximea Shutter",
+                    "name": "Princeton Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -493,14 +493,14 @@
                 },
                 {
                     "loc": ["E", 4],
-                    "name": "Axial iXon Shutter",
+                    "name": "Andor Camera Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["E", 5],
-                    "name": "Vertical iXon Shutter",
+                    "name": "TTL E5",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -689,7 +689,7 @@
                 },
                 {
                     "loc": ["G", 0],
-                    "name": "ODT Modulation Trig.",
+                    "name": "TTL G0",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1090,7 +1090,7 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC24: Broken", 
+                    "name": "DAC24: Plug", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
@@ -1146,13 +1146,13 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32: V. Latt. Phase Stab.", 
+                    "name": "DAC32: Lower Plate (DAC: -V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC33: ", 
+                    "name": "DAC33: Upper Plate (DAC: +V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1164,7 +1164,7 @@
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC35: ", 
+                    "name": "DAC35: Upper Rods (DAC: -V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1175,7 +1175,7 @@
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC37: ", 
+                    "name": "DAC37: Lower Rods (DAC: +V)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1202,7 +1202,7 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC40: Plug Intensity", 
+                    "name": "DAC40: ", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },

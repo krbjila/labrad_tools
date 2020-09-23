@@ -20,6 +20,14 @@
                 }
             }
         },
+        "kd1": {
+            "frequency": {
+                "default": 1286
+            },
+            "amplitude": {
+                "default": -11
+            }
+        },
         "arp33220A": {
             "frequency": {
                 "default_frequency": 100

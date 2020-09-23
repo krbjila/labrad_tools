@@ -35,8 +35,9 @@ class ArduinoServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         addresses = [cp[0] for cp in serial.tools.list_ports.comports()]
-        
-        for address in addresses:
+        descriptions = [cp[1] for cp in serial.tools.list_ports.comports()]
+
+        for (address, d) in zip(addresses, descriptions):
             if address in self.interfaces.keys():
                 try:
                     self.interfaces[address].isOpen()
@@ -45,7 +46,7 @@ class ArduinoServer(HardwareInterfaceServer):
                     del self.interfaces[address]
             else:
                 try:
-                    if address[0:-1] == '/dev/ttyACM':
+                    if address[0:-1] == '/dev/ttyACM' and d.find("Arduino") >= 0:
                         ser = Serial(address)
                         ser.close()
                         self.interfaces[address] = ser

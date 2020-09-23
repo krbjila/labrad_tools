@@ -6,29 +6,29 @@ variables_dict = [
     ['*RbProbeI', -7.5],
     ['*KProbeI', -3.5],
     ['*KHFBlast', 0.58],
-    ['*KMOT', 2],
+    ['*KMOT', 4],
     ['*RbMOT', 9.8],
     ['*RbHFOP', 4.7], 
     # QUAD shims
-    ['*NWhigh', 4.45],
-    ['*NWlow', 4.44],
-    ['*SWhigh', 4.8],
-    ['*SWlow',4.645],
+    ['*NWhigh', 4.42],
+    ['*NWlow', 4.43], # 4.44
+    ['*SWhigh', 4.775],
+    ['*SWlow',4.62], # 4.645
    # Plug PZTs
     ['*PLUGV', 0],
    # Plug Power
     ['*PLUGP', 1.9],
     # B fields
-    ['*QUADV', -3.6],
+    ['*QUADV', -3.8], # was -3.6
     ['*QTRAP', 7.5],
     ['*QuadI2', 4.5], # was 3.8, was 4.0, was 5
-    ['*QuadV2', -2.2], # was -2.2, was -1.9, was -2.4
+    ['*QuadV2', -2.45], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
-    ['*BIASI', 0.04], # was 0.044
+    ['*BIASI', 0.046], # was 0.044
     ['*LowField', 0.457], # was 0.465
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.3], # was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.05], # was -3.6 before moving stuff to back corridor
     ['*BiasSub', -2.65],
     ['*StableBias', 0.05], # was 0.45
     ['*FeshBias', -5.43],

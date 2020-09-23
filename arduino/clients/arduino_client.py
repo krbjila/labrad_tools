@@ -12,6 +12,8 @@ from twisted.internet.defer import inlineCallbacks
 
 SEP = os.path.sep
 
+PORT = '/dev/ttyACM0'
+
 class ArduinoClient(QtGui.QWidget):
     def __init__(self, reactor, parent=None):
         super(ArduinoClient, self).__init__(parent)
@@ -46,7 +48,7 @@ class ArduinoClient(QtGui.QWidget):
         # open connection with Arduino device
         devices = yield self.server.get_interface_list()
         for device in devices:
-            if device[0:-1] == '/dev/ttyACM':
+            if device == PORT:
                 yield self.server.select_interface(device)
                 self.device = device
         try:
