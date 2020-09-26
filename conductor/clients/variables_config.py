@@ -25,12 +25,14 @@ variables_dict = [
     ['*QuadV2', -2.45], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
-    ['*BIASI', 0.046], # was 0.044
+    ['*BIASI', 0.042], # was .04, 0.044
+    ['*BIASV', 0.248],
     ['*LowField', 0.457], # was 0.465
+    ['*LowFieldV', -.085],
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.05], # was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -3.9], # was -3.6 before moving stuff to back corridor
     ['*BiasSub', -2.65],
-    ['*StableBias', 0.05], # was 0.45
+    ['*StableBias', -0.1], # was 0.45
     ['*FeshBias', -5.43],
     ['*ToeBias', -5.01],
     #Micellaneous
@@ -48,13 +50,13 @@ variables_dict = [
     ['*VLattPhaseFinal', 0],
     ['*VLattInitialPhase', 0],
     # Optical traps
-    ['*HOTLoad', 3.6], # was 3.77 (11/27/19); was 5.2 before calibration changed
+    ['*HOTLoad', 4], # was 3.6 (9/23/20); was 3.77 (11/27/19); was 5.2 before calibration changed
     ['*HOTMid', 0.8], # was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
     ['*HOTBottom', 0.4],
     ['*HOTRecom', 0.42],
     ['*HOTFilter', 0.4],
-    ['*MARIALoad', 4.5], # was 2.34 (11/27/19); was 2.6
+    ['*MARIALoad', 5], # was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
     ['*MARIAMid', 0.9], # was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', 0.7], # was 0.5
     ['*MARIABottom', 0.344],
