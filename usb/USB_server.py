@@ -16,11 +16,8 @@ timeout = 20
 ### END NODE INFO
 """
 import sys
-
 import visa
-
 from labrad.server import LabradServer, setting
-
 sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
@@ -32,7 +29,7 @@ class USBServer(HardwareInterfaceServer):
     def refresh_available_interfaces(self):
         """ fill self.interfaces with available connections """
         """ Modified to use python visa """
-        rm = visa.ResourceManager('@py')
+        rm = visa.ResourceManager()
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
