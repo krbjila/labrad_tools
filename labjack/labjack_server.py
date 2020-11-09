@@ -3,8 +3,8 @@
 [info]
 name = DG800
 version = 1
-description = server for Highfinesse WS-7 Wavemeter
-instancename = %LABRADNODE%_wavemeter
+description = server for LabJack T7 DAQ
+instancename = %LABRADNODE%_labjack
 [startup]
 cmdline = %PYTHON% %FILE%
 timeout = 20
