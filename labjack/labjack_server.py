@@ -77,6 +77,43 @@ class LabJackServer(LabradServer):
         ljm.eStreamStart(self.handle, scansPerRead, self.nchannels, ljm.namesToAddresses(self.nchannels, aScanList)[0], scanRate)
         ljm.setStreamCallback(self.handle, self.callback)
 
+    @setting(4, addr='s', returns='v')
+    def read_register(self, c, addr):
+        try:
+            returnValue(ljm.eReadName(self.handle, addr))
+        except Exception as e:
+            print(e)
+            returnValue(0.0)
+        
+    @setting(5, addr='s', val='v')
+    def write_register(self, c, addr, val):
+        try:
+            ljm.eWriteName(self.handle, addr, val)
+        except Exception as e:
+            print(e)
+        
+    @setting(6, addr='s', returns='s')
+    def read_register_string(self, c, addr):
+        try:
+            returnValue(ljm.eReadNameString(self.handle, addr))
+        except Exception as e:
+            print(e)
+            returnValue("")
+
+    @setting(7, addr='s', val='s')
+    def write_register_string(self, c, addr, val):
+        try:
+            ljm.eWriteNameString(self.handle, addr, val)
+        except Exception as e:
+            print(e)
+
+    @setting(8)
+    def stop_stream(self, c):
+        try:
+            ljm.eStreamStop(self.handle)
+        except Exception as e:
+            print(e)
+
 if __name__ == "__main__":
     from labrad import util
     util.runServer(LabJackServer())
