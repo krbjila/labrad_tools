@@ -1252,7 +1252,7 @@
         "S": {
             "device_type": "AD5791Board",
             "connection_type": "OKFPGA",
-            "servername": "polarkrb_okfpga",
+            "servername": "imaging_okfpga",
             "address": "KRbStable01",
             "channels": [
                 {

@@ -11,7 +11,7 @@ from conductor_device.conductor_parameter import ConductorParameter
 import serial
 import json
 
-arduino_address = 'COM3'
+arduino_address = 'COM4'
 
 
 class Update(ConductorParameter):
@@ -32,7 +32,7 @@ class Update(ConductorParameter):
     def initialize(self):
         self.cxn = yield connectAsync()
         try:
-            self.server = self.cxn.polarkrb_ad9910
+            self.server = self.cxn.imaging_ad9910
             interfaces = yield self.server.get_interface_list()
             if len(interfaces) == 1:
                 interface = interfaces[0]
