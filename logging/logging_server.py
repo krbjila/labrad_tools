@@ -15,13 +15,19 @@ timeout = 20
 """
 import sys
 from labrad.server import LabradServer, setting
+import labrad
 sys.path.append("../client_tools")
 # from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
+from twisted.internet.task import LoopingCall
 from datetime import datetime
 import io
 import os, errno
+import json
+
+BETWEEN_SHOTS_TIME = 10 # how often to log the wavemeter between shots (s)
+DURING_SHOT_TIME = 0.1 # how often to log the wavemeter during a shot (s)
 
 class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
@@ -33,6 +39,9 @@ class LoggingServer(LabradServer):
         self.logfile = None
         super(LoggingServer, self).__init__()
         self.set_save_location()
+
+        self.wavemetercall = LoopingCall(self.log_wavelength)
+        self.wavemetercall.start(BETWEEN_SHOTS_TIME)
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
@@ -47,10 +56,15 @@ class LoggingServer(LabradServer):
     def set_shot(self, c, shot=None):
         self.shot = shot
         self.set_save_location()
+        self.wavemetercall.stop()
+        if shot is None:
+            self.wavemetercall.start(BETWEEN_SHOTS_TIME)
+        else:
+            self.wavemetercall.start(DURING_SHOT_TIME)
 
     @setting(3, name='s')
     def set_name(self, c, name):
-        print("setting name of client %d to %s" % (c.ID[0], name))
+        print("Setting name of client %d to %s" % (c.ID[0], name))
         c["name"] = name
 
     def set_save_location(self):
@@ -72,6 +86,10 @@ class LoggingServer(LabradServer):
                 raise
         self.logfile = open(fname, 'a+')
         print("Opening log file %s" % (fname))
+
+    def log_wavelength(self):
+        d = yield self.client.wavemeterlaptop_wavemeter.get_wavelengths()
+        print(json.loads(d))
 
 if __name__ == '__main__':
     from labrad import util
