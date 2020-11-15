@@ -21,6 +21,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
 from datetime import datetime
 import io
+import os, errno
 
 class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
@@ -37,13 +38,20 @@ class LoggingServer(LabradServer):
     def log(self, c, message, time=None):
         if time is None:
             time = datetime.now()
-        client_id = "test" #TODO: get ID from c
-        self.logfile.write("%s - %s: %s" % (client_id, time.strftime('%Y-%m-%d %H:%M:%S.%f'), message))
+        logmessage = "%s - %s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), c["name"], message)
+        print(logmessage)
+        self.logfile.write(logmessage)
+        self.logfile.flush()
 
     @setting(2, shot='i')
     def set_shot(self, c, shot=None):
         self.shot = shot
         self.set_save_location()
+
+    @setting(3, name='s')
+    def set_name(self, c, name):
+        print("setting name of client %d to %s" % (c.ID[0], name))
+        c["name"] = name
 
     def set_save_location(self):
         now = datetime.now()
@@ -51,11 +59,19 @@ class LoggingServer(LabradServer):
             self.logfile.close()
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
-            fname = "log_%s.csv" % (now.strftime('%m_%d_%Y'))
+            path = "K:/data/%s/" % (now.strftime('%Y/%m/%Y%m%d'))
+            fname = path+"log.txt"
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
-            fname = "log_%s_shot_%d.csv" % (now.strftime('%m_%d_%Y'), self.shot)
+            path = "K:/data/%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
+            fname = path+"log.txt"
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
         self.logfile = open(fname, 'a+')
+        print("Opening log file %s" % (fname))
 
 if __name__ == '__main__':
     from labrad import util
