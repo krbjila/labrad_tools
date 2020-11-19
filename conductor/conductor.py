@@ -22,6 +22,10 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import time, strftime
+from datetime import datetime
+
+sys.path.append("../client_tools")
+from connection import connection
 
 from labrad.server import LabradServer
 from labrad.server import setting
@@ -66,6 +70,12 @@ class ConductorServer(LabradServer):
         self.data = {}
         self.data_path = None
         self.do_print_delay = False
+        self.shot = -1
+        self.last_time = datetime.now()
+
+        # self.cxn = connection()
+        # yield self.cxn.connect()
+        # self.logging = yield self.cxn.get_server('imaging_logging')
 
         self.load_config(config_path)
         LabradServer.__init__(self)
@@ -528,6 +538,9 @@ class ConductorServer(LabradServer):
             with open(self.data_path, 'w+') as outfile:
                 json.dump(self.data, outfile, default=lambda x: None)
 
+        self.advance_logging('defaults' in self.data_path)
+
+
     @inlineCallbacks
     def stopServer(self):
         parameters_filename = self.parameters_directory + 'current_parameters.json'
@@ -597,6 +610,31 @@ class ConductorServer(LabradServer):
                 del self.advance_dict[str(kwargs['ID'])]
             if self.do_print_delay:
                 print 'delay', tf-ti
+
+    """
+    Tells the logging server to begin logging for the next shot. Shot number is reset daily
+    """
+    @inlineCallbacks
+    def advance_logging(self, end = False):
+        cur_time = datetime.now()
+        if not end:
+            if cur_time.date() != self.last_time.date():
+                self.shot = 0
+            else:
+                self.shot += 1
+            self.last_time = cur_time
+
+            try:
+                self.client.servers['imaging_logging'].set_shot(self.shot)
+                self.client.servers['imaging_logging'].log("Started shot %d" % (self.shot), cur_time)
+            except Exception as e:
+                print("Could not connect to logging server: ", e)
+        else:
+            try:
+                self.client.servers['imaging_logging'].log("Finished shot %d" % (self.shot), cur_time)
+                self.client.servers['imaging_logging'].set_shot()
+            except Exception as e:
+                print("Could not connect to logging server: ", e)
 
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):

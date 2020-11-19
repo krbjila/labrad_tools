@@ -34,7 +34,7 @@ class LoggingServer(LabradServer):
     name = '%LABRADNODE%_logging'
 
     def __init__(self):
-        self.name = 'krbhyperimage_logging'
+        self.name = 'imaging_logging'
         self.shot = None
         self.logfile = None
         self.freqfile = None
