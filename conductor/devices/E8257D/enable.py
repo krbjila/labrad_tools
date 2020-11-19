@@ -35,7 +35,7 @@ class Enable(ConductorParameter):
     def initialize(self):
 
         self.cxn = yield connectAsync()
-	yield self.cxn.krbjila_gpib.select_interface('GPIB0::19::INSTR')
+        yield self.cxn.krbjila_gpib.select_interface('GPIB0::19::INSTR')
 
         yield self.cxn.krbjila_arduino.signal__case(self.ID_case)
         yield self.cxn.krbjila_arduino.addListener(listener = self.advanceAction, source = None, ID = self.ID_case)

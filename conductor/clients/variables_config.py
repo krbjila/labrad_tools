@@ -6,31 +6,32 @@ variables_dict = [
     ['*RbProbeI', -7.5],
     ['*KProbeI', -3.5],
     ['*KHFBlast', 0.58],
-    ['*KMOT', 4],
-    ['*RbMOT', 9.8],
+    ['*KMOT', 6],
+    ['*RbMOT', 4],
     ['*RbHFOP', 4.7], 
     # QUAD shims
-    ['*NWhigh', 4.42],
-    ['*NWlow', 4.43], # 4.44
-    ['*SWhigh', 4.775],
-    ['*SWlow',4.62], # 4.645
+    ['*NWhigh', 4.4],
+    ['*NWlow', 4.42], # 4.44
+    ['*SWhigh', 4.84],
+    ['*SWlow',4.66], # 4.645
    # Plug PZTs
     ['*PLUGV', 0],
    # Plug Power
     ['*PLUGP', 1.9],
     # B fields
-    ['*QUADV', -3.8], # was -3.6
+    ['*QuadV0', -1.0],
+    ['*QUADV', -4.2], # was -3.6
     ['*QTRAP', 7.5],
     ['*QuadI2', 4.5], # was 3.8, was 4.0, was 5
-    ['*QuadV2', -2.45], # was -2.5 on 9/17/2020
+    ['*QuadV2', -2.7], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*BIASI', 0.042], # was .04, 0.044
-    ['*BIASV', 0.248],
+    ['*BIASV', -0.37],
     ['*LowField', 0.457], # was 0.465
-    ['*LowFieldV', -.085],
+    ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
-    ['*HighFieldV', -3.9], # was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.625], # was -3.6 before moving stuff to back corridor
     ['*BiasSub', -2.65],
     ['*StableBias', -0.1], # was 0.45
     ['*FeshBias', -5.43],
@@ -50,18 +51,20 @@ variables_dict = [
     ['*VLattPhaseFinal', 0],
     ['*VLattInitialPhase', 0],
     # Optical traps
-    ['*HOTLoad', 4], # was 3.6 (9/23/20); was 3.77 (11/27/19); was 5.2 before calibration changed
-    ['*HOTMid', 0.8], # was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
+    ['*HOTLoad', 3.5], # was 3.6 (9/23/20); was 3.77 (11/27/19); was 5.2 before calibration changed
+    ['*HOTMid', 1.1], # was 0.8 (10/09/20); was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
     ['*HOTBottom', 0.4],
     ['*HOTRecom', 0.42],
     ['*HOTFilter', 0.4],
-    ['*MARIALoad', 5], # was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
-    ['*MARIAMid', 0.9], # was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
+    ['*HOTQuad', 0.5],
+    ['*MARIALoad', 3.5], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
+    ['*MARIAMid', 1.1], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', 0.7], # was 0.5
     ['*MARIABottom', 0.344],
     ['*MARIARecom', 0.4],
     ['*MARIAFilter', 0.4],
+    ['*MARIAQuad', 0.7],
     ['*Latt1Load', 0],
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
