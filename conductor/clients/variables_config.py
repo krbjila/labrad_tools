@@ -6,8 +6,8 @@ variables_dict = [
     ['*RbProbeI', -7.5],
     ['*KProbeI', -3.5],
     ['*KHFBlast', 0.58],
-    ['*KMOT', 4],
-    ['*RbMOT', 5.5],
+    ['*KMOT', 6],
+    ['*RbMOT', 4],
     ['*RbHFOP', 4.7], 
     # QUAD shims
     ['*NWhigh', 4.4],
