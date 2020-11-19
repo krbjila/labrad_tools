@@ -77,7 +77,7 @@ class LoggingServer(LabradServer):
         else:
             self.wavemetercall.start(DURING_SHOT_TIME)
 
-    @setting(3, returns='i')
+    @setting(3, returns='d')
     def get_next_shot(self, c):
         currtime = datetime.now()
 
@@ -94,7 +94,7 @@ class LoggingServer(LabradServer):
             self.next_shot = max(dirlist) + 1
         self.last_time = currtime
 
-        returnValue(self.next_shot)
+        return self.next_shot
 
     @setting(4, name='s')
     def set_name(self, c, name):

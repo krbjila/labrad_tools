@@ -17,7 +17,7 @@ timeout = 20
 """
 
 import json
-import os
+import os, errno
 
 from collections import deque
 from copy import deepcopy
@@ -39,8 +39,7 @@ from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 
-# TODO remote save parameter files locally
-# TODO get available parameters
+FILEBASE = '/home/bialkali/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
     """ coordinate setting and saving experiment parameters.
@@ -442,6 +441,7 @@ class ConductorServer(LabradServer):
                 # determine data path
                 timestr = strftime('%Y%m%d')
                 data_directory = self.data_directory.format(timestr)
+                self.experiment_name = experiment['name']
                 data_path = lambda i: str(data_directory 
                                           + experiment['name'] 
                                           + '#{}'.format(i))
@@ -450,7 +450,6 @@ class ConductorServer(LabradServer):
                     iteration += 1
                 self.data_path = data_path(iteration)
                 
-                print 'saving data to {}'.format(self.data_path)
                 if not os.path.exists(data_directory):
                     os.mkdir(data_directory)
 
@@ -528,14 +527,34 @@ class ConductorServer(LabradServer):
                 parameter_data.append(new_value)
         
         if self.data_path:
-            with open(self.data_path, 'w+') as outfile:
-                json.dump(self.data, outfile, default=lambda x: None)
             self.advance_logging('defaults' in self.data_path)
+            self.data['shot_number'] = self.shot
+
+            if not 'defaults' in self.data_path:
+                s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
+                with open(self.data_path, 'w+') as outfile:
+                    outfile.write(s)
+                print 'saving data to {}'.format(self.data_path)
+                
+                path =  "%s/%d/" % (self.last_time.strftime(FILEBASE), self.shot)
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        print("Could not connect to data server: ", e)
+
+                try:
+                    with open(path + "sequence.json", 'w+') as outfile:
+                        outfile.write(s)
+                    print 'saving data to {}'.format(path + "sequence.json")
+                except Exception as e:
+                    print("Could not connect to data server: ", e)
+
 
 
     @inlineCallbacks
     def stopServer(self):
-        self.advance_logging(True)
+        yield self.advance_logging(True)
 
         parameters_filename = self.parameters_directory + 'current_parameters.json'
         if os.path.isfile(parameters_filename):
@@ -619,21 +638,16 @@ class ConductorServer(LabradServer):
             print("Could not connect to logging server: ", e)
 
         if not end:
-            if cur_time.date() != self.last_time.date():
-                self.shot = 0
-            else:
-                self.shot += 1
-            self.last_time = cur_time
-
             try:
-                yield self.client.servers['imaging_logging'].set_shot(self.shot)
-                yield self.client.servers['imaging_logging'].log("Started shot %d" % (self.shot), cur_time)
+                self.shot = yield logging.get_next_shot()
+                yield logging.set_shot(self.shot)
+                yield logging.log("Started shot %d" % (self.shot), cur_time)
             except Exception as e:
                 print("Could not start logging shot: ", e)
         else:
             try:
-                yield self.client.servers['imaging_logging'].log("Finished shot %d" % (self.shot), cur_time)
-                yield self.client.servers['imaging_logging'].set_shot()
+                yield logging.log("Finished shot %d" % (self.shot), cur_time)
+                yield logging.set_shot()
             except Exception as e:
                 print("Could not stop logging shot: ", e)
 
