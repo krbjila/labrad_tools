@@ -24,9 +24,6 @@ from copy import deepcopy
 from time import time, strftime
 from datetime import datetime
 
-sys.path.append("../client_tools")
-from connection import connection
-
 from labrad.server import LabradServer
 from labrad.server import setting
 from labrad.server import Signal
@@ -72,10 +69,6 @@ class ConductorServer(LabradServer):
         self.do_print_delay = False
         self.shot = -1
         self.last_time = datetime.now()
-
-        # self.cxn = connection()
-        # yield self.cxn.connect()
-        # self.logging = yield self.cxn.get_server('imaging_logging')
 
         self.load_config(config_path)
         LabradServer.__init__(self)
@@ -537,12 +530,13 @@ class ConductorServer(LabradServer):
         if self.data_path:
             with open(self.data_path, 'w+') as outfile:
                 json.dump(self.data, outfile, default=lambda x: None)
-
-        self.advance_logging('defaults' in self.data_path)
+            self.advance_logging('defaults' in self.data_path)
 
 
     @inlineCallbacks
     def stopServer(self):
+        self.advance_logging(True)
+
         parameters_filename = self.parameters_directory + 'current_parameters.json'
         if os.path.isfile(parameters_filename):
             with open(parameters_filename, 'r') as infile:
@@ -617,6 +611,13 @@ class ConductorServer(LabradServer):
     @inlineCallbacks
     def advance_logging(self, end = False):
         cur_time = datetime.now()
+
+        try:
+            logging = yield self.client.servers['imaging_logging']
+            logging.set_name("conductor")
+        except Exception as e:
+            print("Could not connect to logging server: ", e)
+
         if not end:
             if cur_time.date() != self.last_time.date():
                 self.shot = 0
@@ -625,22 +626,26 @@ class ConductorServer(LabradServer):
             self.last_time = cur_time
 
             try:
-                self.client.servers['imaging_logging'].set_shot(self.shot)
-                self.client.servers['imaging_logging'].log("Started shot %d" % (self.shot), cur_time)
+                yield self.client.servers['imaging_logging'].set_shot(self.shot)
+                yield self.client.servers['imaging_logging'].log("Started shot %d" % (self.shot), cur_time)
             except Exception as e:
-                print("Could not connect to logging server: ", e)
+                print("Could not start logging shot: ", e)
         else:
             try:
-                self.client.servers['imaging_logging'].log("Finished shot %d" % (self.shot), cur_time)
-                self.client.servers['imaging_logging'].set_shot()
+                yield self.client.servers['imaging_logging'].log("Finished shot %d" % (self.shot), cur_time)
+                yield self.client.servers['imaging_logging'].set_shot()
             except Exception as e:
-                print("Could not connect to logging server: ", e)
+                print("Could not stop logging shot: ", e)
 
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):
         if do_print_delay is not None:
             self.do_print_delay = do_print_delay
         return self.do_print_delay
+
+    @setting(25)
+    def test_logging(self, c):
+        yield self.client.servers['imaging_logging'].log("hi")
 
 if __name__ == "__main__":
     from labrad import util

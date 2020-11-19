@@ -9,6 +9,6 @@ node_dict = {
 	# start device servers next
         'sequencer',
 	# start conductor last
-        'conductor', 
+#        'conductor', 
     ],
 }

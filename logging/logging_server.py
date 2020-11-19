@@ -29,6 +29,8 @@ import json
 BETWEEN_SHOTS_TIME = 10 # how often to log the wavemeter between shots (s)
 DURING_SHOT_TIME = 0.1 # how often to log the wavemeter during a shot (s)
 
+PATHBASE = 'K:\\data'
+
 class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
     name = '%LABRADNODE%_logging'
@@ -36,6 +38,8 @@ class LoggingServer(LabradServer):
     def __init__(self):
         self.name = 'imaging_logging'
         self.shot = None
+        self.next_shot = 0
+        self.last_time = datetime.now()
         self.logfile = None
         self.freqfile = None
         super(LoggingServer, self).__init__()
@@ -73,7 +77,26 @@ class LoggingServer(LabradServer):
         else:
             self.wavemetercall.start(DURING_SHOT_TIME)
 
-    @setting(3, name='s')
+    @setting(3, returns='i')
+    def get_next_shot(self, c):
+        currtime = datetime.now()
+
+        if currtime.date() != self.last_time.date():
+            self.next_shot = 0
+        else:
+            path = PATHBASE + "/%s/shots/" % (currtime.strftime('%Y/%m/%Y%m%d'))
+            dirlist = []
+            for d in os.listdir(path):
+                try:
+                    dirlist.append(int(d))
+                except:
+                    dirlist.append(-1)
+            self.next_shot = max(dirlist) + 1
+        self.last_time = currtime
+
+        returnValue(self.next_shot)
+
+    @setting(4, name='s')
     def set_name(self, c, name):
         print("Setting name of client %d to %s" % (c.ID[0], name))
         c["name"] = name
@@ -87,10 +110,10 @@ class LoggingServer(LabradServer):
             self.freqfile.close()
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
-            path = "K:/data/%s/" % (now.strftime('%Y/%m/%Y%m%d'))
+            path = PATHBASE + "/%s/" % (now.strftime('%Y/%m/%Y%m%d'))
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
-            path = "K:/data/%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
+            path = PATHBASE + "/%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
         fname = path+"log.txt"
         ffname = path+"freqs.txt"
 
