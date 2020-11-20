@@ -533,7 +533,7 @@ class ConductorServer(LabradServer):
         
         if self.data_path:
             self.advance_logging('defaults' in self.data_path)
-            self.data['shot_number'] = self.shot
+            self.data['shot_number'] = [self.shot]
 
             if not 'defaults' in self.data_path:
                 s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
