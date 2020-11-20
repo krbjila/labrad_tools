@@ -509,8 +509,13 @@ class ConductorServer(LabradServer):
     def save_parameters(self):
         # save data to disk
         if self.data:
-            data_length = max([len(p) for dp in self.data.values()
-                                      for p in dp.values()])
+            print(self.data.values())
+            try:
+                data_length = max([len(p) for dp in self.data.values()
+                                        for p in dp.values()])
+            except Exception as e:
+                data_length = 0
+                print("saving data failed due to error:", e)
         else:
             data_length = 0
         
