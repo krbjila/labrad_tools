@@ -28,28 +28,27 @@ from io import BytesIO
 class WavemeterServer(LabradServer):
     """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running"""
     name = '%LABRADNODE%_wavemeter'
-    url = 'http://localhost:8000/wavemeter/api/'
+    url = 'http://192.168.141.220:8000/wavemeter/api/'
     update_rate = 100
 
     def __init__(self):
-        self.name = 'wavemeterlaptop_wavemeter'
+        self.name = 'imaging_wavemeter'
         super(WavemeterServer, self).__init__()
-        # lc = LoopingCall(self.update)
-        # lc.start(1/self.update_rate)
 
     def update(self):
-        # response = urllib.urlopen(self.url)
-        # self.data = json.dumps(response.read())
-        # response.close()
-        buffer = BytesIO()
-        c = pycurl.Curl()
-        c.setopt(c.URL, self.url)
-        c.setopt(c.WRITEDATA, buffer)
-        c.perform()
-        c.close()
-        body = buffer.getvalue()
-        self.data = json.dumps(body.decode('iso-8859-1'))
-        print(self.data)
+        try:
+            buffer = BytesIO()
+            c = pycurl.Curl()
+            c.setopt(c.URL, self.url)
+            c.setopt(c.WRITEDATA, buffer)
+            c.setopt(c.TIMEOUT, 1)
+            c.perform()
+            c.close()
+            body = buffer.getvalue()
+            self.data = json.dumps(body.decode('iso-8859-1'))
+        except pycurl.error as e:
+            print("could not connect to wavemeter: ", e)
+            self.data = ''
     
     @inlineCallbacks
     @setting(5, returns='s')

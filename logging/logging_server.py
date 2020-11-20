@@ -128,15 +128,18 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def log_frequency(self):
-        d = yield self.wavemeter.get_wavelengths()
-        data = json.loads(json.loads(d))
-        freqs = [299792.458/float(i) for i in data["wavelengths"]]
-        time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
-        if(self.shot is None and self.opentime.date() != time.date()):
-            self.set_save_location()
-        logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
-        self.freqfile.write(logmessage)
-        self.freqfile.flush()
+        try:
+            d = yield self.wavemeter.get_wavelengths()
+            data = json.loads(json.loads(d))
+            freqs = [299792.458/float(i) for i in data["wavelengths"]]
+            time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
+            if(self.shot is None and self.opentime.date() != time.date()):
+                self.set_save_location()
+            logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
+            self.freqfile.write(logmessage)
+            self.freqfile.flush()
+        except Exception as e:
+            print("Could not get wavemeter data: ", e)
 
 if __name__ == '__main__':
     from labrad import util

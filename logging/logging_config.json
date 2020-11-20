@@ -1,0 +1,12 @@
+{
+    "wavemeter": {
+        "channels": [
+            { "i": 0, "label": "Up Leg", "max_freq": 461.0, "min_freq": 460.86181},
+            { "i": 2, "label": "D1", "max_freq": 690, "min_freq": 689.245525},
+            { "i": 3, "label": "K Repump", "max_freq":679, "min_freq": 670},
+            { "i": 4, "label": "Down Leg", "max_freq": 707.0, "min_freq": 708},
+            { "i": 5, "label": "Rb Trap", "max_freq": 920, "min_freq": 922},
+            { "i": 6, "label": "Rb Repump", "max_freq": 0.0, "min_freq": 0.0}
+        ]
+    }
+}
