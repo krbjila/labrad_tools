@@ -1,9 +1,9 @@
 node_dicts = [
-    {
-        'node wavemeterlaptop' : [
-            'wavemeter'
-        ]
-    },
+#    {
+#        'node wavemeterlaptop' : [
+#            'wavemeter'
+#        ]
+#    },
     {
         'node imaging' : [
             'ad9910',

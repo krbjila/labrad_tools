@@ -39,7 +39,7 @@ from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 
-FILEBASE = '/home/bialkali/dataserver/data/%Y/%m/%Y%m%d/shots'
+FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
     """ coordinate setting and saving experiment parameters.
