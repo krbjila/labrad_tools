@@ -12,7 +12,7 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon("laser_icon.png"))
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
-        self.url = 'http://localhost:8000/wavemeter/api/'
+        self.url = 'http://192.168.141.220:8000/wavemeter/api/'
 
     def initialize(self):
         with open("logging_config.json", 'r') as f:
@@ -33,7 +33,7 @@ class lattice_block_gui(QtWidgets.QMainWindow):
             button.pressed.connect(partial(self.pressed, button, i))
 
             label = QtWidgets.QLabel()
-            label.setText('300.92268 THz')
+            label.setText('0.00000 THz')
             label.setSizePolicy(sizepolicy)
             label.setFont(QtGui.QFont('Comic Sans', 24))
             label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
@@ -49,20 +49,20 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.setCentralWidget(mainWidget)
 
     def update(self):
+        c = pycurl.Curl()
         try:
             buffer = BytesIO()
-            c = pycurl.Curl()
             c.setopt(c.URL, self.url)
             c.setopt(c.WRITEDATA, buffer)
-            c.setopt(c.TIMEOUT, 1)
+            c.setopt(c.TIMEOUT_MS, 100)
             c.perform()
             c.close()
             body = buffer.getvalue()
             self.data = json.loads(body.decode('iso-8859-1'))
             play = False
             for (i, l) in enumerate(self.lasers):
-                wl = self.data["wavelengths"][i]
-                label = "%f THz" % (wl)
+                wl = 299792.458/self.data["wavelengths"][l['i']]
+                label = "%.5f THz" % (wl)
                 self.labels[i].setText(label)
 
                 if (wl < l['min_freq'] or wl > l['max_freq']) and not self.broken[i]:
