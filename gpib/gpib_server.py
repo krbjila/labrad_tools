@@ -15,6 +15,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
 import sys
 
 import visa
@@ -42,7 +43,7 @@ class GPIBServer(HardwareInterfaceServer):
                 inst.write_termination = ''
                 #inst.clear()
                 self.interfaces[address] = inst
-                print 'connected to GPIB device ' + address
+                print('connected to GPIB device ' + address)
         for addr in deletions:
             del self.interfaces[addr]
 

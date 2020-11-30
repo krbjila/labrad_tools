@@ -244,7 +244,7 @@ class RampMaker(object):
         for i in range(len(sequence)-1):
             sequence[i+1]['_vi'] = sequence[i]['vf']
         for i in range(len(sequence)):
-            if not sequence[i].has_key('vi'):
+            if 'vi' not in sequence[i]:
                 sequence[i]['vi'] = sequence[i]['_vi']
     
         for i, s in enumerate(sequence):

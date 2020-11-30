@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter
@@ -48,16 +49,16 @@ class Uplegdp(ConductorParameter):
                 self.alive = True
             # If not, give error message
             except KeyError:
-                print "Couldn't find channel \"{}\".".format(CHANNEL_NAME)
-                print "Available channels:"
+                print("Couldn't find channel \"{}\".".format(CHANNEL_NAME))
+                print("Available channels:")
                 for key in channels.keys():
-                    print key
+                    print(key)
             except Exception as e:
-                print e
+                print(e)
         except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
-            print "3xAD9959_0's uplegdp: KRbG2 server not connected."
+            print("3xAD9959_0's uplegdp: KRbG2 server not connected.")
 
     @inlineCallbacks
     def update(self):
@@ -69,7 +70,7 @@ class Uplegdp(ConductorParameter):
             try:
                 yield self.getChannelInfo()
             except:
-                print "3xAD9959_0's uplegdp: Tried to get address but failed :("
+                print("3xAD9959_0's uplegdp: Tried to get address but failed :(")
 
         try:
             if self.value:
@@ -83,5 +84,5 @@ class Uplegdp(ConductorParameter):
                 }
                 yield self.server.update_dds(json.dumps(d))
         except Exception as e:
-            print e
-            print "3xAD9959_0's uplegdp: didn't update"
+            print(e)
+            print("3xAD9959_0's uplegdp: didn't update")

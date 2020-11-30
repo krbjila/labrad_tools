@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import time
 import numpy as np
@@ -123,7 +124,7 @@ class OptimizationDialog(QtGui.QDialog):
 		res = least_squares(opt, vs_guesses)
 		stop = timeit.default_timer()
 
-		print "Fitting complete. n iter: {}, time per iter: {}".format(res.nfev, (stop-start)/float(res.nfev))
+		print("Fitting complete. n iter: {}, time per iter: {}".format(res.nfev, (stop-start)/float(res.nfev)))
 
 		vs_results = self.calculator.EArrayToDict(VsToEvs(res.x))
 		params_results = self.calculator.parametersDump(vs_results)
@@ -221,7 +222,7 @@ class OptimizationInputForm(QtGui.QWidget):
 			value.setDecimals(p)
 			value.setRange(mi, ma)	
 
-			if self.config.has_key('long'):
+			if 'long' in self.config:
 				l = self.config['long'][i]
 			else:
 				l = f
@@ -249,7 +250,7 @@ class OptimizationInputForm(QtGui.QWidget):
 
 	def setValues(self, values):
 		for k, v in values.items():
-			if self.lookup.has_key(k):
+			if k in self.lookup:
 				self.widgets[self.lookup[k]][-1].setValue(float(v))
 
 
@@ -283,7 +284,7 @@ class OptimizationResultsForm(QtGui.QWidget):
 
 	def setValues(self, values):
 		for k, v in values.items():
-			if self.lookup.has_key(k):
+			if k in self.lookup:
 				index = self.lookup[k]
 				precision = self.config['precisions'][index]
 				self.widgets[index][-1].setText("{0:+0.{precision}f}".format(v, precision=precision))

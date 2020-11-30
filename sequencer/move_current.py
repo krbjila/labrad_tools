@@ -1,4 +1,5 @@
 """ Moves all of the current sequences to today's date """ 
+from __future__ import print_function
 
 import glob, datetime
 import os

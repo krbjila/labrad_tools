@@ -15,6 +15,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
 import json
 import numpy as np
 import os

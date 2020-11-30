@@ -1,3 +1,4 @@
+from __future__ import print_function
 import serial
 import io
 
@@ -12,4 +13,4 @@ cmd = cmd + unicode(hex(checksum % 256)[2:] + '\r')
 print(cmd)
 sio1.write(cmd)
 sio1.flush()
-print sio1.readline()
+print(sio1.readline())

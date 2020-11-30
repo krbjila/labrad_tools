@@ -15,6 +15,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
 import sys
 
 from time import sleep
@@ -42,7 +43,7 @@ class ArduinoServer(HardwareInterfaceServer):
                 try:
                     self.interfaces[address].isOpen()
                 except:
-                    print '{} unavailable'.format(address)
+                    print('{} unavailable'.format(address))
                     del self.interfaces[address]
             else:
                 try:
@@ -50,7 +51,7 @@ class ArduinoServer(HardwareInterfaceServer):
                         ser = Serial(address)
                         ser.close()
                         self.interfaces[address] = ser
-                        print '{} available'.format(address)
+                        print('{} available'.format(address))
                 except:
                     pass
         
@@ -141,7 +142,7 @@ class ArduinoServer(HardwareInterfaceServer):
         return ans.strip()
 
     @setting(14, n_bytes='w', returns='*s')
-    def read_lines(self, c, n_bytes=1000L):
+    def read_lines(self, c, n_bytes=1000):
         ans = self.call_if_available('readlines', c, n_bytes)
         return [a.strip() for a in ans]
 

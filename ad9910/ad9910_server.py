@@ -15,6 +15,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
 import sys
 
 from time import sleep
@@ -48,7 +49,7 @@ class AD9910Server(HardwareInterfaceServer):
                 try:
                     self.interfaces[address].isOpen()
                 except:
-                    print '{} unavailable'.format(address)
+                    print('{} unavailable'.format(address))
                     del self.interfaces[address]
             else:
                 try:
@@ -56,7 +57,7 @@ class AD9910Server(HardwareInterfaceServer):
                         ser = Serial(address, 4800, timeout=2)
                         ser.close()
                         self.interfaces[address] = ser
-                        print '{} available'.format(address)
+                        print('{} available'.format(address))
                 except:
                     pass
         
@@ -76,7 +77,7 @@ class AD9910Server(HardwareInterfaceServer):
         response = ser.readline()
         if response == "ad9910\n":
             if not suppress_output:
-                print "verified as ad9910"
+                print("verified as ad9910")
         else:
             ser.close()
             del self.interfaces[ser]
@@ -200,8 +201,8 @@ class AD9910Server(HardwareInterfaceServer):
 
         echo = self.getEcho(interface, prog)
         if not suppress_output:
-            print echo
-            print "updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(echo)
+            print("updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
 __server__ = AD9910Server()

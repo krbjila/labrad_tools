@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import numpy as np
 import sys
@@ -59,8 +60,8 @@ class ParameterControl(QtGui.QGroupBox):
         try:
             self.populateGUI()
             yield self.connectSignals()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.setDisabled(True)
 
     @inlineCallbacks
@@ -127,7 +128,7 @@ class ParameterControl(QtGui.QGroupBox):
                                  ID=self.update_id, context=self.context)
 
     def disable(self):
-        print 'oh no!'
+        print('oh no!')
         self.setDisabled(True)
 
 

@@ -13,6 +13,7 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
 import sys
 from labrad.server import LabradServer, setting
 sys.path.append("../client_tools")

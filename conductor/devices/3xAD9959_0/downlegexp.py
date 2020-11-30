@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter
@@ -42,16 +43,16 @@ class Downlegexp(ConductorParameter):
                 self.address = c['loc']
             # If not, give error message
             except KeyError:
-                print "Couldn't find channel \"{}\".".format(CHANNEL_NAME)
-                print "Available channels:"
+                print("Couldn't find channel \"{}\".".format(CHANNEL_NAME))
+                print("Available channels:")
                 for key in channels.keys():
-                    print key
+                    print(key)
             except Exception as e:
-                print e
+                print(e)
         except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
-            print "3xAD9959_0's downlegexp: KRbG2 server not connected."
+            print("3xAD9959_0's downlegexp: KRbG2 server not connected.")
 
     @inlineCallbacks
     def update(self):
@@ -67,4 +68,4 @@ class Downlegexp(ConductorParameter):
                 }
                 yield self.server.update_dds(json.dumps(d))
         except:
-            print "3xAD9959_0's downlegexp: didn't update"
+            print("3xAD9959_0's downlegexp: didn't update")
