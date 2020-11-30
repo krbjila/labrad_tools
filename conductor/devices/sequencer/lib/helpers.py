@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import os
 
@@ -90,15 +91,15 @@ def update_electrode_values(seq, e_seq, presets, channels):
                 step = deepcopy(e_step)
                 
                 for k in ['vf', 'vi']:
-                    if step.has_key(k):
+                    if k in step:
                         v = str(step[k])
 
                         # Get the actual voltage from presets
-                        if presets.has_key(v):
+                        if v in presets:
                             step[k] = presets[v][name]
                         else:
                             step[k] = presets['0'][name]
-                            print "Preset {} not found, replaced with 0".format(int(v))
+                            print("Preset {} not found, replaced with 0".format(int(v)))
                 fixed.append(step)
             seq.update({loc: fixed})
     return seq
@@ -106,7 +107,7 @@ def update_electrode_values(seq, e_seq, presets, channels):
 def read_sequence_file(sequence_directory, filename):
     # Sequencer control sends the actual sequence dict
     if type(filename).__name__ == 'dict':
-        if filename.has_key('sequence'):
+        if 'sequence' in filename:
             try:
                 return (filename['sequence'], filename['meta']['electrodes'])
             except:

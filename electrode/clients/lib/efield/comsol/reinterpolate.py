@@ -1,3 +1,4 @@
+from __future__ import print_function
 ###########################################################################
 # This script should be run once with FIT_FLAG = TRUE
 # to calculate the polynomial interpolation of the E field.
@@ -63,7 +64,7 @@ if FIT_FLAG:
 		guess = [0]*((POLY_ORDER+1)**2)
 		res = least_squares(poly2d, guess, args=(POLY_ORDER, d[:,0], d[:,1], d[:,2]))
 		fitted_parameters[n]=list(res.x)
-		print "Done fitting"
+		print("Done fitting")
 
 	with open(rel_path + outfile, 'w') as f:
 		f.write(json.dumps(fitted_parameters))

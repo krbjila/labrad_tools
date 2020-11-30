@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter
@@ -46,7 +47,7 @@ class Update(ConductorParameter):
         except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
-            print "ad9910's update: Imaging server not connected."
+            print("ad9910's update: Imaging server not connected.")
 
 
     @inlineCallbacks

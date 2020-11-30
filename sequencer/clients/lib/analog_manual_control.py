@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal
@@ -36,8 +37,8 @@ class AnalogVoltageManualControl(QtGui.QGroupBox):
             self.populateGUI()
             yield self.connectSignals()
             yield self.requestValues()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.setDisabled(True)
 
     @inlineCallbacks
@@ -98,7 +99,7 @@ class AnalogVoltageManualControl(QtGui.QGroupBox):
             for k, c in json.loads(channels).items():
                 if k.split('@')[0] == self.name:
                     update = c
-            print update
+            print(update)
             #print update
             if update['mode'] == 'manual':
                 self.mode_button.setChecked(1)
@@ -147,7 +148,7 @@ class AnalogVoltageManualControl(QtGui.QGroupBox):
 
 
     def disable(self):
-        print 'oh no!'
+        print('oh no!')
         self.setDisabled(True)
 
 #    def closeEvent(self, x):

@@ -1,4 +1,5 @@
 """ Update all sequences after config.json has been modified. """
+from __future__ import print_function
 
 import json
 import glob
@@ -39,7 +40,7 @@ for folder in dates:
     for k in sequences:
         with open(k, 'r') as infile:
             c = json.load(infile)
-            if c.has_key("sequence"):
+            if "sequence" in c:
                 d = c["sequence"]
             else:
                 d = c

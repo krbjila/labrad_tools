@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from twisted.internet.defer import inlineCallbacks, returnValue
 
@@ -33,7 +34,7 @@ class connection(object):
     def add_on_connect(self, server_name, action):
         connected = yield self._confirm_connected(server_name)
         if not connected:
-            print '{} Not Available'.format(server_name)
+            print('{} Not Available'.format(server_name))
             return
         try:
             self._on_connect[server_name].append(action)
@@ -44,7 +45,7 @@ class connection(object):
     def add_on_disconnect(self, server_name, action):
         connected = yield self._confirm_connected(server_name)
         if not connected:
-            print '{} Not Available'.format(server_name)
+            print('{} Not Available'.format(server_name))
             return
         try:
             self._on_disconnect[server_name].append(action)
@@ -56,7 +57,7 @@ class connection(object):
         if not server_name in self._servers:
             try:
                 self._servers[server_name] = yield self.cxn[server_name]
-            except Exception, e:
+            except Exception as e:
                 returnValue(False)
         returnValue(True)
         
@@ -69,11 +70,11 @@ class connection(object):
     
     @inlineCallbacks
     def followServerConnect(self, cntx, server_name):
-        print 'server connected'
+        print('server connected')
         server_name = server_name[1]
-        print server_name
+        print(server_name)
         if server_name in self._servers.keys():
-            print '{} Connected'.format(server_name)
+            print('{} Connected'.format(server_name))
             self._servers[server_name] = yield self.cxn[server_name]
             actions = self._on_connect[server_name]
             for action in actions:
@@ -83,7 +84,7 @@ class connection(object):
     def followServerDisconnect(self, cntx, server_name):
         server_name = server_name[1]
         if server_name in self._servers.keys():
-            print '{} Disconnected'.format(server_name)
+            print('{} Disconnected'.format(server_name))
             self._servers[server_name] = None
             actions = self._on_disconnect[server_name]
             for action in actions:

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import visa
 from time import sleep, time
 from evaporate import evaporation

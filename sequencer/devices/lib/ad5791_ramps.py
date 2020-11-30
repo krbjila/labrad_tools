@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 VLIM = 4
@@ -41,7 +42,7 @@ def exp_ramp(p, ret_seq=False):
     try:
         p['a'] = (p['vf']-p['vi'])/(np.exp(p['dt']/p['tau'])-1)
     except Exception as e:
-        print e
+        print(e)
         sseq = [{'type': 'lin', 'ti': p['ti'], 'tf': p['tf'], 'vi': p['vi'], 'vf': p['vf']}]
         return lambda t: sum([lin_ramp(ss)(t) for ss in sseq])
     p['c'] = p['vi'] - p['a']
@@ -226,7 +227,7 @@ class RampMaker(object):
         for i in range(len(sequence)-1):
             sequence[i+1]['_vi'] = sequence[i]['vf']
         for i in range(len(sequence)):
-            if not sequence[i].has_key('vi'):
+            if 'vi' not in sequence[i]:
                 sequence[i]['vi'] = sequence[i]['_vi']
     
         for i, s in enumerate(sequence):
