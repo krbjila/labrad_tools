@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 import json
 from PyQt4 import QtGui, QtCore
@@ -12,7 +13,7 @@ from matplotlib.figure import Figure
 sys.path.append('../../../client_tools')
 from connection import connection
 from widgets import SuperSpinBox
-from helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
+from .helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
 sys.path.append('../')
 from devices.lib.analog_ramps import RampMaker
 

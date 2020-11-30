@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import json
 
@@ -5,7 +7,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
-from lib.helpers import *
+from .lib.helpers import *
 
 class Sequence(ConductorParameter):
     priority = 10
@@ -58,5 +60,5 @@ class Sequence(ConductorParameter):
 
            returnValue((0, electrode_presets, e_channels))
        except Exception as e:
-           print e
+           print(e)
            returnValue((-1, {}, {}))

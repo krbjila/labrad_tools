@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 import json
 from PyQt4 import QtGui, QtCore
@@ -12,7 +13,7 @@ from matplotlib.figure import Figure
 sys.path.append('../../../client_tools')
 from connection import connection
 from widgets import SuperSpinBox
-from helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
+from .helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
 sys.path.append('../')
 
 from devices.lib.ad5791_ramps import RampMaker
@@ -455,7 +456,7 @@ class ElectrodeEditor(QtGui.QDialog):
                 seq = deepcopy(step)
                 vf = self.presets[int(step['vf'])]['values'][x]
                 seq['vf'] = vf
-                if step.has_key('vi'):
+                if 'vi' in step:
                     vi = self.presets[int(step['vi'])]['values'][x]
                     seq['vi'] = vi
                 s.append(seq)

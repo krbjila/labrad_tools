@@ -1,9 +1,11 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import json
 import numpy as np
 import sys
 
 import collections
-import variables_config
+from . import variables_config
 
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal
@@ -64,8 +66,8 @@ class ParameterControl(QtGui.QGroupBox):
         try:
             self.populateGUI()
             yield self.connectSignals()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.setDisabled(True)
 
     @inlineCallbacks
@@ -175,7 +177,7 @@ class ParameterControl(QtGui.QGroupBox):
                                  ID=self.update_id, context=self.context)
 
     def disable(self):
-        print 'oh no!'
+        print('oh no!')
         self.setDisabled(True)
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import time
 import numpy as np
@@ -12,7 +13,7 @@ sys.path.append('./forms/')
 from input_forms import InputForms
 from output_forms import OutputForms
 from gui_defaults_helpers import *
-from optimize_dialog import OptimizationDialog
+from .optimize_dialog import OptimizationDialog
 
 sys.path.append('./../../')
 from calibrations import *

@@ -15,6 +15,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
+from __future__ import absolute_import
 import json
 import numpy as np
 import sys
@@ -32,7 +34,7 @@ from server_tools.device_server import DeviceServer
 sys.path.append('./clients/lib/')
 from helpers import json_load_byteified, json_loads_byteified
 
-from calibrations import *
+from .calibrations import *
 
 PRESETS_PATH = 'values.json'
 BACKUP_PATH = './backup/'
@@ -86,9 +88,9 @@ class ElectrodeServer(LabradServer):
 			self.backup_presets()
 	
 			if self.verbose:
-				print "Settings update and back up:"
+				print("Settings update and back up:")
 				for x in self.presets:
-					print "{}: {}".format(int(x['id']), x['description'])
+					print("{}: {}".format(int(x['id']), x['description']))
 	
 			self.presets_changed(False)
 
@@ -105,7 +107,7 @@ class ElectrodeServer(LabradServer):
 		temp = deepcopy(self.lookup)
 		
 		for k, v in d.items():
-			if self.lookup.has_key(k):
+			if k in self.lookup:
 				if v != self.lookup[k]:
 					self.lookup[k] = v
 		
@@ -117,9 +119,9 @@ class ElectrodeServer(LabradServer):
 			self.backup_presets()
 		
 			if self.verbose:
-				print "Settings soft update and back up:"
+				print("Settings soft update and back up:")
 				for x in self.presets:
-					print "{}: {}".format(int(x['id']), x['description'])
+					print("{}: {}".format(int(x['id']), x['description']))
 			self.presets_changed(True)
 		return 0
 
@@ -137,16 +139,16 @@ class ElectrodeServer(LabradServer):
 		with open(backup_file, 'w') as f:
 			f.write(json.dumps(self.presets, sort_keys=True, indent=4))
 	
-		print "Settings backed up at {}".format(backup_file)
+		print("Settings backed up at {}".format(backup_file))
 
 	@setting(3)
 	def reload_presets(self, c):
 		self._reload_presets()
 	
 		if self.verbose:
-			print "Settings reloaded:"
+			print("Settings reloaded:")
 			for x in self.presets:
-				print "{}: {}".format(int(x['id']), x['description'])
+				print("{}: {}".format(int(x['id']), x['description']))
 		self.presets_changed(False)
 
 	def _reload_presets(self):

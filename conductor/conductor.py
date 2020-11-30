@@ -15,6 +15,8 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import json
 import os, errno
@@ -33,11 +35,11 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.defer import returnValue
 from twisted.internet.threads import deferToThread
 
-from lib.helpers import import_parameter
-from lib.helpers import remaining_points
-from lib.exceptions import ParameterAlreadyRegistered
-from lib.exceptions import ParameterNotImported
-from lib.exceptions import ParameterNotRegistered
+from .lib.helpers import import_parameter
+from .lib.helpers import remaining_points
+from .lib.exceptions import ParameterAlreadyRegistered
+from .lib.exceptions import ParameterNotImported
+from .lib.exceptions import ParameterNotRegistered
 
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
@@ -111,7 +113,7 @@ class ConductorServer(LabradServer):
                 try:
                     yield self.register_parameters(c, json.dumps(params))
                 except ParameterNotImported:
-                    print "{} not imported successfully".format(device)
+                    print("{} not imported successfully".format(device))
 
             # If the device is loaded, check that all the parameters are there
             else:
@@ -197,7 +199,7 @@ class ConductorServer(LabradServer):
                     parameter.value_type = value_type
                 self.parameters[device_name][parameter_name] = parameter
                 
-                print "{}'s {} registered".format(device_name, parameter_name)              
+                print("{}'s {} registered".format(device_name, parameter_name))              
                 yield parameter.initialize()
                 yield self.update_parameter(parameter)
 
@@ -325,16 +327,16 @@ class ConductorServer(LabradServer):
                     yield self.set_parameter_value(device_name, parameter_name, value, True)
         except:
             if use_registry:
-                print 'looking in registry for parameter {}'.format(device_name + parameter_name)
-                print 'this feature will be depreciated'
+                print('looking in registry for parameter {}'.format(device_name + parameter_name))
+                print('this feature will be depreciated')
                 try: 
                     yield self.client.registry.cd(self.registry_directory
                                                   + [device_name])
                     value = yield self.client.registry.get(parameter_name)
                     config = json.dumps({device_name: {parameter_name: value}})
                     yield self.set_parameter_values(None, config, True)
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    print(e)
                     message = 'unable to get most recent value for\
                                {} {}'.format(device_name, parameter_name)
             else:
@@ -457,7 +459,7 @@ class ConductorServer(LabradServer):
         else:
             self.data = {}
             if self.data_path:
-                print 'experiment queue is empty'
+                print('experiment queue is empty')
             # signal that experiment has stopped
             self.experiment_stopped(True)
             self.data_path = None
@@ -472,7 +474,7 @@ class ConductorServer(LabradServer):
         if not pts:
             advanced = yield self.advance_experiment()
         else:
-            print 'remaining points: ', pts
+            print('remaining points: ', pts)
 
         # sort by priority. higher priority is called first. 
         priority_parameters = [parameter for device_name, device_parameters
@@ -499,11 +501,11 @@ class ConductorServer(LabradServer):
         """ have device update parameter value """
         try:
             yield parameter.update()
-        except Exception, e:
+        except Exception as e:
             # remove parameter is update failed.
-            print e
-            print 'could not update {}\'s {}. removing parameter'.format(
-                    parameter.device_name, parameter.name)
+            print(e)
+            print('could not update {}\'s {}. removing parameter'.format(
+                    parameter.device_name, parameter.name))
             yield self.remove_parameter(parameter.device_name, parameter.name)
     
     def save_parameters(self):
@@ -515,7 +517,7 @@ class ConductorServer(LabradServer):
                                         for p in dp.values()])
             except Exception as e:
                 data_length = 0
-                print("saving data failed due to error:", e)
+                print(("saving data failed due to error:", e))
         else:
             data_length = 0
         
@@ -539,21 +541,21 @@ class ConductorServer(LabradServer):
                 s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
                 with open(self.data_path, 'w+') as outfile:
                     outfile.write(s)
-                print 'saving data to {}'.format(self.data_path)
+                print('saving data to {}'.format(self.data_path))
                 
                 path =  "%s/%d/" % (self.last_time.strftime(FILEBASE), self.shot)
                 try:
                     os.makedirs(path)
                 except OSError as e:
                     if e.errno != errno.EEXIST:
-                        print("Could not connect to data server: ", e)
+                        print(("Could not connect to data server: ", e))
 
                 try:
                     with open(path + "sequence.json", 'w+') as outfile:
                         outfile.write(s)
-                    print 'saving data to {}'.format(path + "sequence.json")
+                    print('saving data to {}'.format(path + "sequence.json"))
                 except Exception as e:
-                    print("Could not connect to data server: ", e)
+                    print(("Could not connect to data server: ", e))
 
 
 
@@ -627,7 +629,7 @@ class ConductorServer(LabradServer):
             if 'ID' in kwargs:
                 del self.advance_dict[str(kwargs['ID'])]
             if self.do_print_delay:
-                print 'delay', tf-ti
+                print('delay', tf-ti)
 
     """
     Tells the logging server to begin logging for the next shot. Shot number is reset daily
@@ -640,7 +642,7 @@ class ConductorServer(LabradServer):
             logging = yield self.client.servers['imaging_logging']
             logging.set_name("conductor")
         except Exception as e:
-            print("Could not connect to logging server: ", e)
+            print(("Could not connect to logging server: ", e))
 
         if not end:
             try:
@@ -648,13 +650,13 @@ class ConductorServer(LabradServer):
                 yield logging.set_shot(self.shot)
                 yield logging.log("Started shot %d" % (self.shot), cur_time)
             except Exception as e:
-                print("Could not start logging shot: ", e)
+                print(("Could not start logging shot: ", e))
         else:
             try:
                 yield logging.log("Finished shot %d" % (self.shot), cur_time)
                 yield logging.set_shot()
             except Exception as e:
-                print("Could not stop logging shot: ", e)
+                print(("Could not stop logging shot: ", e))
 
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):

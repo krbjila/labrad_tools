@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import time
 import numpy as np
@@ -13,7 +14,7 @@ from helpers import json_load_byteified
 
 # This is a 4th order polynomial approximation
 # of the KRb dipole moment as a function of E (in kV/cm)
-from dipole_fit import *
+from .dipole_fit import *
 
 # 1 D = 3.33564e-30 Coulomb meters
 # We usually use V/cm

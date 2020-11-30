@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import numpy as np
 import sys
@@ -10,7 +11,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-from helpers import substitute_sequence_parameters
+from .helpers import substitute_sequence_parameters
 sys.path.append('../')
 from devices.lib.analog_ramps import RampMaker
 

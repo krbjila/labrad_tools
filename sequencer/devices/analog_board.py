@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import numpy as np
 import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
-from lib.analog_ramps import RampMaker
+from .lib.analog_ramps import RampMaker
 
 VOLTAGE_RANGE = (-10., 10.)
 DAC_BITS = 16

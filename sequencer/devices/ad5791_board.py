@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
 import json
 import math
@@ -5,7 +7,7 @@ import math
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
-from lib.ad5791_ramps import RampMaker
+from .lib.ad5791_ramps import RampMaker
 
 (VREFN, VREFP) = (-5., 5.)
 (VMIN, VMAX) = (-2.6, 2.6)
@@ -223,7 +225,7 @@ class AD5791Board(DeviceWrapper):
 
             # Print a warning if there are too many ramps
             if len(final_ramps) > MAX_STEPS:
-                print "Too many steps! Program will be truncated!!!"
+                print("Too many steps! Program will be truncated!!!")
          
             # Trucate the array at the maximum program length 
             try:
