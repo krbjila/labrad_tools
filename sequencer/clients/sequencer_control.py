@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import json
 import time
 import numpy as np
@@ -11,23 +13,23 @@ from twisted.internet.defer import inlineCallbacks
 sys.path.append('../../client_tools')
 from connection import connection
 from widgets import SuperSpinBox
-from lib.duration_widgets import DurationRow
-from lib.digital_widgets import DigitalControl
-from lib.analog_widgets import AnalogControl
+from .lib.duration_widgets import DurationRow
+from .lib.digital_widgets import DigitalControl
+from .lib.analog_widgets import AnalogControl
 
-from lib.ad5791_widgets import AD5791Control
-from lib.ad5791_editor import AD5791VoltageEditor
+from .lib.ad5791_widgets import AD5791Control
+from .lib.ad5791_editor import AD5791VoltageEditor
 
-from lib.electrode_widgets import ElectrodeControl
-from lib.electrode_editor import ElectrodeEditor, zero_sequence
+from .lib.electrode_widgets import ElectrodeControl
+from .lib.electrode_editor import ElectrodeEditor, zero_sequence
 
-from lib.description import DescriptionDialog
+from .lib.description import DescriptionDialog
 
-from lib.add_dlt_widgets import AddDltRow
-from lib.analog_editor import AnalogVoltageEditor
-from lib.analog_manual_control import AnalogVoltageManualControl
-from lib.analog_manual_control import ControlConfig as AnalogControlConfig
-from lib.helpers import get_sequence_parameters, ConfigWrapper
+from .lib.add_dlt_widgets import AddDltRow
+from .lib.analog_editor import AnalogVoltageEditor
+from .lib.analog_manual_control import AnalogVoltageManualControl
+from .lib.analog_manual_control import ControlConfig as AnalogControlConfig
+from .lib.helpers import get_sequence_parameters, ConfigWrapper
 
 from copy import deepcopy
 
@@ -88,7 +90,7 @@ class SequencerControl(QtGui.QWidget):
         try:
             self.populate()
         except Exception as e:
-            print e
+            print(e)
         yield self.displaySequence(self.default_sequence)
         yield self.connectSignals()
         yield self.update_sequencer(None, True)
@@ -514,13 +516,13 @@ class SequencerControl(QtGui.QWidget):
         with open(filepath, 'r') as infile:
             sequence = json.load(infile)
 
-        if sequence.has_key('sequence'):
+        if 'sequence' in sequence:
             self.metadata = sequence['meta']
 
-            if not self.metadata.has_key('descriptions'):
+            if 'descriptions' not in self.metadata:
                 v = sequence['sequence'][self.config.timing_channel]
                 self.metadata['descriptions'] = ['']*len(v)
-            if not self.metadata.has_key('electrodes'):
+            if 'electrodes' not in self.metadata:
                 v = sequence['sequence'][self.config.timing_channel]
                 self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
             sequence = sequence['sequence']

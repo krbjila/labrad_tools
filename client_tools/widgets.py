@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from PyQt4 import QtGui, QtCore, Qt
 import numpy as np
 
@@ -17,7 +19,7 @@ class SuperSpinBox(QtGui.QLineEdit):
         
     def keyPressEvent(self, c):
         if len(self.text().split('*')) > 1:
-            print 'variable: ', self.text()
+            print('variable: ', self.text())
             super(SuperSpinBox, self).keyPressEvent(c)
             return
         if c.key() in [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter]:
@@ -229,7 +231,7 @@ class IntSpinBox(QtGui.QLineEdit):
 
 if __name__ == '__main__':
     a = QtGui.QApplication([])
-    import qt4reactor 
+    from . import qt4reactor 
     qt4reactor.install()
     from twisted.internet import reactor
     widget = IntSpinBox([-100, 100])

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import time
 import numpy as np
@@ -17,7 +18,7 @@ from widgets import SuperSpinBox
 sys.path.append('../')
 from calibrations import *
 
-from gui_defaults_helpers import *
+from .gui_defaults_helpers import *
 
 SEP = os.path.sep
 

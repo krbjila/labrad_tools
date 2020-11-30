@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import time
 import numpy as np
@@ -12,7 +13,7 @@ from twisted.internet.defer import inlineCallbacks
 
 sys.path.append('./settings/')
 from setting_controls import SettingControl
-from helpers import json_loads_byteified
+from .helpers import json_loads_byteified
 
 SEP = os.path.sep
 
