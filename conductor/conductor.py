@@ -39,7 +39,7 @@ from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 
-FILEBASE = '/home/bialkali/dataserver/data/%Y/%m/%Y%m%d/shots'
+FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
     """ coordinate setting and saving experiment parameters.
@@ -509,8 +509,13 @@ class ConductorServer(LabradServer):
     def save_parameters(self):
         # save data to disk
         if self.data:
-            data_length = max([len(p) for dp in self.data.values()
-                                      for p in dp.values()])
+            print(self.data.values())
+            try:
+                data_length = max([len(p) for dp in self.data.values()
+                                        for p in dp.values()])
+            except Exception as e:
+                data_length = 0
+                print("saving data failed due to error:", e)
         else:
             data_length = 0
         
@@ -528,7 +533,7 @@ class ConductorServer(LabradServer):
         
         if self.data_path:
             self.advance_logging('defaults' in self.data_path)
-            self.data['shot_number'] = self.shot
+            self.data['shot_number'] = [self.shot]
 
             if not 'defaults' in self.data_path:
                 s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)

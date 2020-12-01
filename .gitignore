@@ -13,3 +13,4 @@ magnetic_evaporation/backup/*.json
 **.swp
 electrode/backup/*
 electrode/values.json
+.vscode/settings.json
