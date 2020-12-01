@@ -427,6 +427,7 @@ class ConductorServer(LabradServer):
             experiment_copy = deepcopy(experiment)
 
             if "name" in experiment and "default" not in experiment["name"]:
+                #TODO: Move save_parameters here
                 yield self._advance_logging(False)
             else:
                 yield self._advance_logging(True)
@@ -481,6 +482,7 @@ class ConductorServer(LabradServer):
             advanced = yield self.advance_experiment()
         else:
             print 'remaining points: ', pts
+            #TODO: Add save_parameters here
             if self.logging:
                 yield self._advance_logging(True)
                 yield self._advance_logging(False)
@@ -630,6 +632,7 @@ class ConductorServer(LabradServer):
                 self.advance_counter += 1 
         else:
             ti = time()
+            #TODO: Remove save_parameters here
             yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
