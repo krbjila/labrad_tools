@@ -6,7 +6,7 @@ node_dicts = [
 #    },
     {
         'node imaging' : [
-            'wavemeter'
+            'wavemeter',
             'ad9910',
             'okfpga',
             'logging'
