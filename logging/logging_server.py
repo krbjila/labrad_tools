@@ -67,11 +67,17 @@ class LoggingServer(LabradServer):
     def set_shot(self, c, shot=None):
         self.shot = shot
         self.set_save_location()
-        self.wavemetercall.stop()
-        if shot is None:
-            self.wavemetercall.start(BETWEEN_SHOTS_TIME)
-        else:
-            self.wavemetercall.start(DURING_SHOT_TIME)
+        try:
+            self.wavemetercall.stop()
+        except Exception as e:
+            print("Could not stop looping call for wavemeter: %s" % (e))
+        try:
+            if shot is None:
+                self.wavemetercall.start(BETWEEN_SHOTS_TIME)
+            else:
+                self.wavemetercall.start(DURING_SHOT_TIME)
+        except Exception as e:
+            print("Could not start looping call for wavemeter: %s" % (e))
 
     @setting(3, returns='i')
     def get_next_shot(self, c):
@@ -125,14 +131,17 @@ class LoggingServer(LabradServer):
     @inlineCallbacks
     def log_frequency(self):
         d = yield self.wavemeter.get_wavelengths()
-        data = json.loads(json.loads(d))
-        freqs = [299792.458/float(i) for i in data["wavelengths"]]
-        time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
-        if(self.shot is None and self.opentime.date() != time.date()):
-            self.set_save_location()
-        logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
-        self.freqfile.write(logmessage)
-        self.freqfile.flush()
+        if len(d) > 0:
+            data = json.loads(json.loads(d))
+            freqs = [299792.458/float(i) for i in data["wavelengths"]]
+            time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
+            if(self.shot is None and self.opentime.date() != time.date()):
+                self.set_save_location()
+            logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
+            self.freqfile.write(logmessage)
+            self.freqfile.flush()
+        else:
+            print("No response received from wavemeter!")
 
 if __name__ == '__main__':
     from labrad import util
