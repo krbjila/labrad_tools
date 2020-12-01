@@ -23,7 +23,7 @@ node_dicts = [
             # start device servers next
             'sequencer',
             # start conductor last
-            # 'conductor', 
+            'conductor', 
         ]
     },
 ]
