@@ -18,7 +18,7 @@ from labrad.server import LabradServer, setting
 import labrad
 sys.path.append("../client_tools")
 from connection import connection
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from datetime import datetime
@@ -42,19 +42,15 @@ class LoggingServer(LabradServer):
         self.last_time = datetime.now()
         self.logfile = None
         self.freqfile = None
-        super(LoggingServer, self).__init__()
+        LabradServer.__init__(self)
         self.set_save_location()
-        self.connect()
         self.opentime = datetime.now()
 
+    @inlineCallbacks
+    def initServer(self):
+        self.wavemeter = yield self.client.servers['imaging_wavemeter']
         self.wavemetercall = LoopingCall(self.log_frequency)
         self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
-
-    @inlineCallbacks
-    def connect(self):
-        self.cxn = connection()
-        yield self.cxn.connect()
-        self.wavemeter = yield self.cxn.get_server('wavemeterlaptop_wavemeter')
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
@@ -77,7 +73,7 @@ class LoggingServer(LabradServer):
         else:
             self.wavemetercall.start(DURING_SHOT_TIME)
 
-    @setting(3, returns='d')
+    @setting(3, returns='i')
     def get_next_shot(self, c):
         currtime = datetime.now()
 
@@ -141,3 +137,4 @@ class LoggingServer(LabradServer):
 if __name__ == '__main__':
     from labrad import util
     util.runServer(LoggingServer())
+    
