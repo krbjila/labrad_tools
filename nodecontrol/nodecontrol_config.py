@@ -9,6 +9,8 @@ node_dicts = [
             'wavemeter',
             'ad9910',
             'okfpga',
+            'usb',
+            'dg800',
             'logging'
         ]
     },

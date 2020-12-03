@@ -1,10 +1,10 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = DG800
+name = dg800
 version = 1
 description = server for Rigol DG800 series AWGs
-instancename = %LABRADNODE%_DG800
+instancename = %LABRADNODE%_dg800
 
 [startup]
 cmdline = %PYTHON% %FILE%
@@ -21,7 +21,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 class DG800Server(LabradServer):
     """Provides access to Rigol DG800 series AWGs."""
-    name = '%LABRADNODE%_DG800'
+    name = '%LABRADNODE%_dg800'
 
     def __init__(self):
         self.USB_server_name = 'imaging_usb'
