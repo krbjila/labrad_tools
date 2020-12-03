@@ -29,10 +29,10 @@ class WavemeterServer(LabradServer):
     """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running"""
     name = '%LABRADNODE%_wavemeter'
     url = 'http://192.168.141.220:8000/wavemeter/api/'
-    update_rate = 100
 
     def __init__(self):
         self.name = 'imaging_wavemeter'
+        self.data = ''
         super(WavemeterServer, self).__init__()
 
     def update(self):
@@ -40,15 +40,13 @@ class WavemeterServer(LabradServer):
             buffer = BytesIO()
             c = pycurl.Curl()
             c.setopt(c.URL, self.url)
-            c.setopt(c.WRITEDATA, buffer)
-            c.setopt(c.TIMEOUT, 1)
+            c.setopt(c.WRITEFUNCTION, buffer.write)
             c.perform()
             c.close()
             body = buffer.getvalue()
             self.data = json.dumps(body.decode('iso-8859-1'))
-        except pycurl.error as e:
-            print("could not connect to wavemeter: ", e)
-            self.data = ''
+        except Exception as e:
+            print("Could not connect to wavemeter: %s" % (e))
     
     @inlineCallbacks
     @setting(5, returns='s')

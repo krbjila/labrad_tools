@@ -18,7 +18,7 @@ from labrad.server import LabradServer, setting
 import labrad
 sys.path.append("../client_tools")
 from connection import connection
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from datetime import datetime
@@ -42,19 +42,15 @@ class LoggingServer(LabradServer):
         self.last_time = datetime.now()
         self.logfile = None
         self.freqfile = None
-        super(LoggingServer, self).__init__()
+        LabradServer.__init__(self)
         self.set_save_location()
-        self.connect()
         self.opentime = datetime.now()
 
+    @inlineCallbacks
+    def initServer(self):
+        self.wavemeter = yield self.client.servers['imaging_wavemeter']
         self.wavemetercall = LoopingCall(self.log_frequency)
         self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
-
-    @inlineCallbacks
-    def connect(self):
-        self.cxn = connection()
-        yield self.cxn.connect()
-        self.wavemeter = yield self.cxn.get_server('wavemeterlaptop_wavemeter')
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
@@ -71,13 +67,19 @@ class LoggingServer(LabradServer):
     def set_shot(self, c, shot=None):
         self.shot = shot
         self.set_save_location()
-        self.wavemetercall.stop()
-        if shot is None:
-            self.wavemetercall.start(BETWEEN_SHOTS_TIME)
-        else:
-            self.wavemetercall.start(DURING_SHOT_TIME)
+        try:
+            self.wavemetercall.stop()
+        except Exception as e:
+            print("Could not stop looping call for wavemeter: %s" % (e))
+        try:
+            if shot is None:
+                self.wavemetercall.start(BETWEEN_SHOTS_TIME)
+            else:
+                self.wavemetercall.start(DURING_SHOT_TIME)
+        except Exception as e:
+            print("Could not start looping call for wavemeter: %s" % (e))
 
-    @setting(3, returns='d')
+    @setting(3, returns='i')
     def get_next_shot(self, c):
         currtime = datetime.now()
 
@@ -128,8 +130,8 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def log_frequency(self):
-        try:
-            d = yield self.wavemeter.get_wavelengths()
+        d = yield self.wavemeter.get_wavelengths()
+        if len(d) > 0:
             data = json.loads(json.loads(d))
             freqs = [299792.458/float(i) for i in data["wavelengths"]]
             time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
@@ -138,9 +140,10 @@ class LoggingServer(LabradServer):
             logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
             self.freqfile.write(logmessage)
             self.freqfile.flush()
-        except Exception as e:
-            print("Could not get wavemeter data: ", e)
+        else:
+            print("No response received from wavemeter!")
 
 if __name__ == '__main__':
     from labrad import util
     util.runServer(LoggingServer())
+    
