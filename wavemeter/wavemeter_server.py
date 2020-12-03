@@ -45,7 +45,6 @@ class WavemeterServer(LabradServer):
             c.close()
             body = buffer.getvalue()
             self.data = json.dumps(body.decode('iso-8859-1'))
-            print(self.data)
         except Exception as e:
             print("Could not connect to wavemeter: %s" % (e))
     
