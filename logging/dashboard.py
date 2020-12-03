@@ -1,10 +1,10 @@
 import json
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
-import vlc
 import pycurl
 from io import BytesIO
 from functools import partial
+import pyttsx3
 
 class lattice_block_gui(QtWidgets.QMainWindow):
     def __init__(self, Parent=None):
@@ -13,6 +13,14 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
         self.url = 'http://192.168.141.220:8000/wavemeter/api/'
+        self.engine = pyttsx3.init()
+        # voices = self.engine.getProperty('voices')
+        # for v in voices:
+        #     print(v.id)
+        #     if "Paul" in v.id:
+        #         self.engine.setProperty('voice', v.id)
+        #         break
+        self.engine.startLoop(False)
 
     def initialize(self):
         with open("logging_config.json", 'r') as f:
@@ -60,20 +68,23 @@ class lattice_block_gui(QtWidgets.QMainWindow):
             body = buffer.getvalue()
             self.data = json.loads(body.decode('iso-8859-1'))
             play = False
+            names = []
             for (i, l) in enumerate(self.lasers):
                 wl = 299792.458/self.data["wavelengths"][l['i']]
-                label = "%.5f THz" % (wl)
+                label = "%.6f THz" % (wl)
                 self.labels[i].setText(label)
 
-                if (wl < l['min_freq'] or wl > l['max_freq']) and not self.broken[i]:
+                if (wl < l['min_freq'] or wl > l['max_freq']) and 100 < wl and 800 > wl and not self.broken[i]:
+                    print(l, wl)
                     self.broken[i] = True
                     play = True
                     self.buttons[i].setStyleSheet('background-color: red')
+                    names.append(l['label'])
             if play:
-                sound = vlc.MediaPlayer('unlocked.mp3')
-                sound.play()
-
-
+                # sound = vlc.MediaPlayer('unlocked.mp3')
+                # sound.play()
+                for n in names:
+                    self.engine.say("The %s laser is unlocked!" % (n))
         except pycurl.error as e:
             print("could not connect to wavemeter: ", e)
             self.data = ''
@@ -84,7 +95,7 @@ class lattice_block_gui(QtWidgets.QMainWindow):
 
 
     def status(self):
-        pass
+        self.engine.iterate()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
@@ -105,4 +116,5 @@ if __name__ == "__main__":
 
     # Run event loop
     ret = app.exec_()
+    app.engine.stop()
     sys.exit(ret)
