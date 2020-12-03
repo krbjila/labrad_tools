@@ -17,8 +17,6 @@ timeout = 20
 """
 import sys
 from labrad.server import LabradServer, setting
-sys.path.append("../client_tools")
-from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 class DG800Server(LabradServer):
@@ -26,15 +24,12 @@ class DG800Server(LabradServer):
     name = '%LABRADNODE%_DG800'
 
     def __init__(self):
-        self.USB_server_name = 'polarkrb_usb'
-        super(DG800Server, self).__init__()
-        self.connect()
+        self.USB_server_name = 'imaging_usb'
+        LabradServer.__init__(self)
     
     @inlineCallbacks
-    def connect(self):
-        self.cxn = connection()
-        yield self.cxn.connect()
-        self.USB = yield self.cxn.get_server(self.USB_server_name)
+    def initServer(self):
+        self.USB = yield self.client.servers[self.USB_server_name]
 
     @setting(5, returns='*s')
     def get_devices(self, c):
