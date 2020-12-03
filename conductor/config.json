@@ -55,6 +55,22 @@
                 }
             }
         },
+        "dg800": {
+            "sin": {
+                "default_sin" : {
+                    "freq1": 0,
+                    "amplitude1": 0,
+                    "phase1": 0,
+                    "offset1": 0,
+                    "output1": 0,
+                    "freq2": 0,
+                    "amplitude2": 0,
+                    "phase2": 0,
+                    "offset2": 0,
+                    "output2": 0
+                }
+            }
+        },
         "highFieldRbARP": {
             "duration": {
                 "default": 1

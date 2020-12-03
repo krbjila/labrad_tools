@@ -20,15 +20,15 @@ class Sin(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        device = yield self.cxn.imaging_dg800.get_devices()[0]
-        yield self.cxn.imaging_dg800.select_device(device)
+        devices = yield self.cxn.imaging_dg800.get_devices()
+        yield self.cxn.imaging_dg800.select_device(devices[0])
         try:
             yield self.cxn.imaging_dg800.set_sin(1,
                 self.value['freq1'], self.value['amplitude1'], self.value['offset1'], self.value['phase1'])
             yield self.cxn.imaging_dg800.set_sin(2,
                 self.value['freq2'], self.value['amplitude2'], self.value['offset2'], self.value['phase2'])
-            yield self.cxn.imaging_dg800.set_output(1,self.value['outputl'])
-            yield self.cxn.imaging_dg800.set_output(2,self.value['output2'])
+            yield self.cxn.imaging_dg800.set_output(1,bool(self.value['output1']))
+            yield self.cxn.imaging_dg800.set_output(2,bool(self.value['output2']))
         except Exception as e:
             print(e)
 
@@ -40,7 +40,7 @@ class Sin(ConductorParameter):
                     self.value['freq1'], self.value['amplitude1'], self.value['offset1'], self.value['phase1'])
                 yield self.cxn.imaging_dg800.set_sin(2,
                     self.value['freq2'], self.value['amplitude2'], self.value['offset2'], self.value['phase2'])
-                yield self.cxn.imaging_dg800.set_output(1,self.value['outputl'])
-                yield self.cxn.imaging_dg800.set_output(2,self.value['output2'])
+                yield self.cxn.imaging_dg800.set_output(1,bool(self.value['output1']))
+                yield self.cxn.imaging_dg800.set_output(2,bool(self.value['output2']))
             except Exception as e:
                 print(e)
