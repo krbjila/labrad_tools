@@ -26,6 +26,12 @@ node_dicts = [
             'sequencer',
             # start conductor last
             'conductor', 
+        ],
+        'node polarkrb': [
+            # start hardware interfaces first
+            'usb', 
+            # start multimeter monitoring
+            'multimeter', 
         ]
     },
 ]
