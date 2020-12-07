@@ -1,7 +1,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = dg800
+name = ag34410a
 version = 1
 description = server for Agilent 34410A multimeter
 instancename = %LABRADNODE%_ag34410a
