@@ -22,6 +22,8 @@ class Sin(ConductorParameter):
         self.cxn = yield connectAsync()
         devices = yield self.cxn.imaging_dg800.get_devices()
         yield self.cxn.imaging_dg800.select_device(devices[0])
+        yield self.cxn.imaging_dg800.set_impedance(1, 50)
+        yield self.cxn.imaging_dg800.set_impedance(2, 50)
         try:
             yield self.cxn.imaging_dg800.set_sin(1,
                 self.value['freq1'], self.value['amplitude1'], self.value['offset1'], self.value['phase1'])

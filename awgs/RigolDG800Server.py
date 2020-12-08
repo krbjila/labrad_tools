@@ -58,6 +58,17 @@ class DG800Server(LabradServer):
             stringthing = 'OFF'
         yield self.USB.write(":OUTP%d %s" % (channel, stringthing))
 
+    @setting(11, channel='i', impedance='i', inf='b', low='b')
+    def set_impedance(self, c, channel, impedance=50, inf=False, low=False):
+        if inf:
+            yield self.USB.write(":OUTP%d:IMP INF" % (channel))
+
+        elif low:
+            yield self.USB.write(":OUTP%d:IMP MIN" % (channel))
+
+        else:
+            yield self.USB.write(":OUTP%d:IMP %d" % (channel, impedance))
+
     @setting(9, channel='i', returns='*v')
     def get_sin(self, c, channel):
         out = yield self.USB.query(":SOUR%d:APPL?" % (channel))
