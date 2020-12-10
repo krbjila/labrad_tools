@@ -3,6 +3,7 @@ import json
 #from scratch import evaporation
 
 import time
+import os
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as Canvas
 from matplotlib.figure import Figure
@@ -223,8 +224,14 @@ class Ui_MainWindow(object):
 
         #Backup the old trajectory
         x = loadtraj('../evap.json')
-        backpath = '../backup/evap'+str(x['timestamp'])+'.json'
-        with open(backpath, 'w') as outfile:
+        relative_backup_path = '/dataserver/data/'
+        folder_s = datetime.datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
+        file_s = datetime.datetime.now().strftime("%H%M%S.json")
+        backup_folder = relative_backup_path + folder_s
+        backup_file = backup_folder + file_s
+        if not os.path.exists(backup_folder):
+			os.mkdir(backup_folder)
+        with open(backup_file, 'w') as outfile:
             json.dump(x,outfile)
 
         #save new trajectory
@@ -240,7 +247,6 @@ class Ui_MainWindow(object):
         T = np.arange(len(F))*dT
 	MaxTime = T[-1]
 	print(MaxTime)
-	
         self.graph.axes.clear()
         self.graph.axes.plot(T,F)
 	print(F[-1])
