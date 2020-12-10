@@ -70,8 +70,12 @@ class lattice_block_gui(QtWidgets.QMainWindow):
             play = False
             names = []
             for (i, l) in enumerate(self.lasers):
-                wl = 299792.458/self.data["wavelengths"][l['i']]
-                label = "%.6f THz" % (wl)
+                if l['i'] < 8:
+                    wl = 299792.458/self.data["wavelengths"][l['i']]
+                    label = "%.6f THz" % (wl)
+                else:
+                    wl = self.data["freq"]
+                    label = "%.2f MHz" % (wl)
                 self.labels[i].setText(label)
 
                 if (wl < l['min_freq'] or wl > l['max_freq']) and 100 < wl and 800 > wl and not self.broken[i]:
