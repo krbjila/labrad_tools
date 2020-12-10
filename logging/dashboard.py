@@ -78,7 +78,7 @@ class lattice_block_gui(QtWidgets.QMainWindow):
                     label = "%.2f MHz" % (wl)
                 self.labels[i].setText(label)
 
-                if (wl < l['min_freq'] or wl > l['max_freq']) and 100 < wl and 800 > wl and not self.broken[i]:
+                if (wl < l['min_freq'] or wl > l['max_freq']) and ((100 < wl and 800 > wl) or l['i'] >= 8) and not self.broken[i]:
                     print(l, wl)
                     self.broken[i] = True
                     play = True
