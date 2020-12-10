@@ -55,5 +55,5 @@ class Time(ConductorParameter):
             except Exception as e:
                 time = 6.7
                 print("MagEvapTime Error: could not get MagEvap sequence time; assuming default of %f: %s" % (time, e))
-            time = data['time'] - time + 0.25
+            time = max(data['time'] - time + 0.25, 0.001)
             yield self.cxn.conductor.set_parameter_values(json.dumps({'sequencer': {'*MagEvapTime': time}}))
