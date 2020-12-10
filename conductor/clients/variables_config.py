@@ -14,9 +14,11 @@ variables_dict = [
     ['*NWlow', 4.35], # 4.44
     ['*SWhigh', 4.84],
     ['*SWlow',4.66], # 4.645
-   # Plug PZTs
+    # Evaporation
+    ['*MagEvapTime', 12.7],
+    # Plug PZTs
     ['*PLUGV', 0],
-   # Plug Power
+    # Plug Power
     ['*PLUGP', 1.9],
     # B fields
     ['*QuadV0', -1.0],
