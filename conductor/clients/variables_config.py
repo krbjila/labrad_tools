@@ -11,7 +11,7 @@ variables_dict = [
     ['*RbHFOP', 4.7], 
     # QUAD shims
     ['*NWhigh', 4.4],
-    ['*NWlow', 4.42], # 4.44
+    ['*NWlow', 4.35], # 4.44
     ['*SWhigh', 4.84],
     ['*SWlow',4.66], # 4.645
    # Plug PZTs
