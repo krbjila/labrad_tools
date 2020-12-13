@@ -1,0 +1,10 @@
+[deps]
+DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
+Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
+MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
