@@ -8,14 +8,16 @@ module CalculatorController
   using DiffResults
   using BenchmarkTools
 
-  if !(@isdefined coeffs)
+  #if !(@isdefined coeffs)
       # Configuration constants
-      const PATH = "../lib/efield/comsol/data/fit_coeffs.json"
+      const PATH = "../../electrode/clients/lib/efield/comsol/data/fit_coeffs.json"
       const KEY_ORDER = ["LP", "UP", "LW", "LE", "UE", "UW"]
-      const PARAM_ORDER = ["bias", "dipole", "angle", "dEdx", "dEdy", "nux", "nuy"]
+      const PARAM_ORDER = ["bias", "dipole", "angle", "dEdx", "dEdy", "nux", "nuy", "d2Edx2", "d2Edy2"]
 
       # Optimization constants
-      const weights = SA_F64[1, 0, 1, 1, 1, 0, 0]
+      const weights = SA_F64[1, 0, 1, 1, 1, 0, 0, 1, 1]
+      const Vmax = SA_F64[5000, 5000, 5000, 5000, 5000, 5000]
+      const Vmin = SA_F64[-5000, -5000, -5000, -5000, -5000, -5000]
 
       # Physical constants
       const amu = 1.66054e-27 # kg
@@ -60,7 +62,7 @@ module CalculatorController
       const Dpoly = dot(D_POLY_FIT, [(E/1000)^i for i in 0:length(D_POLY_FIT)-1])
       const dDdEpoly = differentiate(Dpoly, E)
       const d2DdE2poly = differentiate(dDdEpoly, E)
-  end
+ # end
 
   # Compute the parameters of the field given electrode potentials
   function get_params(V)
@@ -76,6 +78,8 @@ module CalculatorController
       angle = atan(Ev[1], Ev[2]) * 180/π
       dEdx = dot(Ev, dEdxv)/bias
       dEdy = dot(Ev, dEdyv)/bias
+      d2Edx2 = (dot(dEdxv, dEdxv) + dot(d2Edx2v, Ev) - dEdx^2)/bias
+      d2Edy2 = (dot(dEdyv, dEdyv) + dot(d2Edy2v, Ev) - dEdy^2)/bias
 
       # Evaluate the dipole moment at the bias field and its derivatives
       dipole = subs(Dpoly, E => bias)
@@ -83,28 +87,28 @@ module CalculatorController
       d2DdE2v = subs(d2DdE2poly, E => bias)
 
       # Compute the trap frequency
-      kx = (dipole/bias + dDdEv) * dot(Ev, d2Edx2v) + dEdx^2 * (2 * dDdEv + bias * d2DdE2v)
-      ky = (dipole/bias + dDdEv) * dot(Ev, d2Edy2v) + dEdy^2 * (2 * dDdEv + bias * d2DdE2v)
+      biaspoly = (-dipole/bias*0 + 2*dDdEv + bias*d2DdE2v)
+      kx = (dipole/bias + dDdEv) * dot(Ev, d2Edx2v) + dEdx^2 * biaspoly
+      ky = (dipole/bias + dDdEv) * dot(Ev, d2Edy2v) + dEdy^2 * biaspoly
       # TODO: Correct these formulae after testing program
-      νx = sqrt(abs(100*DVcmToJ*kx) / (2 * π * m))
-      νy = sqrt(abs(100*DVcmToJ*ky) / (2 * π * m))
-
-      out = SVector(bias, dipole, angle, dEdx, dEdy, νx, νy)
+      νx = -sign(kx)*sqrt(abs(100*DVcmToJ*kx) / (2 * π * m))
+      νy = -sign(ky)*sqrt(abs(100*DVcmToJ*ky) / (2 * π * m))
+      out = SVector(bias, dipole, angle, dEdx, dEdy, νx, νy, d2Edx2, d2Edy2)
 
       return out
   end
 
   # Compute the least squares error
-  function err(p, V)
-      return dot(weights, (get_params(V) .- p).^2)
+  function err(p, V, w)
+      return dot(w, (get_params(V) .- p).^2)
   end
 
   # Optimize electrode potentials for parameters p
-  function opt(p; V0=Nothing)
-      if V0 == Nothing
+  function opt(p; V0=nothing, w=weights)
+      if V0 === nothing
           V0 = randn(6)
       end
-      f(V) = err(p, V)
+      f(V) = err(p, V, w)
       tape = ReverseDiff.GradientTape(f, V0)
       compiled_tape = ReverseDiff.compile(tape)
       result = DiffResults.GradientResult(V0)
@@ -115,19 +119,24 @@ module CalculatorController
       end
       opts = Optim.Options(x_tol=1E-8, f_tol=1E-8, g_tol=1E-8)
       optimize(Optim.only_fg!(fg!), V0, BFGS(), opts)
+      # TODO: Why doesn't this work?
+      #optimize(Optim.only_fg!(fg!), Vmin, Vmax, V0, Fminbox(BFGS()), opts)
   end
 
-  function opt_json(p; V0=Nothing)
-    min = opt(p; V0=V0).minimizer
-    p = get_params(min)
+  function opt_json(p; V0=nothing, w=weights)
+    optres = opt(p; V0=V0, w=w)
+    iter = optres.iterations
+    min = optres.minimizer
+    p2 = get_params(min)
     Vdict = Dict(k => min[i] for (i, k) in enumerate(KEY_ORDER))
     pdict = Dict(k => p[i] for (i, k) in enumerate(PARAM_ORDER))
-    return json(merge(Vdict, pdict))
+    edict = Dict("err" => err(p, min, w), "iter" => iter)
+    return merge(Vdict, pdict, edict)
   end
 
   function params_json(V)
     p = get_params(V)
-    return json(Dict(k => p[i] for (i, k) in enumerate(PARAM_ORDER)))
+    return Dict(k => p[i] for (i, k) in enumerate(PARAM_ORDER))
   end
 
   # Benchmark the optimization

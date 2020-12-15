@@ -7,7 +7,7 @@
             { "i": 4, "label": "Down Leg", "max_freq": 434.92273, "min_freq": 434.92262},
             { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},
             { "i": 6, "label": "Rb Repump", "max_freq": 384.23482, "min_freq": 384.23472},
-            { "i": 9, "label": "K Trap", "max_freq": 1260, "min_freq": 400}
+            { "i": 9, "label": "K Trap", "max_freq": 1370, "min_freq": 400}
         ]
     }
 }
