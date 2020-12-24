@@ -98,9 +98,12 @@ module CalculatorController
       return out
   end
 
+  function barrier(x, xmin, xmax)
+      return 1E0 .* (-log.(max.(x .- xmin, nextfloat(0.0))) -log.(max.(xmax .- x, nextfloat(0.0))))
+  end
   # Compute the least squares error
   function err(p, V, w)
-      return dot(w, (get_params(V) .- p).^2)
+      return dot(w, (get_params(V) .- p).^2) + sum(barrier(V, Vmin, Vmax))
   end
 
   # Optimize electrode potentials for parameters p
@@ -126,11 +129,11 @@ module CalculatorController
   function opt_json(p; V0=nothing, w=weights)
     optres = opt(p; V0=V0, w=w)
     iter = optres.iterations
-    min = optres.minimizer
-    p2 = get_params(min)
-    Vdict = Dict(k => min[i] for (i, k) in enumerate(KEY_ORDER))
-    pdict = Dict(k => p[i] for (i, k) in enumerate(PARAM_ORDER))
-    edict = Dict("err" => err(p, min, w), "iter" => iter)
+    bestV = max.(min.(optres.minimizer, Vmax), Vmin)
+    p2 = get_params(bestV)
+    Vdict = Dict(k => bestV[i] for (i, k) in enumerate(KEY_ORDER))
+    pdict = Dict(k => p2[i] for (i, k) in enumerate(PARAM_ORDER))
+    edict = Dict("err" => err(p, bestV, w), "iter" => iter, "barrier" => sum(barrier(bestV, Vmin, Vmax)))
     return merge(Vdict, pdict, edict)
   end
 
