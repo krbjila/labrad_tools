@@ -43,6 +43,7 @@ route("/opt", method = POST) do
       end
       result = CalculatorController.opt_json(p; V0=V0, w=w)
       last_result = [convert(Float64, result[v]) for v in CalculatorController.KEY_ORDER]
+      last_weight = w
       append!(out[mk], result)
     end
   end
