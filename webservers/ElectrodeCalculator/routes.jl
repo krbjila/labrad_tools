@@ -7,6 +7,10 @@ route("/") do
   serve_static_file("welcome.html")
 end
 
+route("/beep") do
+  print(println("\007"))
+end
+
 route("/params", method = POST) do
   messages = jsonpayload()
   out = Dict()

@@ -31,7 +31,8 @@ node_dicts = [
             # start hardware interfaces first
             'usb', 
             # start multimeter monitoring
-            'ag34410a', 
+            'ag34410a',
+            'alerter',
         ]
     },
 ]
