@@ -30,13 +30,17 @@ class alerterServer(LabradServer):
         self.USB_server_name = 'polarkrb_alerter'
         LabradServer.__init__(self)
     
-    @inlineCallbacks
+    # @inlineCallbacks
     def initServer(self):
         self.engine = pyttsx3.init()
-        self.engine.startLoop(True)
+        self.engine.startLoop(False)
+        l = LoopingCall(self.engine.iterate)
+        l.start(0.1)
+
 
     @setting(5, message="s")
     def say(self, c, message):
+        print(message)
         self.engine.say(message)
 
 if __name__ == '__main__':
