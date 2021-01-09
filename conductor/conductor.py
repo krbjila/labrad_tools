@@ -17,11 +17,12 @@ timeout = 20
 """
 
 import json
-import os
+import os, errno
 
 from collections import deque
 from copy import deepcopy
 from time import time, strftime
+from datetime import datetime
 
 from labrad.server import LabradServer
 from labrad.server import setting
@@ -38,8 +39,7 @@ from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 
-# TODO remote save parameter files locally
-# TODO get available parameters
+FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
     """ coordinate setting and saving experiment parameters.
@@ -66,6 +66,9 @@ class ConductorServer(LabradServer):
         self.data = {}
         self.data_path = None
         self.do_print_delay = False
+        self.shot = -1
+        self.last_time = datetime.now()
+        self.logging = False
 
         self.load_config(config_path)
         LabradServer.__init__(self)
@@ -82,6 +85,7 @@ class ConductorServer(LabradServer):
             config = json.load(infile)
             for key, value in config.items():
                 setattr(self, key, value)
+        # TODO: RUN conductor/clients/variables_config.py and setattr from those also. Refer to conductor/clients/forceWriteValue in parameter_values_control.py
 
     def initServer(self):
         # register default parameters after connected to labrad
@@ -397,6 +401,7 @@ class ConductorServer(LabradServer):
     # Abort the experiment immediately, then run defaults
     @setting(17)
     def abort_experiment(self, c):
+        yield self._advance_logging(True)
         for ID, call in self.advance_dict.items():
             try:
                 call.cancel()
@@ -420,6 +425,12 @@ class ConductorServer(LabradServer):
             # get next experiment from queue and keep a copy
             experiment = self.experiment_queue.popleft()
             experiment_copy = deepcopy(experiment)
+
+            if "name" in experiment and "default" not in experiment["name"]:
+                #TODO: Move save_parameters here
+                yield self._advance_logging(False)
+            else:
+                yield self._advance_logging(True)
             
             parameter_values = experiment.get('parameter_values')
             if parameter_values:
@@ -439,6 +450,7 @@ class ConductorServer(LabradServer):
                 # determine data path
                 timestr = strftime('%Y%m%d')
                 data_directory = self.data_directory.format(timestr)
+                self.experiment_name = experiment['name']
                 data_path = lambda i: str(data_directory 
                                           + experiment['name'] 
                                           + '#{}'.format(i))
@@ -447,7 +459,6 @@ class ConductorServer(LabradServer):
                     iteration += 1
                 self.data_path = data_path(iteration)
                 
-                print 'saving data to {}'.format(self.data_path)
                 if not os.path.exists(data_directory):
                     os.mkdir(data_directory)
 
@@ -471,6 +482,10 @@ class ConductorServer(LabradServer):
             advanced = yield self.advance_experiment()
         else:
             print 'remaining points: ', pts
+            #TODO: Add save_parameters here
+            if self.logging:
+                yield self._advance_logging(True)
+                yield self._advance_logging(False)
 
         # sort by priority. higher priority is called first. 
         priority_parameters = [parameter for device_name, device_parameters
@@ -507,8 +522,12 @@ class ConductorServer(LabradServer):
     def save_parameters(self):
         # save data to disk
         if self.data:
-            data_length = max([len(p) for dp in self.data.values()
-                                      for p in dp.values()])
+            try:
+                data_length = max([len(p) for dp in self.data.values()
+                                        for p in dp.values()])
+            except Exception as e:
+                data_length = 0
+                print("saving data failed due to error:", e)
         else:
             data_length = 0
         
@@ -525,11 +544,34 @@ class ConductorServer(LabradServer):
                 parameter_data.append(new_value)
         
         if self.data_path:
-            with open(self.data_path, 'w+') as outfile:
-                json.dump(self.data, outfile, default=lambda x: None)
+            self.data['shot_number'] = {"shot": [self.shot]}
+
+            if not 'defaults' in self.data_path:
+                s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
+                with open(self.data_path, 'w+') as outfile:
+                    outfile.write(s)
+                print 'saving data to {}'.format(self.data_path)
+                
+                path =  "%s/%d/" % (self.last_time.strftime(FILEBASE), self.shot)
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        print("Could not connect to data server: ", e)
+
+                try:
+                    with open(path + "sequence.json", 'w+') as outfile:
+                        outfile.write(s)
+                    print 'saving data to {}'.format(path + "sequence.json")
+                except Exception as e:
+                    print("Could not connect to data server: ", e)
+
+
 
     @inlineCallbacks
     def stopServer(self):
+        yield self._advance_logging(True)
+
         parameters_filename = self.parameters_directory + 'current_parameters.json'
         if os.path.isfile(parameters_filename):
             with open(parameters_filename, 'r') as infile:
@@ -590,6 +632,7 @@ class ConductorServer(LabradServer):
                 self.advance_counter += 1 
         else:
             ti = time()
+            #TODO: Remove save_parameters here
             yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
@@ -598,11 +641,57 @@ class ConductorServer(LabradServer):
             if self.do_print_delay:
                 print 'delay', tf-ti
 
+    """
+    Tells the logging server to begin logging for the next shot. Shot number is reset daily
+    """
+    @setting(1700, end='b')
+    def advance_logging(self, c, end = False):
+        yield self._advance_logging(end)
+
+    @inlineCallbacks
+    def _advance_logging(self, end = False):
+        cur_time = datetime.now()
+
+        # if (not end) and len(self.experiment_queue):
+        #     print(self.experiment_queue)
+        #     end = False
+        # else:
+        #     end = True
+
+        try:
+            logging = yield self.client.servers['imaging_logging']
+            logging.set_name("conductor")
+        except Exception as e:
+            print("Could not connect to logging server: ", e)
+
+        if not end:
+            try:
+                self.shot = yield logging.get_next_shot()
+                yield logging.set_shot(self.shot)
+                yield logging.log("Started shot %d" % (self.shot), cur_time)
+                print("Started logging shot %d" % (self.shot))
+                self.logging = True
+            except Exception as e:
+                print("Could not start logging shot: ", e)
+        else:
+            try:
+                if self.logging:
+                    yield logging.log("Finished shot %d" % (self.shot), cur_time)
+                    yield logging.set_shot()
+                    print("Stopped logging shot %d" % (self.shot))
+                    self.logging = False
+            except Exception as e:
+                print("Could not stop logging shot: ", e)
+
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):
         if do_print_delay is not None:
             self.do_print_delay = do_print_delay
         return self.do_print_delay
+
+    @setting(25)
+    def test_logging(self, c):
+        yield self.client.servers['imaging_logging'].log("hi")
 
 if __name__ == "__main__":
     from labrad import util

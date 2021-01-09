@@ -41,6 +41,7 @@ class Sequence(ConductorParameter):
                                                       parameter_values)
             yield self.cxn.sequencer.run_sequence(json.dumps(sequence))
             t_advance = get_duration(sequence)
+            # yield self.cxn.conductor.advance_logging()
         yield self.cxn.conductor.advance(t_advance)
 
     @inlineCallbacks
