@@ -12,6 +12,10 @@ node_dicts = [
             'usb',
             'dg800',
             'logging'
+        ],
+        'node krbg2': [
+            'okfpga',
+            'dds'
         ]
     },
     {
