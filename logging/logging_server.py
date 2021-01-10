@@ -70,7 +70,8 @@ class LoggingServer(LabradServer):
         self.shot = shot
         self.set_save_location()
         try:
-            self.labjack.set_shot(self.ljpath, idle=(self.shot == None))
+            self.labjack.set_shot(self.ljpath, self.shot == None)
+            print("starting labjack at path %s" % (self.ljpath))
         except Exception as e:
             print("Could not start LabJack: %s" % (e))
         try:
@@ -129,6 +130,11 @@ class LoggingServer(LabradServer):
 
         try:
             os.makedirs(path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+        try:
+            os.makedirs(self.ljpath)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
