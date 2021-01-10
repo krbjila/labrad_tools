@@ -21,7 +21,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labjack import ljm
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime
 import json
 
 class LabJackServer(LabradServer):
@@ -32,7 +32,8 @@ class LabJackServer(LabradServer):
         super(LabJackServer, self).__init__()
 
         config_fname = "../logging/logging_config.json"
-        self.config = json.load(config_fname)['labjack']
+        with open(config_fname, 'r') as f:
+            self.config = json.load(f)['labjack']
 
         self.handle = ljm.openS("T7", "ANY", "ANY")
 
@@ -43,7 +44,8 @@ class LabJackServer(LabradServer):
 
     
     def callback(self, handle):
-        ret = ljm.eStreamRead(self.handle)[0]
+        print("reading...")
+        ret = ljm.eStreamRead(handle)[0]
         data = np.array(ret).reshape(-1, self.nchannels)
         data[:,1] = data[:,1]*65536+data[:,0]
         if self.start_time == 0:
@@ -101,7 +103,9 @@ class LabJackServer(LabradServer):
             f.write('time,')
             [f.write('%s,' % i) for i in aScanList[2:]]
             f.write('\n')
+        print("starting stream")
         ljm.eStreamStart(self.handle, scansPerRead, self.nchannels, ljm.namesToAddresses(self.nchannels, aScanList)[0], scanRate)
+        print("setting callback")
         ljm.setStreamCallback(self.handle, self.callback)
 
     @setting(4, addr='s', returns='v')
@@ -137,18 +141,20 @@ class LabJackServer(LabradServer):
     @setting(8)
     def stop_stream(self, c):
         try:
-            ljm.eStreamStop(self.handle)
+            if(ljm.eReadAddress(self.handle, 4990, 1)): #STREAM_ENABLE
+                ljm.eStreamStop(self.handle)
         except Exception as e:
             print(e)
 
     @setting(9, path='s', idle='b')
     def set_shot(self, c, path, idle=False):
+        print("logging scan at %s" % (path))
         fname = path+"labjack_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")+".csv"
-        scan_list = [c["id"] for c in self.config["channels"]]
+        scan_list = [str(c["id"]) for c in self.config["channels"]]
         if idle:
             self.setup_stream(None, self.config["idlemaxreads"], self.config["idlescansperread"], scan_list, self.config["idlerate"], fname, "")
         else:
-            self.setup_stream(None, self.config["maxreads"], self.config["scansperread"], scan_list, self.config["scanrate"], fname, self.config["trigger"])
+            self.setup_stream(None, self.config["maxreads"], self.config["scansperread"], scan_list, self.config["scanrate"], fname, str(self.config["trigger"]))
         
 
 if __name__ == "__main__":
