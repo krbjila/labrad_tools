@@ -52,6 +52,8 @@ class LoggingServer(LabradServer):
         self.wavemetercall = LoopingCall(self.log_frequency)
         self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
 
+        self.labjack = yield self.client.servers['polarkrb_labjack']
+
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
         if time is None:
@@ -67,6 +69,10 @@ class LoggingServer(LabradServer):
     def set_shot(self, c, shot=None):
         self.shot = shot
         self.set_save_location()
+        try:
+            self.labjack.set_shot(self.ljpath, idle=(self.shot == None))
+        except Exception as e:
+            print("Could not start LabJack: %s" % (e))
         try:
             self.wavemetercall.stop()
         except Exception as e:
@@ -113,9 +119,11 @@ class LoggingServer(LabradServer):
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
             path = PATHBASE + "/%s/" % (now.strftime('%Y/%m/%Y%m%d'))
+            self.ljpath = path + "/labjack/"
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
             path = PATHBASE + "/%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
+            self.ljpath = path
         fname = path+"log.txt"
         ffname = path+"freqs.txt"
 

@@ -9,5 +9,19 @@
             { "i": 6, "label": "Rb Repump", "max_freq": 384.23482, "min_freq": 384.23472},
             { "i": 9, "label": "K Trap", "max_freq": 1370, "min_freq": 400}
         ]
+    },
+    "labjack": {
+        "trigger": "DIO0",
+        "scanrate": 1000,
+        "idlerate": 1,
+        "scansperread": 500,
+        "idlescansperread": 1,
+        "maxreads": 120,
+        "idlemaxreads": 120000,
+        "channels": [
+            {"id": "DIO0", "name": "Trigger"},
+            {"id": "AIN0", "name": "K Probe Detuning"},
+            {"id": "AIN1", "name": "AIN1"}
+        ]
     }
 }
