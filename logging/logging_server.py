@@ -29,7 +29,7 @@ import json
 BETWEEN_SHOTS_TIME = 10 # how often to log the wavemeter between shots (s)
 DURING_SHOT_TIME = 0.1 # how often to log the wavemeter during a shot (s)
 
-PATHBASE = 'K:\\data'
+PATHBASE = 'K:/data/'
 
 class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
@@ -93,7 +93,7 @@ class LoggingServer(LabradServer):
         if currtime.date() != self.last_time.date():
             self.next_shot = 0
         else:
-            path = PATHBASE + "/%s/shots/" % (currtime.strftime('%Y/%m/%Y%m%d'))
+            path = PATHBASE + "%s/shots/" % (currtime.strftime('%Y/%m/%Y%m%d'))
             dirlist = []
             for d in os.listdir(path):
                 try:
@@ -119,11 +119,11 @@ class LoggingServer(LabradServer):
             self.freqfile.close()
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
-            path = PATHBASE + "/%s/" % (now.strftime('%Y/%m/%Y%m%d'))
-            self.ljpath = path + "/labjack/"
+            path = PATHBASE + "%s/" % (now.strftime('%Y/%m/%Y%m%d'))
+            self.ljpath = path + "labjack/"
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
-            path = PATHBASE + "/%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
+            path = PATHBASE + "%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
             self.ljpath = path
         fname = path+"log.txt"
         ffname = path+"freqs.txt"
