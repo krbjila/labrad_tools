@@ -37,6 +37,7 @@ node_dicts = [
             # start multimeter monitoring
             'ag34410a',
             'alerter',
+            'labjack'
         ]
     },
 ]
