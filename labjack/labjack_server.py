@@ -63,11 +63,12 @@ class LabJackServer(LabradServer):
                 data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)[[0],:]
             else:
                 data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)
-            data[:,2] = data[:,2]*65536+data[:,1]
-            if self.start_time == -1:
-                self.start_time = data[0,2]
-            data[:,2] = (data[:,2] - self.start_time)/40E6
-            np.savetxt(self.file, data[:,2:], delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels-2))
+            # data[:,2] = data[:,2]*65536+data[:,1]
+            # if self.start_time == -1:
+            #     self.start_time = data[0,2]
+            # data[:,2] = (data[:,2] - self.start_time)/40E6
+            # np.savetxt(self.file, data[:,2:], delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels-2))
+            np.savetxt(self.file, data, delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels))
             self.file.flush()
 
     @setting(3, scansPerRead='i', aScanList='*s', scanRate='v')
@@ -89,7 +90,7 @@ class LabJackServer(LabradServer):
         # stream settling time and stream resolution configuration.
         numFrames = len(aNames)
         ljm.eWriteNames(self.handle, numFrames, aNames, aValues)
-        aScanList = ['FIO_STATE', 'CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
+        # aScanList = ['FIO_STATE', 'CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
         self.nchannels = len(aScanList)
         self.start_time = -1
         print("starting stream")
@@ -146,8 +147,8 @@ class LabJackServer(LabradServer):
         print("logging scan at %s" % (self.fname))
         old_file = self.file
         self.file = open(self.fname, "a+")
-        self.file.write('time,')
-        [self.file.write('%s,' % i) for i in self.scan_list]
+        # self.file.write('time,')
+        [self.file.write('%s,' % str(c["name"])) for c in self.config["channels"]]
         self.file.write('\n')
         self.idle = idle
         try:
