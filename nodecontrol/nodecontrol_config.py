@@ -1,9 +1,9 @@
 node_dicts = [
-#    {
-#        'node wavemeterlaptop' : [
-#            'wavemeter'
-#        ]
-#    },
+    {
+        'node polarkrb': [
+                'labjack'
+            ]
+    },
     {
         'node imaging' : [
             'wavemeter',
@@ -36,8 +36,7 @@ node_dicts = [
             'usb', 
             # start multimeter monitoring
             'ag34410a',
-            'alerter',
-            'labjack'
+            'alerter'
         ]
     },
 ]

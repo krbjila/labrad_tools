@@ -1,7 +1,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = DG800
+name = labjack
 version = 1
 description = server for LabJack T7 DAQ
 instancename = %LABRADNODE%_labjack
@@ -32,6 +32,7 @@ class LabJackServer(LabradServer):
     name = '%LABRADNODE%_labjack'
 
     def __init__(self):
+        self.name = "polarkrb_labjack"
         super(LabJackServer, self).__init__()
 
         config_fname = "../logging/logging_config.json"
