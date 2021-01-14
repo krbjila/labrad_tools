@@ -147,7 +147,7 @@ class LoggingServer(LabradServer):
         d = yield self.wavemeter.get_wavelengths()
         if len(d) > 0:
             data = json.loads(json.loads(d))
-            freqs = [299792.458/float(i) for i in data["wavelengths"]]
+            freqs = [299792.458/float(i) if i > 0 else 0 for i in data["wavelengths"]]
             time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
             if(self.shot is None and self.opentime.date() != time.date()):
                 self.set_save_location()
