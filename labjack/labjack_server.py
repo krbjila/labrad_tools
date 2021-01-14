@@ -18,11 +18,13 @@ from labrad.server import LabradServer, setting
 sys.path.append("../client_tools")
 from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
+from threading import Thread
 from labjack import ljm
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import json
+import os
 
 class LabJackServer(LabradServer):
     """Provides access to LabJack T7 DAQ."""
@@ -42,71 +44,58 @@ class LabJackServer(LabradServer):
         "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
         (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
 
+        self.running = False
+        self.idle = True
+        self.skips = 0
+        self.scan_list = [str(c["id"]) for c in self.config["channels"]]
+        self.fname = os.devnull
+        self.file = open(self.fname, "a+")
+        self.setup_stream(None, self.config["scansperread"], self.scan_list, self.config["scanrate"])
+
     
-    def callback(self, handle):
-        print("reading...")
-        ret = ljm.eStreamRead(handle)[0]
-        data = np.array(ret).reshape(-1, self.nchannels)
-        data[:,1] = data[:,1]*65536+data[:,0]
-        if self.start_time == 0:
-            self.start_time = data[0,1]
-        data[:,1] = (data[:,1] - self.start_time)/40E6
-        with open(self.path, "a") as f:
-            np.savetxt(f, data[:,1:], delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels-1))
-        self.reads -= 1
-        if(self.reads == 0):
-            ljm.eStreamStop(handle)
+    def read(self):
+        while self.running:
+            ret = ljm.eStreamRead(self.handle)
+            self.skips += ret[0].count(-9999.0)
+            print("Skips: %d, Scan Backlogs: Device = %i, LJM = "
+              "%i" % (self.skips, ret[1], ret[2]))
+            if self.idle:
+                data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)[[0],:]
+            else:
+                data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)
+            data[:,2] = data[:,2]*65536+data[:,1]
+            if self.start_time == -1:
+                self.start_time = data[0,2]
+            data[:,2] = (data[:,2] - self.start_time)/40E6
+            np.savetxt(self.file, data[:,2:], delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels-2))
+            self.file.flush()
 
-    def configureDeviceForTriggeredStream(self, triggerName):
-        """Configure the device to wait for a trigger before beginning stream.
-
-        @para handle: The device handle
-        @type handle: int
-        @para triggerName: The name of the channel that will trigger stream to start
-        @type triggerName: str
-        """
-        address = ljm.nameToAddress(triggerName)[0]
-        ljm.eWriteName(self.handle, "STREAM_TRIGGER_INDEX", address)
-
-        # Clear any previous settings on triggerName's Extended Feature registers
-        ljm.eWriteName(self.handle, "%s_EF_ENABLE" % triggerName, 0)
-
-        # 5 enables a rising or falling edge to trigger stream
-        ljm.eWriteName(self.handle, "%s_EF_INDEX" % triggerName, 5)
-
-        # Enable
-        ljm.eWriteName(self.handle, "%s_EF_ENABLE" % triggerName, 1)
-
-    def configureLJMForTriggeredStream(self):
-        ljm.writeLibraryConfigS(ljm.constants.STREAM_SCANS_RETURN, ljm.constants.STREAM_SCANS_RETURN_ALL_OR_NONE)
-        ljm.writeLibraryConfigS(ljm.constants.STREAM_RECEIVE_TIMEOUT_MS, 0)
-        # By default, LJM will time out with an error while waiting for the stream
-        # trigger to occur.
-
-    @setting(3, reads='i', scansPerRead='i', aScanList='*s', scanRate='v', savePath='s', triggerName='s', openMode='s')
-    def setup_stream(self, c, reads, scansPerRead, aScanList, scanRate, savePath, triggerName, openMode='a+'):
+    @setting(3, scansPerRead='i', aScanList='*s', scanRate='v')
+    def setup_stream(self, c, scansPerRead, aScanList, scanRate):
         if(ljm.eReadAddress(self.handle, 4990, 1)): #STREAM_ENABLE
             ljm.eStreamStop(self.handle)
-        if triggerName != "":
-            self.configureLJMForTriggeredStream()
-            self.configureDeviceForTriggeredStream(triggerName)
-        else:
-            ljm.writeLibraryConfigS(ljm.constants.STREAM_SCANS_RETURN, ljm.constants.STREAM_SCANS_RETURN_ALL)
-            ljm.writeLibraryConfigS(ljm.constants.STREAM_RECEIVE_TIMEOUT_MODE, ljm.constants.STREAM_RECEIVE_TIMEOUT_MODE_CALCULATED)
-            ljm.eWriteName(self.handle, "STREAM_TRIGGER_INDEX", 0)
-        aScanList = ['CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
-        self.reads = reads
+        # Ensure triggered stream is disabled.
+        ljm.eWriteName(self.handle, "STREAM_TRIGGER_INDEX", 0)
+
+        # Enabling internally-clocked stream.
+        ljm.eWriteName(self.handle, "STREAM_CLOCK_SOURCE", 0)
+
+        # All negative channels are single-ended, AIN0 and AIN1 ranges are
+        # +/-10 V, stream settling is 0 (default) and stream resolution index
+        # is 0 (default).
+        aNames = ["AIN_ALL_NEGATIVE_CH", "STREAM_SETTLING_US", "STREAM_RESOLUTION_INDEX", "STREAM_BUFFER_SIZE_BYTES"]
+        aValues = [ljm.constants.GND, 0, 0, 32768]
+        # Write the analog inputs' negative channels (when applicable), ranges,
+        # stream settling time and stream resolution configuration.
+        numFrames = len(aNames)
+        ljm.eWriteNames(self.handle, numFrames, aNames, aValues)
+        aScanList = ['FIO_STATE', 'CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
         self.nchannels = len(aScanList)
-        self.path = savePath
-        self.start_time = 0
-        with open(savePath, openMode) as f:
-            f.write('time,')
-            [f.write('%s,' % i) for i in aScanList[2:]]
-            f.write('\n')
+        self.start_time = -1
         print("starting stream")
         ljm.eStreamStart(self.handle, scansPerRead, self.nchannels, ljm.namesToAddresses(self.nchannels, aScanList)[0], scanRate)
-        print("setting callback")
-        ljm.setStreamCallback(self.handle, self.callback)
+        self.running = True
+        Thread(target = self.read).start()
 
     @setting(4, addr='s', returns='v')
     def read_register(self, c, addr):
@@ -140,6 +129,7 @@ class LabJackServer(LabradServer):
 
     @setting(8)
     def stop_stream(self, c):
+        self.running = False
         try:
             if(ljm.eReadAddress(self.handle, 4990, 1)): #STREAM_ENABLE
                 ljm.eStreamStop(self.handle)
@@ -148,13 +138,22 @@ class LabJackServer(LabradServer):
 
     @setting(9, path='s', idle='b')
     def set_shot(self, c, path, idle=False):
-        print("logging scan at %s" % (path))
-        fname = path+"labjack_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")+".csv"
-        scan_list = [str(c["id"]) for c in self.config["channels"]]
-        if idle:
-            self.setup_stream(None, self.config["idlemaxreads"], self.config["idlescansperread"], scan_list, self.config["idlerate"], fname, "")
+        if path == "":
+            self.fname = os.devnull
         else:
-            self.setup_stream(None, self.config["maxreads"], self.config["scansperread"], scan_list, self.config["scanrate"], fname, str(self.config["trigger"]))
+            self.fname = path + "labjack_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")+".csv"
+        self.start_time = -1
+        print("logging scan at %s" % (self.fname))
+        old_file = self.file
+        self.file = open(self.fname, "a+")
+        self.file.write('time,')
+        [self.file.write('%s,' % i) for i in self.scan_list]
+        self.file.write('\n')
+        self.idle = idle
+        try:
+            old_file.close()
+        except:
+            print("could not close file!")
         
 
 if __name__ == "__main__":
