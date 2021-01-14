@@ -11,17 +11,35 @@
         ]
     },
     "labjack": {
-        "trigger": "DIO0",
         "scanrate": 1000,
-        "idlerate": 1,
         "scansperread": 500,
-        "idlescansperread": 1,
-        "maxreads": 120,
-        "idlemaxreads": 120000,
         "channels": [
             {"id": "AIN0", "name": "K Probe Detuning"},
-            {"id": "AIN0", "name": "K Probe Detuning"},
-            {"id": "AIN1", "name": "AIN1"}
+            {"id": "AIN1", "name": "AIN1"},
+            {"id": "AIN2", "name": "AIN2"},
+            {"id": "AIN3", "name": "AIN3"},
+            {"id": "AIN120", "name": "AIN120"},
+            {"id": "AIN121", "name": "AIN121"},
+            {"id": "AIN122", "name": "AIN122"},
+            {"id": "AIN123", "name": "AIN123"},
+            {"id": "AIN124", "name": "AIN124"},
+            {"id": "AIN125", "name": "AIN125"},
+            {"id": "AIN126", "name": "AIN126"},
+            {"id": "AIN127", "name": "AIN127"},
+            {"id": "AIN48", "name": "AIN48"},
+            {"id": "AIN49", "name": "AIN49"},
+            {"id": "AIN50", "name": "AIN50"},
+            {"id": "AIN51", "name": "AIN51"},
+            {"id": "AIN52", "name": "AIN52"},
+            {"id": "AIN53", "name": "AIN53"},
+            {"id": "AIN54", "name": "AIN54"},
+            {"id": "AIN55", "name": "AIN55"},
+            {"id": "AIN56", "name": "AIN56"},
+            {"id": "AIN57", "name": "AIN57"},
+            {"id": "AIN58", "name": "AIN58"},
+            {"id": "AIN59", "name": "AIN59"},
+            {"id": "FIO_STATE", "name": "FIO_STATE"},
+            {"id": "CIO_STATE", "name": "CIO_STATE"}
         ]
     }
 }
