@@ -38,8 +38,14 @@
             {"id": "AIN57", "name": "AIN57"},
             {"id": "AIN58", "name": "AIN58"},
             {"id": "AIN59", "name": "AIN59"},
-            {"id": "FIO_STATE", "name": "FIO_STATE"},
-            {"id": "CIO_STATE", "name": "CIO_STATE"}
+            {"id": "FIO0", "name": "Trigger"},
+            {"id": "FIO1", "name": "FIO1"},
+            {"id": "FIO2", "name": "FIO2"},
+            {"id": "FIO3", "name": "FIO3"},
+            {"id": "CIO0", "name": "CIO0"},
+            {"id": "CIO1", "name": "CIO1"},
+            {"id": "CIO0", "name": "CIO2"},
+            {"id": "CIO1", "name": "CIO3"}
         ]
     }
 }

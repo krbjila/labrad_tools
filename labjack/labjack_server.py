@@ -25,6 +25,7 @@ import numpy as np
 from datetime import datetime
 import json
 import os
+import struct
 
 class LabJackServer(LabradServer):
     """Provides access to LabJack T7 DAQ."""
@@ -52,23 +53,26 @@ class LabJackServer(LabradServer):
         self.file = open(self.fname, "a+")
         self.setup_stream(None, self.config["scansperread"], self.scan_list, self.config["scanrate"])
 
-    
     def read(self):
         while self.running:
             ret = ljm.eStreamRead(self.handle)
             self.skips += ret[0].count(-9999.0)
-            print("Skips: %d, Scan Backlogs: Device = %i, LJM = "
-              "%i" % (self.skips, ret[1], ret[2]))
+            # print("Skips: %d, Scan Backlogs: Device = %i, LJM = %i" % (self.skips, ret[1], ret[2]))
             if self.idle:
                 data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)[[0],:]
             else:
                 data = np.array(ret[0], dtype=np.float64).reshape(-1, self.nchannels)
-            # data[:,2] = data[:,2]*65536+data[:,1]
-            # if self.start_time == -1:
-            #     self.start_time = data[0,2]
-            # data[:,2] = (data[:,2] - self.start_time)/40E6
-            # np.savetxt(self.file, data[:,2:], delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels-2))
-            np.savetxt(self.file, data, delimiter=',',header='',comments='',fmt="%f,"*(self.nchannels))
+            data[:,2] = data[:,2]*65536+data[:,1]
+            if self.start_time == -1:
+                self.start_time = data[0,2]
+            data[:,2] = (data[:,2] - self.start_time)
+            diffs = np.diff(data[:,2], prepend = self.last_time) < 0
+            self.last_time = data[-1, 2]
+            data[:,2] = data[:,2] + (self.n_rollovers + diffs) * 2**32
+            if np.any(diffs):
+                self.n_rollovers += 1
+            data[:, 2] = data[:,2] / 40E6
+            np.savetxt(self.file, data[:,2:], delimiter=',',header='',comments='',fmt="%.3f,"*(self.nchannels-2))
             self.file.flush()
 
     @setting(3, scansPerRead='i', aScanList='*s', scanRate='v')
@@ -85,14 +89,16 @@ class LabJackServer(LabradServer):
         # +/-10 V, stream settling is 0 (default) and stream resolution index
         # is 0 (default).
         aNames = ["AIN_ALL_NEGATIVE_CH", "STREAM_SETTLING_US", "STREAM_RESOLUTION_INDEX", "STREAM_BUFFER_SIZE_BYTES"]
-        aValues = [ljm.constants.GND, 0, 0, 32768]
+        aValues = [ljm.constants.GND, 0, 1, 32768]
         # Write the analog inputs' negative channels (when applicable), ranges,
         # stream settling time and stream resolution configuration.
         numFrames = len(aNames)
         ljm.eWriteNames(self.handle, numFrames, aNames, aValues)
-        # aScanList = ['FIO_STATE', 'CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
+        aScanList = ['FIO_STATE', 'CORE_TIMER', 'STREAM_DATA_CAPTURE_16'] + aScanList
         self.nchannels = len(aScanList)
         self.start_time = -1
+        self.last_time = -np.inf
+        self.n_rollovers = 0
         print("starting stream")
         ljm.eStreamStart(self.handle, scansPerRead, self.nchannels, ljm.namesToAddresses(self.nchannels, aScanList)[0], scanRate)
         self.running = True
@@ -144,12 +150,19 @@ class LabJackServer(LabradServer):
         else:
             self.fname = path + "labjack_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S.%f")+".csv"
         self.start_time = -1
+        self.n_rollovers = 0
+        self.last_time = -np.inf
         print("logging scan at %s" % (self.fname))
         old_file = self.file
-        self.file = open(self.fname, "a+")
-        # self.file.write('time,')
-        [self.file.write('%s,' % str(c["name"])) for c in self.config["channels"]]
-        self.file.write('\n')
+        new_file = open(self.fname, "a+")
+        # TODO: Make header more informative
+        new_file.write('time,')
+        [new_file.write('%s,' % str(c["name"])) for c in self.config["channels"]]
+        new_file.write('\n')
+        new_file.write('time,')
+        [new_file.write('%s,' % str(c["id"])) for c in self.config["channels"]]
+        new_file.write('\n')
+        self.file = new_file
         self.idle = idle
         try:
             old_file.close()
