@@ -169,6 +169,12 @@ class LabJackServer(LabradServer):
             old_file.close()
         except:
             print("could not close file!")
+
+    @setting(10)
+    def stopServer(self):
+        self.set_shot(None, "", idle=True)
+        self.stop_stream(None)
+        ljm.close(self.handle)
         
 
 if __name__ == "__main__":
