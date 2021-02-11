@@ -69,6 +69,17 @@ class DG800Server(LabradServer):
         else:
             yield self.USB.write(":OUTP%d:IMP %d" % (channel, impedance))
 
+    @setting(12, channel='i', ncycles='i')
+    def set_ncycles(self, c, channel, ncycles):
+        yield self.USB.write(":SOUR%d:BURS:NCYC %d" % (channel, ncycles))
+
+    @setting(13, channel='i', gated='b')
+    def set_gated(self, c, channel, gated):
+        if gated:
+            yield self.USB.write(":SOUR%d:BURS:MODE GAT" % (channel))
+        else:
+            yield self.USB.write(":SOUR%d:BURS:MODE TRIG" % (channel))
+
     @setting(9, channel='i', returns='*v')
     def get_sin(self, c, channel):
         out = yield self.USB.query(":SOUR%d:APPL?" % (channel))

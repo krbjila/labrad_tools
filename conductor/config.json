@@ -63,11 +63,15 @@
                     "phase1": 0,
                     "offset1": 0,
                     "output1": 0,
+                    "ncycles1": 1,
+                    "gated1": 1,
                     "freq2": 0,
                     "amplitude2": 0,
                     "phase2": 0,
                     "offset2": 0,
-                    "output2": 0
+                    "output2": 0,
+                    "ncycles2": 1,
+                    "gated2": 1
                 }
             }
         },
