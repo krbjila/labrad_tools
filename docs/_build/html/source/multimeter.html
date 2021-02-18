@@ -145,7 +145,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/source/labrad_tools.conductor.devices.arp33220A.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/source/multimeter.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -165,19 +165,7 @@
 </div>
 <div class="section" id="module-multimeter.Agilent34410A_server">
 <span id="multimeter-agilent34410a-server-module"></span><h2>multimeter.Agilent34410A_server module<a class="headerlink" href="#module-multimeter.Agilent34410A_server" title="Permalink to this headline">¶</a></h2>
-<p>### BEGIN NODE INFO
-[info]
-name = ag34410a
-version = 1
-description = server for Agilent 34410A multimeter
-instancename = %LABRADNODE%_ag34410a</p>
-<p>[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20</p>
-<p>[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO</p>
+<p>Provides access to Agilent 34410A multimeters.</p>
 <dl class="class">
 <dt id="multimeter.Agilent34410A_server.ag34410aServer">
 <em class="property">class </em><code class="descclassname">multimeter.Agilent34410A_server.</code><code class="descname">ag34410aServer</code><a class="headerlink" href="#multimeter.Agilent34410A_server.ag34410aServer" title="Permalink to this definition">¶</a></dt>
@@ -191,7 +179,7 @@ timeout = 20
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>c</strong> – A LabRAD context (passed to select_device())</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>c</strong> – A LabRAD context (which is passed on to passed to <a class="reference internal" href="#multimeter.Agilent34410A_server.ag34410aServer.select_device" title="multimeter.Agilent34410A_server.ag34410aServer.select_device"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ag34410aServer.select_device()</span></code></a>)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body">A list of strings corresponding to the IDs of connected multimeters</td>
 </tr>
@@ -242,7 +230,7 @@ timeout = 20
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>c</strong> – A LabRAD context (not used)</li>
-<li><strong>device</strong> (<em>string</em>) – The ID of the multimeter to connect to, as returned by get_devices()</li>
+<li><strong>device</strong> (<em>string</em>) – The ID of the multimeter to connect to, as returned by <a class="reference internal" href="#multimeter.Agilent34410A_server.ag34410aServer.get_devices" title="multimeter.Agilent34410A_server.ag34410aServer.get_devices"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ag34410aServer.get_devices()</span></code></a></li>
 </ul>
 </td>
 </tr>
