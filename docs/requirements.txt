@@ -73,7 +73,6 @@ pylabrad==0.97.2
 pylint==1.9.5
 pyOpenSSL==19.0.0
 pyparsing==2.3.1
-pypiwin32==223
 pyrsistent==0.15.2
 pyserial==3.4
 python-dateutil==2.7.5
