@@ -71,14 +71,18 @@ class DG800Server(LabradServer):
 
     @setting(12, channel='i', ncycles='i')
     def set_ncycles(self, c, channel, ncycles):
-        yield self.USB.write(":SOUR%d:BURS:NCYC %d" % (channel, ncycles))
+        pass
+        # print("not implented, sad!")
+        # yield self.USB.write(":SOUR%d:BURS:NCYC %d" % (channel, ncycles))
 
     @setting(13, channel='i', gated='b')
     def set_gated(self, c, channel, gated):
-        if gated:
-            yield self.USB.write(":SOUR%d:BURS:MODE GAT" % (channel))
-        else:
-            yield self.USB.write(":SOUR%d:BURS:MODE TRIG" % (channel))
+        pass
+        # print("function not implemented. sad!")
+        # if gated:
+        #     yield self.USB.write(":SOUR%d:BURS:MODE GAT" % (channel))
+        # else:
+        #     yield self.USB.write(":SOUR%d:BURS:MODE TRIG" % (channel))
 
     @setting(9, channel='i', returns='*v')
     def get_sin(self, c, channel):
