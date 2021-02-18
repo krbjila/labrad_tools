@@ -5,6 +5,7 @@ import pycurl
 from io import BytesIO
 from functools import partial
 import pyttsx3
+import random
 
 class lattice_block_gui(QtWidgets.QMainWindow):
     def __init__(self, Parent=None):
@@ -14,12 +15,6 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.initialize()
         self.url = 'http://192.168.141.220:8000/wavemeter/api/'
         self.engine = pyttsx3.init()
-        # voices = self.engine.getProperty('voices')
-        # for v in voices:
-        #     print(v.id)
-        #     if "Paul" in v.id:
-        #         self.engine.setProperty('voice', v.id)
-        #         break
         self.engine.startLoop(False)
 
     def initialize(self):
@@ -83,12 +78,22 @@ class lattice_block_gui(QtWidgets.QMainWindow):
                     self.broken[i] = True
                     play = True
                     self.buttons[i].setStyleSheet('background-color: red')
+                    self.buttons[i].repaint()
                     names.append(l['label'])
             if play:
                 # sound = vlc.MediaPlayer('unlocked.mp3')
                 # sound.play()
                 for n in names:
-                    self.engine.say("The %s laser is unlocked!" % (n))
+                    r = random.random()
+                    if r > 0.99:
+                        s = "Papa Jun is always watching"
+                    elif r < 0.1:
+                        s = "Thank you papa Cal for giving me life, for birthing me"
+                    elif r > 0.7:
+                        s = ""
+                    else:
+                        s = ""
+                    self.engine.say(("The %s laser is unlocked!" + s) % (n))
         except pycurl.error as e:
             print("could not connect to wavemeter: ", e)
             self.data = ''
