@@ -16,3 +16,5 @@ electrode/values.json
 .vscode/settings.json
 magnetic_evaporation/evap.json
 *.DS_Store
+docs/_build
+docs/_static
