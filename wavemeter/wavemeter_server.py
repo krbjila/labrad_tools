@@ -39,7 +39,11 @@ class WavemeterServer(LabradServer):
         super(WavemeterServer, self).__init__()
 
     def update(self):
-        """Updates internal state with the latest wavelengths from the wavemeter"""
+        """
+        update(self)
+
+        Updates internal state with the latest wavelengths from the wavemeter
+        """
         try:
             buffer = BytesIO()
             c = pycurl.Curl()
@@ -55,7 +59,10 @@ class WavemeterServer(LabradServer):
     @inlineCallbacks
     @setting(5, returns='s')
     def get_wavelengths(self, c):
-        """Updates and returns data from the wavemeter
+        """
+        get_wavelengths(self, c)
+        
+        Updates and returns data from the wavemeter
 
         Args:
             c: A LabRAD context (not used)

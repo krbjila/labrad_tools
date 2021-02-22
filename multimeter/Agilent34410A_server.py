@@ -35,7 +35,11 @@ class ag34410aServer(LabradServer):
     
     @inlineCallbacks
     def initServer(self):
-        """Lists connected multimeters, if any, and connects to the first one."""
+        """
+        initServer(self)
+
+        Lists connected multimeters, if any, and connects to the first one.
+        """
         update_time = 0.05 # s
         self.USB = yield self.client.servers[self.USB_server_name]
         devices = yield self.get_devices(None)
@@ -48,7 +52,10 @@ class ag34410aServer(LabradServer):
 
     @setting(5, returns='*s')
     def get_devices(self, c):
-        """Lists connected multimeters. Note that the function connects to each device to check its ID.
+        """
+        get_devices(self, c)
+        
+        Lists connected multimeters. Note that the function connects to each device to check its ID.
 
         Args:
             c: A LabRAD context (which is passed on to passed to :meth:`ag34410aServer.select_device`)
@@ -67,7 +74,10 @@ class ag34410aServer(LabradServer):
 
     @setting(6, device='s')
     def select_device(self, c, device):
-        """Select a connected multimeter
+        """
+        select_device(self, c, device)
+        
+        Select a connected multimeter
 
         Args:
             c: A LabRAD context (not used)
@@ -78,7 +88,10 @@ class ag34410aServer(LabradServer):
     @inlineCallbacks
     @setting(10, returns='v')
     def read(self, c):
-        """Reads the current data from the multimeter
+        """
+        read(self, c)
+        
+        Reads the current data from the multimeter
 
         Args:
             c: A LabRAD context (not used)
@@ -101,7 +114,10 @@ class ag34410aServer(LabradServer):
     
     @inlineCallbacks
     def log_multimeter(self):
-        """Logs the current multimeter data
+        """
+        log_multimeter(self)
+        
+        Logs the current multimeter data using the #TODO: logging server link
         """
         try:
             val = yield self._read()

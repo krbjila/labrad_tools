@@ -1,10 +1,10 @@
-wavemeter package
+awgs package
 =================================================
 
-wavemeter.wavemeter_server module
+awgs.RigolDG800Server module
 ----------------------------------------------------------
 
-.. automodule:: wavemeter.wavemeter_server
+.. automodule:: awgs.RigolDG800Server
    :members:
    :undoc-members:
    :show-inheritance:
