@@ -1,3 +1,7 @@
+"""
+A list of LabRAD servers, by node, which are started and stopped by the :mod:`nodecontrol.nodecontrol_start` and :mod:`nodecontrol.nodecontrol_stop` scripts. They are started and stopped in the order that they appear in the file.
+"""
+
 node_dicts = [
     {
         'node polarkrb': [
