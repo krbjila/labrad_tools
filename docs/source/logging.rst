@@ -9,6 +9,9 @@ log.logging_server module
    :undoc-members:
    :show-inheritance:
 
+log.dashboard module
+----------------------------------------------------------
+
 .. automodule:: log.dashboard
    :members:
    :undoc-members:

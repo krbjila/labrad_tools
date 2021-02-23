@@ -7,6 +7,7 @@ from functools import partial
 import pyttsx3
 import random
 
+# TODO: Fix Sphinx autodoc reporting the superclass as sphinx.ext.autodoc.importer._MockObject
 class laser_dashboard_gui(QtWidgets.QMainWindow):
     """
     Displays the status of the laser locks, including the measured laser frequencies and an indicator if the laser is unlocked. Also provides audible warnings when lasers come unlocked.
