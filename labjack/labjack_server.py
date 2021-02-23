@@ -1,17 +1,20 @@
 """
-### BEGIN NODE INFO
-[info]
-name = labjack
-version = 1
-description = server for LabJack T7 DAQ
-instancename = %LABRADNODE%_labjack
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+Provides access to LabJack T7 DAQ.
+
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = labjack
+    version = 1
+    description = server for LabJack T7 DAQ
+    instancename = %LABRADNODE%_labjack
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 from labrad.server import LabradServer, setting
@@ -55,6 +58,9 @@ class LabJackServer(LabradServer):
         self.setup_stream(None, self.config["scansperread"], self.scan_list, self.config["scanrate"])
 
     def read(self):
+        """
+        Reads latest data from LabJack, computes times relative to the start of the scan, and saves data to a file.
+        """
         while self.running:
             ret = ljm.eStreamRead(self.handle)
             self.skips += ret[0].count(-9999.0)
@@ -78,6 +84,17 @@ class LabJackServer(LabradServer):
 
     @setting(3, scansPerRead='i', aScanList='*s', scanRate='v')
     def setup_stream(self, c, scansPerRead, aScanList, scanRate):
+        """
+        setup_stream(self, c, scansPerRead, aScanList, scanRate)
+        
+        Sets up and starts a LabJack stream. The stream is nonblocking, since the read function is automatically started in a new thread. The data is saved in a location set by :meth:`set_shot`
+
+        Args:
+            c: A LabRAD context (not used)
+            scansPerRead (int): The number of scans to be taken before the data is read into the computer. Should typically be set so the data is read at ~1 Hz.
+            aScanList (list of strings): An ordered list of the channels to be read. See `the LabJack docs <https://labjack.com/support/datasheets/t-series/communication/stream-mode#streamable-registers>`__ for a list of streamable registers.
+            scanRate (int): The scan rate in Hz
+        """
         if(ljm.eReadAddress(self.handle, 4990, 1)): #STREAM_ENABLE
             ljm.eStreamStop(self.handle)
         # Ensure triggered stream is disabled.
@@ -107,6 +124,19 @@ class LabJackServer(LabradServer):
 
     @setting(4, addr='s', returns='v')
     def read_register(self, c, addr):
+        """
+        read_register(self, c, addr)
+        
+        Reads a register on the LabJack. Returns a float, which may need to be interpreted bitwise.
+
+        Args:
+            c: A LabRAD context (not used)
+            addr (string): The address of the register. See `the LabJack docs <https://labjack.com/support/datasheets/t-series/communication/modbus-map>`__ for a list of registers.
+
+        Returns:
+            float: The contents of the register. This may need to be converted to a bit string. Zero is returned if an error occurs.
+
+        """
         try:
             returnValue(ljm.eReadName(self.handle, addr))
         except Exception as e:
@@ -115,6 +145,16 @@ class LabJackServer(LabradServer):
         
     @setting(5, addr='s', val='v')
     def write_register(self, c, addr, val):
+        """
+        write_register(self, c, addr, val)
+        
+        Writes to a register on the LabJack.
+
+        Args:
+            c: A LabRAD context (not used)
+            addr (string): The address of the register. See `the LabJack docs <https://labjack.com/support/datasheets/t-series/communication/modbus-map>`__ for a list of registers.
+            val (float): The value to be written to the register.
+        """
         try:
             ljm.eWriteName(self.handle, addr, val)
         except Exception as e:
@@ -122,6 +162,19 @@ class LabJackServer(LabradServer):
         
     @setting(6, addr='s', returns='s')
     def read_register_string(self, c, addr):
+        """
+        read_register_string(self, c, addr)
+        
+        Reads a register containing a string on the LabJack.
+
+        Args:
+            c: A LabRAD context (not used)
+            addr (string): The address of the register. See `the LabJack docs <https://labjack.com/support/datasheets/t-series/communication/modbus-map>`_ for a list of registers.
+
+        Returns:
+            string: The contents of the register. An empty string is returned if an error occurs.
+
+        """
         try:
             returnValue(ljm.eReadNameString(self.handle, addr))
         except Exception as e:
@@ -130,6 +183,16 @@ class LabJackServer(LabradServer):
 
     @setting(7, addr='s', val='s')
     def write_register_string(self, c, addr, val):
+        """
+        write_register(self, c, addr, val)
+        
+        Writes to a register containing a string on the LabJack.
+
+        Args:
+            c: A LabRAD context (not used)
+            addr (string): The address of the register. See `the LabJack docs <https://labjack.com/support/datasheets/t-series/communication/modbus-map>`_ for a list of registers.
+            val (string): The value to be written to the register.
+        """
         try:
             ljm.eWriteNameString(self.handle, addr, val)
         except Exception as e:
@@ -137,6 +200,14 @@ class LabJackServer(LabradServer):
 
     @setting(8)
     def stop_stream(self, c):
+        """
+        stop_stream(self, c)
+
+        Stops a stream, if one is running.
+
+        Args:
+            c: A LabRAD context (not used)
+        """
         self.running = False
         try:
             if(ljm.eReadAddress(self.handle, 4990, 1)): #STREAM_ENABLE
@@ -146,6 +217,16 @@ class LabJackServer(LabradServer):
 
     @setting(9, path='s', idle='b')
     def set_shot(self, c, path, idle=False):
+        """
+        set_shot(self, c, path, idle=False)
+        
+        Sets the save path and logging rate for the LabJack.
+
+        Args:
+            c: A LabRAD context (not used)
+            path (string): A directory that the LabJack data is saved to.
+            idle (bool, optional): If True, only saves the first point from each read. If False, saves all data. Defaults to False.
+        """
         if path == "":
             self.fname = os.devnull
         else:
@@ -156,7 +237,6 @@ class LabJackServer(LabradServer):
         print("logging scan at %s" % (self.fname))
         old_file = self.file
         new_file = open(self.fname, "a+")
-        # TODO: Make header more informative
         new_file.write('time,')
         [new_file.write('%s,' % str(c["name"])) for c in self.config["channels"]]
         new_file.write('\n')
@@ -169,6 +249,15 @@ class LabJackServer(LabradServer):
             old_file.close()
         except:
             print("could not close file!")
+
+    @setting(10)
+    def stopServer(self):
+        """
+        Run when the LabRAD server is stopped. Stops any running stream, closes any open files, and closes the connection to the LabJack.
+        """
+        self.set_shot(None, "", idle=True)
+        self.stop_stream(None)
+        ljm.close(self.handle)
         
 
 if __name__ == "__main__":

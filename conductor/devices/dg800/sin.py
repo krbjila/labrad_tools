@@ -31,6 +31,10 @@ class Sin(ConductorParameter):
                 self.value['freq2'], self.value['amplitude2'], self.value['offset2'], self.value['phase2'])
             yield self.cxn.imaging_dg800.set_output(1,bool(self.value['output1']))
             yield self.cxn.imaging_dg800.set_output(2,bool(self.value['output2']))
+            # yield self.cxn.imaging_dg800.set_ncycles(1,int(self.value['ncycles1']))
+            # yield self.cxn.imaging_dg800.set_ncycles(2,int(self.value['ncycles2']))
+            # yield self.cxn.imaging_dg800.set_gated(1,bool(self.value['gated1']))
+            # yield self.cxn.imaging_dg800.set_gated(2,bool(self.value['gated2']))
         except Exception as e:
             print(e)
 
@@ -44,5 +48,9 @@ class Sin(ConductorParameter):
                     self.value['freq2'], self.value['amplitude2'], self.value['offset2'], self.value['phase2'])
                 yield self.cxn.imaging_dg800.set_output(1,bool(self.value['output1']))
                 yield self.cxn.imaging_dg800.set_output(2,bool(self.value['output2']))
+                # yield self.cxn.imaging_dg800.set_ncycles(1,int(self.value['ncycles1']))
+                # yield self.cxn.imaging_dg800.set_ncycles(2,int(self.value['ncycles2']))
+                # yield self.cxn.imaging_dg800.set_gated(1,bool(self.value['gated1']))
+                # yield self.cxn.imaging_dg800.set_gated(2,bool(self.value['gated2']))
             except Exception as e:
                 print(e)

@@ -1,17 +1,20 @@
 """
-### BEGIN NODE INFO
-[info]
-name = wavemeter
-version = 1
-description = server for Highfinesse WS-7 Wavemeter
-instancename = %LABRADNODE%_wavemeter
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+Provides access to Highfinesse WS-7 Wavemeter.
+
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = wavemeter
+    version = 1
+    description = server for Highfinesse WS-7 Wavemeter
+    instancename = %LABRADNODE%_wavemeter
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 from labrad.server import LabradServer, setting
@@ -26,7 +29,7 @@ import pycurl
 from io import BytesIO
 
 class WavemeterServer(LabradServer):
-    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running"""
+    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running. The URL is hardcoded."""
     name = '%LABRADNODE%_wavemeter'
     url = 'http://192.168.141.220:8000/wavemeter/api/'
 
@@ -36,6 +39,11 @@ class WavemeterServer(LabradServer):
         super(WavemeterServer, self).__init__()
 
     def update(self):
+        """
+        update(self)
+
+        Updates internal state with the latest wavelengths from the wavemeter
+        """
         try:
             buffer = BytesIO()
             c = pycurl.Curl()
@@ -51,6 +59,17 @@ class WavemeterServer(LabradServer):
     @inlineCallbacks
     @setting(5, returns='s')
     def get_wavelengths(self, c):
+        """
+        get_wavelengths(self, c)
+        
+        Updates and returns data from the wavemeter
+
+        Args:
+            c: A LabRAD context (not used)
+
+        Yields:
+            Returns a string containing the latest wavemeter data encoded as a JSON.
+        """
         yield self.update()
         returnValue(self.data)
 

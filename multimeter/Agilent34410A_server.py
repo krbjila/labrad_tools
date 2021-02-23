@@ -1,20 +1,24 @@
 """
-### BEGIN NODE INFO
-[info]
-name = ag34410a
-version = 1
-description = server for Agilent 34410A multimeter
-instancename = %LABRADNODE%_ag34410a
+Provides access to Agilent 34410A multimeters.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = ag34410a
+    version = 1
+    description = server for Agilent 34410A multimeter
+    instancename = %LABRADNODE%_ag34410a
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
+
 import sys
 from datetime import datetime
 from labrad.server import LabradServer, setting
@@ -22,7 +26,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 
 class ag34410aServer(LabradServer):
-    """Provides access to Rigol DG800 series AWGs."""
+    """Provides access to Agilent 34410A multimeters."""
     name = '%LABRADNODE%_ag34410a'
 
     def __init__(self):
@@ -31,6 +35,11 @@ class ag34410aServer(LabradServer):
     
     @inlineCallbacks
     def initServer(self):
+        """
+        initServer(self)
+
+        Lists connected multimeters, if any, and connects to the first one.
+        """
         update_time = 0.05 # s
         self.USB = yield self.client.servers[self.USB_server_name]
         devices = yield self.get_devices(None)
@@ -43,6 +52,17 @@ class ag34410aServer(LabradServer):
 
     @setting(5, returns='*s')
     def get_devices(self, c):
+        """
+        get_devices(self, c)
+        
+        Lists connected multimeters. Note that the function connects to each device to check its ID.
+
+        Args:
+            c: A LabRAD context (which is passed on to passed to :meth:`ag34410aServer.select_device`)
+
+        Yields:
+            A list of strings corresponding to the IDs of connected multimeters
+        """
         interfaces = yield self.USB.get_interface_list()
         self.devices = []
         for i in interfaces:
@@ -54,11 +74,31 @@ class ag34410aServer(LabradServer):
 
     @setting(6, device='s')
     def select_device(self, c, device):
+        """
+        select_device(self, c, device)
+        
+        Select a connected multimeter
+
+        Args:
+            c: A LabRAD context (not used)
+            device (string): The ID of the multimeter to connect to, as returned by :meth:`ag34410aServer.get_devices`
+        """
         self.USB.select_interface(device)
 
     @inlineCallbacks
     @setting(10, returns='v')
     def read(self, c):
+        """
+        read(self, c)
+        
+        Reads the current data from the multimeter
+
+        Args:
+            c: A LabRAD context (not used)
+
+        Yields:
+            [type]: [description]
+        """
         val = yield self._read()
         returnValue(val)
 
@@ -74,6 +114,11 @@ class ag34410aServer(LabradServer):
     
     @inlineCallbacks
     def log_multimeter(self):
+        """
+        log_multimeter(self)
+        
+        Logs the current multimeter data using the #TODO: logging server link
+        """
         try:
             val = yield self._read()
         except Exception as e:
