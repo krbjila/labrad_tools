@@ -18,6 +18,7 @@ Provides access to LabJack T7 DAQ.
 """
 import sys
 from labrad.server import LabradServer, setting
+from labrad.util import getNodeName
 sys.path.append("../client_tools")
 from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -35,7 +36,7 @@ class LabJackServer(LabradServer):
     name = '%LABRADNODE%_labjack'
 
     def __init__(self):
-        self.name = "polarkrb_labjack"
+        self.name = "{}_labjack".format(getNodeName())
         super(LabJackServer, self).__init__()
 
         config_fname = "../logging/logging_config.json"

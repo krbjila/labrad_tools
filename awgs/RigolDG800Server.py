@@ -19,6 +19,7 @@ Provides access to Rigol DG800 series AWGs.
     ### END NODE INFO
 """
 import sys
+from labrad.util import getNodeName
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks, returnValue
 
@@ -27,7 +28,6 @@ class DG800Server(LabradServer):
     name = '%LABRADNODE%_dg800'
 
     def __init__(self):
-        self.USB_server_name = 'imaging_usb'
         LabradServer.__init__(self)
     
     @inlineCallbacks
@@ -37,6 +37,7 @@ class DG800Server(LabradServer):
         
         Called by LabRAD when server is started. Connects to :class:`usb.USB_server`.
         """
+        self.USB_server_name = '{}_usb'.format(getNodeName())
         self.USB = yield self.client.servers[self.USB_server_name]
 
     @setting(5, returns='*s')

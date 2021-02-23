@@ -30,7 +30,6 @@ class alerterServer(LabradServer):
     name = '%LABRADNODE%_alerter'
 
     def __init__(self):
-        self.USB_server_name = 'polarkrb_alerter'
         LabradServer.__init__(self)
     
     def initServer(self):

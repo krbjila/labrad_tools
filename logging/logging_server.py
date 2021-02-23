@@ -15,6 +15,7 @@ timeout = 20
 """
 import sys
 from labrad.server import LabradServer, setting
+from labrad.util import getNodeName
 import labrad
 sys.path.append("../client_tools")
 from connection import connection
@@ -36,7 +37,7 @@ class LoggingServer(LabradServer):
     name = '%LABRADNODE%_logging'
 
     def __init__(self):
-        self.name = 'imaging_logging'
+        self.name = '{}_logging'.format(getNodeName())
         self.shot = None
         self.next_shot = 0
         self.last_time = datetime.now()
