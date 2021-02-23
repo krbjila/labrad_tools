@@ -1,17 +1,20 @@
 """
-### BEGIN NODE INFO
-[info]
-name = logging
-version = 1
-description = server for logging
-instancename = %LABRADNODE%_logging
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+Logs messages received from other LabRAD nodes. Also the wavemeter, for some reason.
+
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = logging
+    version = 1
+    description = server for logging
+    instancename = %LABRADNODE%_logging
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 from labrad.server import LabradServer, setting
@@ -57,6 +60,16 @@ class LoggingServer(LabradServer):
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
+        """
+        log(self, c, message, time=None)
+        
+        Saves a timestamped message to the log file. The name of the sender is also recorded (so the client needs to call :meth:`set_name` first!).
+
+        Args:
+            c: A LabRAD context
+            message (string): The message to record
+            time (datetime.datetime, optional): The time to record. Defaults to None, in which case the current time is used.
+        """
         if time is None:
             time = datetime.now()
         if(self.shot is None and self.opentime.date() != time.date()):
@@ -68,11 +81,20 @@ class LoggingServer(LabradServer):
 
     @setting(2, shot='i')
     def set_shot(self, c, shot=None):
+        """
+        set_shot(self, c, shot=None)
+
+        Sets the number of the shot to record, which determines the folder in which data is saved. The shot number is reset daily. If the shot number is `None`, the experiment is considered idle. This means files are stored in the day's folder on the dataserver. The wavemeter is also set to log at a lower rate when the experiment is idle.
+
+        Args:
+            c: A LabRAD context (not used)
+            shot (int, optional): The number of the shot to record. Defaults to None, which sets the program to log the idle experiment.
+        """
         self.shot = shot
         self.set_save_location()
         try:
             self.labjack.set_shot(self.ljpath, self.shot == None)
-            print("starting labjack at path %s" % (self.ljpath))
+            print("Starting labjack at path %s" % (self.ljpath))
         except Exception as e:
             print("Could not start LabJack: %s" % (e))
         try:
@@ -89,6 +111,17 @@ class LoggingServer(LabradServer):
 
     @setting(3, returns='i')
     def get_next_shot(self, c):
+        """
+        get_next_shot(self, c)
+        
+        Determines the number for the next shot based on the highest numbered directory in the current day's dataserver folder.
+
+        Args:
+            c: A LabRAD context (not used)
+
+        Returns:
+            int: the number for the next shot
+        """
         currtime = datetime.now()
 
         if currtime.date() != self.last_time.date():
@@ -108,10 +141,22 @@ class LoggingServer(LabradServer):
 
     @setting(4, name='s')
     def set_name(self, c, name):
+        """
+        set_name(self, c, name)
+        
+        Sets the name of the client's connection. The name is entered in the log when messages are sent, so this function must be called before :meth:`log` is run.
+
+        Args:
+            c: A LabRAD context
+            name (string): The name of the client's connection
+        """
         print("Setting name of client %d to %s" % (c.ID[0], name))
         c["name"] = name
 
     def set_save_location(self):
+        """
+        Sets the save location based on the current time and shot number.
+        """
         now = datetime.now()
         self.opentime = now
         if isinstance(self.logfile, io.IOBase) and not self.logfile.closed:
@@ -145,10 +190,16 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def log_frequency(self):
+        """
+        log_frequency(self)
+
+        Records the current wavemeter frequencies (and the frequency for the K trap lock in the last column.)
+        """
         d = yield self.wavemeter.get_wavelengths()
         if len(d) > 0:
             data = json.loads(json.loads(d))
             freqs = [299792.458/float(i) if i > 0 else 0 for i in data["wavelengths"]]
+            freqs.append(data["freq"])
             time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
             if(self.shot is None and self.opentime.date() != time.date()):
                 self.set_save_location()

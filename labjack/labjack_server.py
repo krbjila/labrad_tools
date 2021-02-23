@@ -39,7 +39,7 @@ class LabJackServer(LabradServer):
         self.name = "{}_labjack".format(getNodeName())
         super(LabJackServer, self).__init__()
 
-        config_fname = "../logging/logging_config.json"
+        config_fname = "../log/logging_config.json"
         with open(config_fname, 'r') as f:
             self.config = json.load(f)['labjack']
 

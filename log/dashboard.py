@@ -7,9 +7,12 @@ from functools import partial
 import pyttsx3
 import random
 
-class lattice_block_gui(QtWidgets.QMainWindow):
+class laser_dashboard_gui(QtWidgets.QMainWindow):
+    """
+    Displays the status of the laser locks, including the measured laser frequencies and an indicator if the laser is unlocked. Also provides audible warnings when lasers come unlocked.
+    """
     def __init__(self, Parent=None):
-        super(lattice_block_gui, self).__init__(Parent)
+        super(laser_dashboard_gui, self).__init__(Parent)
         self.setWindowIcon(QtGui.QIcon("laser_icon.png"))
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
@@ -18,6 +21,9 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.engine.startLoop(False)
 
     def initialize(self):
+        """
+        Loads the config file ``logging_config.json`` and lays out buttons and labels in the window per the channels listed in the config file.
+        """
         with open("logging_config.json", 'r') as f:
             config = json.load(f)
 
@@ -52,6 +58,9 @@ class lattice_block_gui(QtWidgets.QMainWindow):
         self.setCentralWidget(mainWidget)
 
     def update(self):
+        """
+        Gets the latest data from the wavemeter and updates buttons and plays warning audio if laser is unlocked.
+        """
         c = pycurl.Curl()
         try:
             buffer = BytesIO()
@@ -99,18 +108,28 @@ class lattice_block_gui(QtWidgets.QMainWindow):
             self.data = ''
 
     def pressed(self, button, i):
+        """
+        Resets unlocked status when a button corresponding to a laser is pressed.
+
+        Args:
+            button (QtWidgets.QPushButton): The button that was pressed
+            i (int): The index of the button
+        """
         self.broken[i] = False
         self.buttons[i].setStyleSheet('background-color: light gray')
 
 
     def status(self):
+        """
+        Called every 100 ms. Updates text-to-speech engine.
+        """
         self.engine.iterate()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     # Set up window
-    w = lattice_block_gui()
+    w = laser_dashboard_gui()
     # w.setGeometry(100, 100, 1200, 380)
     w.show()
 
