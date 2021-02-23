@@ -15,8 +15,8 @@ from lib.duration_widgets import DurationRow
 from lib.digital_widgets import DigitalControl
 from lib.analog_widgets import AnalogControl
 
-from lib.ad5791_widgets import AD5791Control
-from lib.ad5791_editor import AD5791VoltageEditor
+# from lib.ad5791_widgets import AD5791Control
+# from lib.ad5791_editor import AD5791VoltageEditor
 
 from lib.electrode_widgets import ElectrodeControl
 from lib.electrode_editor import ElectrodeEditor, zero_sequence
