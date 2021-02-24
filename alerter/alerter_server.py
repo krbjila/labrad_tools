@@ -1,19 +1,22 @@
 """
-### BEGIN NODE INFO
-[info]
-name = alerter
-version = 1
-description = it can talk!
-instancename = %LABRADNODE%_alerter
+Allows the computer to talk using `pyttsx3 <https://pypi.org/project/pyttsx3/>`_ text to speech
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = alerter
+    version = 1
+    description = it can talk!
+    instancename = %LABRADNODE%_alerter
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 import pyttsx3
@@ -27,10 +30,8 @@ class alerterServer(LabradServer):
     name = '%LABRADNODE%_alerter'
 
     def __init__(self):
-        self.USB_server_name = 'polarkrb_alerter'
         LabradServer.__init__(self)
     
-    # @inlineCallbacks
     def initServer(self):
         self.engine = pyttsx3.init()
         self.engine.startLoop(False)
@@ -40,6 +41,12 @@ class alerterServer(LabradServer):
 
     @setting(5, message="s")
     def say(self, c, message):
+        """Makes the computer say a message with text to speech
+
+        Args:
+            c: A LabRAD context (not used)
+            message (string): The message to say
+        """
         print(message)
         self.engine.say(message)
 

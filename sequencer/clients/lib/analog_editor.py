@@ -179,7 +179,7 @@ class MplCanvas(FigureCanvas):
         self.fig.set_tight_layout(True)
 
         FigureCanvas.__init__(self, self.fig)
-        self.setFixedSize(600, 300)
+        self.setMinimumSize(600, 300)
 
     def make_figure(self, times=None, voltages=None):
         self.axes.set_xlabel('time [s]')
@@ -238,7 +238,8 @@ class AnalogVoltageEditor(QtGui.QDialog):
        
         width = self.canvas.width()
         height = self.nav.height() + self.canvas.height() + self.ramp_scroll.height() + 20
-        self.setFixedSize(width, height)
+        self.setMinimumSize(width, height)
+        self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         yield self.set_columns()
         yield self.replot()
 

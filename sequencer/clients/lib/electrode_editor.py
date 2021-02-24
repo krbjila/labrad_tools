@@ -224,7 +224,7 @@ class MplCanvas(FigureCanvas):
         self.fig.set_tight_layout(True)
 
         FigureCanvas.__init__(self, self.fig)
-        self.setFixedSize(600, 300)
+        self.setMinimumSize(600, 300)
 
     def clear(self):
         self.axes.clear()
@@ -319,7 +319,8 @@ class ElectrodeEditor(QtGui.QDialog):
        
         width = self.canvas.width()
         height = self.nav.height() + self.canvas.height() + self.ramp_scroll.height() + 20
-        self.setFixedSize(width, height)
+        self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setMinimumSize(width, height)
 
     @inlineCallbacks
     def connect_signals(self):
