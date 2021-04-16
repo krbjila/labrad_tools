@@ -19,7 +19,8 @@ class HardwareInterfaceServer(LabradServer):
             interface = self.get_interface(c)
             ans = getattr(interface, f)(*args, **kwargs)
             return ans
-        except:
+        except Exception as e:
+            print(e)
             try:
                 self.refresh_available_interfaces()
                 interface = self.get_interface(c)

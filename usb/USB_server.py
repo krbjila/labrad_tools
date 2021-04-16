@@ -24,7 +24,6 @@ from labrad.server import LabradServer, setting
 sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
-
 class USBServer(HardwareInterfaceServer):
     """Provides direct access to USB-enabled hardware."""
     name = '%LABRADNODE%_usb'
@@ -36,10 +35,9 @@ class USBServer(HardwareInterfaceServer):
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
-            if address.startswith('USB'):
+            if address.startswith('USB') or address.startswith('ASRL'):
                 inst = rm.open_resource(address)
-                inst.write_termination = ''
-                #inst.clear()
+                inst.clear()
                 self.interfaces[address] = inst
                 print 'connected to USB device ' + address
         for addr in deletions:
@@ -81,8 +79,6 @@ class USBServer(HardwareInterfaceServer):
             c: The LabRAD context
             data (string): The string to be written to the USB bus
         """        
-#        self.call_if_available('write', c, data)
-#        ans = self.call_if_available('read_raw', c)
         response = self.call_if_available('query', c, data)
         return response.strip()
 
@@ -101,6 +97,10 @@ class USBServer(HardwareInterfaceServer):
         if timeout is not None:
             interface.timeout = timeout
         return interface.timeout
+
+    @setting(7)
+    def clear(self, c):
+        self.call_if_available('clear', c)
 
 
 if __name__ == '__main__':
