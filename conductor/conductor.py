@@ -39,7 +39,7 @@ from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 
-FILEBASE = '/home/bialkali/dataserver/data/%Y/%m/%Y%m%d/shots'
+FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
     """ coordinate setting and saving experiment parameters.
@@ -68,6 +68,7 @@ class ConductorServer(LabradServer):
         self.do_print_delay = False
         self.shot = -1
         self.last_time = datetime.now()
+        self.logging = False
 
         self.load_config(config_path)
         LabradServer.__init__(self)
@@ -84,6 +85,7 @@ class ConductorServer(LabradServer):
             config = json.load(infile)
             for key, value in config.items():
                 setattr(self, key, value)
+        # TODO: RUN conductor/clients/variables_config.py and setattr from those also. Refer to conductor/clients/forceWriteValue in parameter_values_control.py
 
     def initServer(self):
         # register default parameters after connected to labrad
@@ -399,6 +401,7 @@ class ConductorServer(LabradServer):
     # Abort the experiment immediately, then run defaults
     @setting(17)
     def abort_experiment(self, c):
+        yield self._advance_logging(True)
         for ID, call in self.advance_dict.items():
             try:
                 call.cancel()
@@ -422,6 +425,12 @@ class ConductorServer(LabradServer):
             # get next experiment from queue and keep a copy
             experiment = self.experiment_queue.popleft()
             experiment_copy = deepcopy(experiment)
+
+            if "name" in experiment and "default" not in experiment["name"]:
+                #TODO: Move save_parameters here
+                yield self._advance_logging(False)
+            else:
+                yield self._advance_logging(True)
             
             parameter_values = experiment.get('parameter_values')
             if parameter_values:
@@ -473,6 +482,10 @@ class ConductorServer(LabradServer):
             advanced = yield self.advance_experiment()
         else:
             print 'remaining points: ', pts
+            #TODO: Add save_parameters here
+            if self.logging:
+                yield self._advance_logging(True)
+                yield self._advance_logging(False)
 
         # sort by priority. higher priority is called first. 
         priority_parameters = [parameter for device_name, device_parameters
@@ -509,8 +522,12 @@ class ConductorServer(LabradServer):
     def save_parameters(self):
         # save data to disk
         if self.data:
-            data_length = max([len(p) for dp in self.data.values()
-                                      for p in dp.values()])
+            try:
+                data_length = max([len(p) for dp in self.data.values()
+                                        for p in dp.values()])
+            except Exception as e:
+                data_length = 0
+                print("saving data failed due to error:", e)
         else:
             data_length = 0
         
@@ -527,8 +544,7 @@ class ConductorServer(LabradServer):
                 parameter_data.append(new_value)
         
         if self.data_path:
-            self.advance_logging('defaults' in self.data_path)
-            self.data['shot_number'] = self.shot
+            self.data['shot_number'] = {"shot": [self.shot]}
 
             if not 'defaults' in self.data_path:
                 s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
@@ -554,7 +570,7 @@ class ConductorServer(LabradServer):
 
     @inlineCallbacks
     def stopServer(self):
-        yield self.advance_logging(True)
+        yield self._advance_logging(True)
 
         parameters_filename = self.parameters_directory + 'current_parameters.json'
         if os.path.isfile(parameters_filename):
@@ -616,6 +632,7 @@ class ConductorServer(LabradServer):
                 self.advance_counter += 1 
         else:
             ti = time()
+            #TODO: Remove save_parameters here
             yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
@@ -627,9 +644,19 @@ class ConductorServer(LabradServer):
     """
     Tells the logging server to begin logging for the next shot. Shot number is reset daily
     """
+    @setting(1700, end='b')
+    def advance_logging(self, c, end = False):
+        yield self._advance_logging(end)
+
     @inlineCallbacks
-    def advance_logging(self, end = False):
+    def _advance_logging(self, end = False):
         cur_time = datetime.now()
+
+        # if (not end) and len(self.experiment_queue):
+        #     print(self.experiment_queue)
+        #     end = False
+        # else:
+        #     end = True
 
         try:
             logging = yield self.client.servers['imaging_logging']
@@ -642,12 +669,17 @@ class ConductorServer(LabradServer):
                 self.shot = yield logging.get_next_shot()
                 yield logging.set_shot(self.shot)
                 yield logging.log("Started shot %d" % (self.shot), cur_time)
+                print("Started logging shot %d" % (self.shot))
+                self.logging = True
             except Exception as e:
                 print("Could not start logging shot: ", e)
         else:
             try:
-                yield logging.log("Finished shot %d" % (self.shot), cur_time)
-                yield logging.set_shot()
+                if self.logging:
+                    yield logging.log("Finished shot %d" % (self.shot), cur_time)
+                    yield logging.set_shot()
+                    print("Stopped logging shot %d" % (self.shot))
+                    self.logging = False
             except Exception as e:
                 print("Could not stop logging shot: ", e)
 

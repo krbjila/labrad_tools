@@ -47,7 +47,7 @@ class ArduinoServer(HardwareInterfaceServer):
             else:
                 try:
                     if address[0:-1] == '/dev/ttyACM' and d.find("Arduino") >= 0:
-                        ser = Serial(address)
+                        ser = Serial(address, timeout=1)
                         ser.close()
                         self.interfaces[address] = ser
                         print '{} available'.format(address)

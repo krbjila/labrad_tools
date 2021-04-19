@@ -3,6 +3,7 @@ import json
 #from scratch import evaporation
 
 import time
+import os
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as Canvas
 from matplotlib.figure import Figure
@@ -116,9 +117,6 @@ class Ui_MainWindow(object):
         self.addButton.setObjectName(_fromUtf8("addButton"))
         self.addButton.clicked.connect(self.addrow)
 
-        
-        
-
         self.table = QtGui.QTableWidget(self.centralwidget)
         self.table.setGeometry(QtCore.QRect(20, 20, 541, 281))
         self.table.setRowCount(len(self.A[self.headers[0]]))
@@ -220,11 +218,18 @@ class Ui_MainWindow(object):
         #Stamp the current trajectory with time
         import time, datetime
         self.A['timestamp'] = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S') 
+        self.A['time'] = self.MaxTime
 
         #Backup the old trajectory
         x = loadtraj('../evap.json')
-        backpath = '../backup/evap'+str(x['timestamp'])+'.json'
-        with open(backpath, 'w') as outfile:
+        relative_backup_path = '/dataserver/data/'
+        folder_s = datetime.datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
+        file_s = datetime.datetime.now().strftime("%H%M%S.json")
+        backup_folder = relative_backup_path + folder_s
+        backup_file = backup_folder + file_s
+        if not os.path.exists(backup_folder):
+			os.mkdir(backup_folder)
+        with open(backup_file, 'w') as outfile:
             json.dump(x,outfile)
 
         #save new trajectory
@@ -238,13 +243,12 @@ class Ui_MainWindow(object):
             x = exponential(self.A['start'][k],self.A['stop'][k],self.A['asymp'][k],self.A['tau'][k])
             F = np.append(F,x)
         T = np.arange(len(F))*dT
-	MaxTime = T[-1]
-	print(MaxTime)
-	
+	self.MaxTime = T[-1]
+	print(self.MaxTime)
         self.graph.axes.clear()
         self.graph.axes.plot(T,F)
 	print(F[-1])
-        fick = "Evap. Time: {0:.2f} s".format(MaxTime)
+        fick = "Evap. Time: {0:.2f} s".format(self.MaxTime)
 	self.graph.axes.set_title(fick)
         self.graph.draw()
 

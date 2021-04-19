@@ -27,14 +27,14 @@ def round_dv(dv):
 
 def lin_ramp(p):
     """
-    returns continuous finction defined over ['ti', 'tf'].
+    returns continuous function defined over ['ti', 'tf'].
     values are determined by connecting 'vi' to 'vf' with a line.
     """
     return lambda t: G(p['ti'], p['tf'])(t)*(p['vi'] + (p['vf']-p['vi'])/(p['tf']-p['ti'])*(t-p['ti']))
 
 def exp_ramp(p, ret_seq=False):
     """
-    returns continuous finction defined over ['ti', 'tf'].
+    returns continuous function defined over ['ti', 'tf'].
     values are determined by connecting 'vi' to 'vf' with an exponential function.
     v = a*e^{-t/'tau'} + c
     """
@@ -61,7 +61,7 @@ def exp_ramp(p, ret_seq=False):
 
 def scurve_ramp(p, ret_seq=False):
     """
-    returns continuous finction defined over ['ti', 'tf'].
+    returns continuous function defined over ['ti', 'tf'].
     values are determined by connecting 'vi' to 'vf' with an exponential function.
     v = a / (1 + e^{-t/ 12 * 'tau'}) + c
     """
@@ -85,6 +85,15 @@ def scurve_ramp(p, ret_seq=False):
         return sseq
     else:
         return lambda t: sum([lin_ramp(ss)(t) for ss in sseq])
+
+def smooth_ramp(p, ret_seq=False):
+    """
+    returns continuous function defined over ['ti', 'tf'].
+    values are determined by connecting 'vi' to 'vf' by smoothly ramping in electrode parameter space.
+    """
+    # print(p)
+    p['steep'] = 1
+    return scurve_ramp(p, ret_seq)
 
 class SRamp(object):
     required_parameters = [
@@ -203,6 +212,34 @@ class SCurveRamp(object):
         seq = scurve_ramp(p, ret_seq=True)
         return [{'dt': MIN_TIME, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
 
+class SmoothRamp(object):
+    required_parameters = [
+        ('vi', ([-VLIM, VLIM], [(0, 'V')], 6)),
+        ('vf', ([-VLIM, VLIM], [(0, 'V')], 6)),
+        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 2)), 
+        ('pts', ([1, 20], [(0, 'na')], 0)),
+        ('wbias', ([0, 1], [(0, 'na')], 2)),
+        ('wangle', ([0, 1], [(0, 'na')], 2)),
+        ('wdEdx', ([0, 1], [(0, 'na')], 2)),
+        ('wdEdy', ([0, 1], [(0, 'na')], 2)),
+        ('wnux', ([0, 1], [(0, 'na')], 2)),
+        ('wnuy', ([0, 1], [(0, 'na')], 2)),
+        ('wd2Edx2', ([0, 1], [(0, 'na')], 2)),
+        ('wd2Edy2', ([0, 1], [(0, 'na')], 2)),
+        ]
+    def __init__(self, p=None):
+        self.p = p
+        if p is not None:
+            self.v = smooth_ramp(p)
+    
+    def to_lin(self):
+        """
+        to list of linear ramps [{dt, dv}]
+        """
+        p = self.p
+        seq = smooth_ramp(p, ret_seq=True)
+        return [{'dt': MIN_TIME, 'v': p['vi']}] + [{'dt': s['tf']-s['ti'], 'v': s['vf']} for s in seq]
+
 
 class RampMaker(object):
     available_ramps = {
@@ -211,7 +248,8 @@ class RampMaker(object):
         'slin': SLinRamp,
         'exp': ExpRamp,
         'sexp': SExpRamp,
-        'scurve': SCurveRamp
+        'scurve': SCurveRamp,
+        # 'smooth (not done!)': SmoothRamp
         }
     def __init__(self, sequence):
         j=0

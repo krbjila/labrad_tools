@@ -1,17 +1,20 @@
 """
-### BEGIN NODE INFO
-[info]
-name = wavemeter
-version = 1
-description = server for Highfinesse WS-7 Wavemeter
-instancename = %LABRADNODE%_wavemeter
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+Provides access to Highfinesse WS-7 Wavemeter.
+
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = wavemeter
+    version = 1
+    description = server for Highfinesse WS-7 Wavemeter
+    instancename = %LABRADNODE%_wavemeter
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 from labrad.server import LabradServer, setting
@@ -26,34 +29,47 @@ import pycurl
 from io import BytesIO
 
 class WavemeterServer(LabradServer):
-    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running"""
+    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running. The URL is hardcoded."""
     name = '%LABRADNODE%_wavemeter'
-    url = 'http://localhost:8000/wavemeter/api/'
-    update_rate = 100
+    url = 'http://192.168.141.220:8000/wavemeter/api/'
 
     def __init__(self):
-        self.name = 'wavemeterlaptop_wavemeter'
+        self.name = 'imaging_wavemeter'
+        self.data = ''
         super(WavemeterServer, self).__init__()
-        # lc = LoopingCall(self.update)
-        # lc.start(1/self.update_rate)
 
     def update(self):
-        # response = urllib.urlopen(self.url)
-        # self.data = json.dumps(response.read())
-        # response.close()
-        buffer = BytesIO()
-        c = pycurl.Curl()
-        c.setopt(c.URL, self.url)
-        c.setopt(c.WRITEDATA, buffer)
-        c.perform()
-        c.close()
-        body = buffer.getvalue()
-        self.data = json.dumps(body.decode('iso-8859-1'))
-        print(self.data)
+        """
+        update(self)
+
+        Updates internal state with the latest wavelengths from the wavemeter
+        """
+        try:
+            buffer = BytesIO()
+            c = pycurl.Curl()
+            c.setopt(c.URL, self.url)
+            c.setopt(c.WRITEFUNCTION, buffer.write)
+            c.perform()
+            c.close()
+            body = buffer.getvalue()
+            self.data = json.dumps(body.decode('iso-8859-1'))
+        except Exception as e:
+            print("Could not connect to wavemeter: %s" % (e))
     
     @inlineCallbacks
     @setting(5, returns='s')
     def get_wavelengths(self, c):
+        """
+        get_wavelengths(self, c)
+        
+        Updates and returns data from the wavemeter
+
+        Args:
+            c: A LabRAD context (not used)
+
+        Yields:
+            Returns a string containing the latest wavemeter data encoded as a JSON.
+        """
         yield self.update()
         returnValue(self.data)
 

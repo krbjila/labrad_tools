@@ -35,7 +35,7 @@ from helpers import json_load_byteified, json_loads_byteified
 from calibrations import *
 
 PRESETS_PATH = 'values.json'
-BACKUP_PATH = './backup/'
+BACKUP_PATH = '/dataserver/data/'
 
 class ElectrodeServer(LabradServer):
 	name = 'electrode'
@@ -125,7 +125,7 @@ class ElectrodeServer(LabradServer):
 
 
 	def backup_presets(self):
-		folder_s = datetime.now().strftime("%Y%m%d/")
+		folder_s = datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
 		file_s = datetime.now().strftime("%H%M%S.json")
 	
 		backup_folder = self.relative_backup_path + folder_s

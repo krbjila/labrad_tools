@@ -17,9 +17,8 @@ class evaporation():
             n = []
             for key, value in evap.items():
 	    	setattr(self, key, value)
-		if not  key == 'timestamp':
+		if key in ['tau', 'amplitudes', 'start', 'stop', 'asymp']:
 	        	n.append(len(value))
- 
             if not all( x == n[0] for x in n):
                 raise Exception("All parameters must have the same length")
             else:

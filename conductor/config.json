@@ -8,13 +8,13 @@
             "sequence": {
                 "sequence_directory": "/home/bialkali/data/{}/sequences/",
                 "default_sequence": "KRb_default"
-	    }
+            }
         },
         "E8257D": {
             "enable": {
                 "default_enable": 1,
                 "defaults": {
-                    "0": {"frequency": 6834.25, "amplitude": -12},
+                    "0": {"frequency": 6834.5, "amplitude": -4},
 	            "1": {"evap": 1},
                     "2": {"frequency": 6889.25, "amplitude": 16, "dev": 1}
                 }
@@ -55,6 +55,26 @@
                 }
             }
         },
+        "dg800": {
+            "sin": {
+                "default_sin" : {
+                    "freq1": 0,
+                    "amplitude1": 0,
+                    "phase1": 0,
+                    "offset1": 0,
+                    "output1": 0,
+                    "ncycles1": 1,
+                    "gated1": 1,
+                    "freq2": 0,
+                    "amplitude2": 0,
+                    "phase2": 0,
+                    "offset2": 0,
+                    "output2": 0,
+                    "ncycles2": 1,
+                    "gated2": 1
+                }
+            }
+        },
         "highFieldRbARP": {
             "duration": {
                 "default": 1
@@ -70,6 +90,9 @@
         },
         "time": {
             "timestamp": {}
+        },
+        "magevaptimer": {
+            "time": {}
         }
     }
 }

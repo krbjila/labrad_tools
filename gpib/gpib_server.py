@@ -32,7 +32,7 @@ class GPIBServer(HardwareInterfaceServer):
     def refresh_available_interfaces(self):
         """ fill self.interfaces with available connections """
         """ Modified to use python visa """
-	rm = visa.ResourceManager('@py')
+        rm = visa.ResourceManager('@py')
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
