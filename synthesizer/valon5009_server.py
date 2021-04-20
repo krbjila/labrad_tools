@@ -24,6 +24,8 @@ from labrad.server import LabradServer, setting
 from labrad.util import getNodeName
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+baud_rates = [115200, 9600]
+
 class Valon5009Server(LabradServer):
     """Provides access to Valon 5009 synthesizer"""
     name = '%LABRADNODE%_valon5009'
@@ -53,29 +55,38 @@ class Valon5009Server(LabradServer):
             A list of strings: The PyVISA ID strings for the connected Valon devices
         """
         interfaces = yield self.USB.get_interface_list()
-        print(interfaces)
         self.devices = []
         for i in interfaces:
             self.select_device(c, i)
             print("selecting {}".format(i))
-            try:
-                self.USB.clear()
-                print("querying *IDN?")
-                id1 = yield self.USB.query('*IDN?')
-                if '*IDN?' in id1:
-                    id1 = yield self.USB.read()
-                print(id1)
-                if "Illegal command!" in id1:
-                    # next_line = yield self.USB.read()
-                    # next_next_line = yield self.USB.read()
-                    # if 'IDN*' in next_line and "Command error!" in next_next_line:
-                    self.USB.clear()
-                    yield self.USB.query('ID')
-                    id2 = yield self.USB.read()
-                    if "Valon" in id2:
-                        self.devices.append(i)
-            except Exception as e:
-                print(e)
+            old_baud_rate = yield self.USB.baud_rate()
+            for baud_rate in baud_rates:
+                try:
+                    print("Setting baud rate to " + str(baud_rate))
+                    yield self.USB.baud_rate(baud_rate)
+                    yield self.USB.clear()
+                    print("querying *IDN?")
+                    id1 = yield self.USB.query('*IDN?')
+                    if '*IDN?' in id1:
+                        id1 = yield self.USB.read()
+                    if "Illegal command!" in id1:
+                        # next_line = yield self.USB.read()
+                        # next_next_line = yield self.USB.read()
+                        # if 'IDN*' in next_line and "Command error!" in next_next_line:
+                        yield self.USB.clear()
+                        yield self.USB.query('ID')
+                        id2 = yield self.USB.read()
+                        if "Valon" in id2:
+                            self.devices.append(i)
+                            break
+                except Exception as e:
+                    print("Setting baud rate to " + str(old_baud_rate))
+                    yield  self.USB.baud_rate(old_baud_rate)
+                    if "exceptions.AttributeError" in e.msg:
+                        pass
+                    else:
+                        raise Exception(e.msg)
+        print("Connected to {}".format(self.devices))
         returnValue(self.devices)
 
     @setting(6, device='s')
@@ -140,7 +151,7 @@ class Valon5009Server(LabradServer):
             enable (boolean): False for disabled, True for enabled
         """
         self.USB.clear()
-        yield self.USB.query("OEN {}".format("ON" if enable else "OFF"))
+        yield self.USB.query("OEN {}".format("1" if enable else "0"))
         yield self.USB.read()
 
     @setting(10, mode='s')
