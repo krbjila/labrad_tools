@@ -36,10 +36,13 @@ class USBServer(HardwareInterfaceServer):
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
             if address.startswith('USB') or address.startswith('ASRL'):
-                inst = rm.open_resource(address)
-                inst.clear()
-                self.interfaces[address] = inst
-                print 'connected to USB device ' + address
+                try:
+                    inst = rm.open_resource(address)
+                    inst.clear()
+                    self.interfaces[address] = inst
+                    print('connected to USB device ' + address)
+                except visa.VisaIOError as e:
+                    print("Could not connect to {}: ".format(address) + str(e))
         for addr in deletions:
             del self.interfaces[addr]
 
