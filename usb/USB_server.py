@@ -88,7 +88,7 @@ class USBServer(HardwareInterfaceServer):
 
         Args:
             c: The LabRAD context
-            timeout (numeric, optional): The timeout for the interface in seconds. Defaults to None.
+            timeout (numeric, optional): The timeout for the interface in milliseconds. Defaults to None.
 
         Returns:
             The timeout in seconds
@@ -101,6 +101,22 @@ class USBServer(HardwareInterfaceServer):
     @setting(7)
     def clear(self, c):
         self.call_if_available('clear', c)
+
+    @setting(8, baud_rate='v', returns='v')
+    def baud_rate(self, c, baud_rate=None):
+        """Sets the baud rate associated with the interface
+
+        Args:
+            c: The LabRAD context
+            baud_rate (numeric, optional): The baud rate for the interface. Defaults to None, which queries the baud rate.
+
+        Returns:
+            The baud  in seconds
+        """
+        interface = self.get_interface(c)
+        if baud_rate is not None:
+            interface.baud_rate = int(baud_rate)
+        return interface.baud_rate
 
 
 if __name__ == '__main__':
