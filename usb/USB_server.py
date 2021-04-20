@@ -48,7 +48,10 @@ class USBServer(HardwareInterfaceServer):
 
     @setting(3, data='s', returns='')
     def write(self, c, data):
-        """Write a string to the USB bus.
+        """
+        write(self, c, data)
+        
+        Write a string to the USB bus.
 
         Args:
             c: The LabRAD context
@@ -58,7 +61,10 @@ class USBServer(HardwareInterfaceServer):
 
     @setting(4, n_bytes='w', returns='s')
     def read(self, c, n_bytes=None):
-        """Read from the USB bus.
+        """
+        read(self, c, n_bytes=None)
+
+        Read from the USB bus.
 
         Args:
             c: The LabRAD context
@@ -73,7 +79,10 @@ class USBServer(HardwareInterfaceServer):
 
     @setting(5, data='s', returns='s')
     def query(self, c, data):
-        """Make a USB query, a write followed by a read.
+        """
+        query(self, c, data)
+        
+        Make a USB query, a write followed by a read.
 
         This query is atomic.  No other communication to the
         device will occur while the query is in progress.
@@ -87,7 +96,10 @@ class USBServer(HardwareInterfaceServer):
 
     @setting(6, timeout='v', returns='v')
     def timeout(self, c, timeout=None):
-        """Sets the timeout associated with the interface
+        """
+        timeout(self, c, timeout=None)
+        
+        Sets the timeout associated with the interface
 
         Args:
             c: The LabRAD context
@@ -103,11 +115,22 @@ class USBServer(HardwareInterfaceServer):
 
     @setting(7)
     def clear(self, c):
+        """
+        clear(self, c)
+
+        Clears the interface's input and output buffers
+
+        Args:
+            c: The LabRAD context
+        """
         self.call_if_available('clear', c)
 
     @setting(8, baud_rate='v', returns='v')
     def baud_rate(self, c, baud_rate=None):
-        """Sets the baud rate associated with the interface
+        """
+        baud_rate(self, c, baud_rate=None)
+        
+        Sets the baud rate associated with the interface
 
         Args:
             c: The LabRAD context
