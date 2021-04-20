@@ -22,7 +22,10 @@ Provides access to Valon 5009 synthesizer
 import sys, re
 from labrad.server import LabradServer, setting
 from labrad.util import getNodeName
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
+from twisted.internet.reactor import callLater
+
+import numpy as np
 
 baud_rates = [115200, 9600]
 
@@ -191,6 +194,41 @@ class Valon5009Server(LabradServer):
         yield self.USB.query("F {}m".format(freq))
         reply = yield self.USB.read()
         returnValue(float(re.findall(r'\d*\.?\d+', reply)[1]))
+
+    @inlineCallbacks
+    @setting(23, freq='v', timestep='v', f_step='v', returns='v')
+    def ramp_to_freq(self, c, freq, timestep=100, f_step=0.1):
+        """
+        ramp_to_freq(self, c, freq, timestep=100, f_step=0.1)
+
+        Ramps from the current frequency to "freq".
+
+        Args:
+            c: The LabRAD context (not used)
+            freq (float): Final frequency (MHz)
+            timestep (int, optional): Time between frequency steps (ms). Defaults to 100.
+            f_step (float, optional): Frequency stepsize (MHz). Defaults to 0.1.
+
+        Yields:
+            f (float): Final frequency (MHz)
+        """
+
+        def twisted_sleep(secs):
+            d = Deferred()
+            callLater(secs, d.callback, None)
+            return d
+
+        current = yield self.get_freq(c)
+        pts = np.arange(current, freq, f_step * np.sign(freq - current))
+        dt = timestep * 1e-3
+
+        for i in pts:
+            yield self.set_freq(c, i)
+            yield twisted_sleep(dt)
+        yield self.set_freq(c, freq)
+        
+        f = yield self.get_freq(c)
+        returnValue(f)
 
     @setting(12, mode='s')
     def set_trig(self, c, mode):
