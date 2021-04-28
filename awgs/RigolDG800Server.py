@@ -57,9 +57,13 @@ class DG800Server(LabradServer):
         self.devices = []
         for i in interfaces:
             self.select_device(c, i)
-            id = yield self.USB.query('*IDN?')
-            if "DG832" in id:
-                self.devices.append(i)
+            try:
+                id = yield self.USB.query('*IDN?')
+                if "DG832" in id:
+                    self.devices.append(i)
+            except Exception as e:
+                print("Could not connect to {}".format(i))
+                print(e)
         returnValue(self.devices)
 
     @setting(6, device='s')
