@@ -228,7 +228,7 @@ class Ui_MainWindow(object):
         backup_folder = relative_backup_path + folder_s
         backup_file = backup_folder + file_s
         if not os.path.exists(backup_folder):
-			os.mkdir(backup_folder)
+			os.makedirs(backup_folder)
         with open(backup_file, 'w') as outfile:
             json.dump(x,outfile)
 
