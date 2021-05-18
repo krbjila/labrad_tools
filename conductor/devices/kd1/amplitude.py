@@ -28,3 +28,4 @@ class Amplitude(ConductorParameter):
         if self.value:
             a = str(self.value) # dBm
             yield self.cxn.krbjila_gpib.write(":POW:AMPL " + a + "dBm")
+            yield self.cxn.krbjila_gpib.write(":OUTP ON")

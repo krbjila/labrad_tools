@@ -17,7 +17,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon("laser_icon.png"))
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
-        self.url = 'http://192.168.141.220:8000/wavemeter/api/'
+        self.url = 'http://192.168.141.202:8000/wavemeter/api/'
         self.engine = pyttsx3.init()
         self.engine.startLoop(False)
 

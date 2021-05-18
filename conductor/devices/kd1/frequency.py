@@ -27,3 +27,4 @@ class Frequency(ConductorParameter):
     def update(self):
         if self.value:
             yield self.cxn.krbjila_gpib.write(":FREQ:CW " + str(self.value) + "MHz")
+            yield self.cxn.krbjila_gpib.write(":OUTP ON")
