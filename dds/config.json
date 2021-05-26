@@ -1,0 +1,60 @@
+{
+    "devices": {
+        "3xAD9959_0": {
+            "device_type": "ad9959xem6001",
+            "connection_type": "OKFPGA",
+            "servername": "krbg2_okfpga",
+            "address": "KRb_dds0",
+            "channels": [
+                {
+                    "name": "Up Leg Double Pass",
+                    "loc": [0,0]
+                },
+                {
+                    "name": "Up Leg Experiment",
+                    "loc": [0,1]
+                },
+                {
+                    "name": "Down Leg After Cavity",
+                    "loc": [0,2]
+                },
+                {
+                    "name": "Down Leg Experiment",
+                    "loc": [0,3]
+                },
+                {
+                    "name": "Vertical Lattice",
+                    "loc": [1,0]
+                },
+                {
+                    "name": "Horizontal OT",
+                    "loc": [1,1]
+                },
+                {
+                    "name": "MARIA OT",
+                    "loc": [1,2]
+                },
+                {
+                    "name": "Plug Beam",
+                    "loc": [1,3]
+                },
+                {
+                    "name": "K D1 AOM",
+                    "loc": [2,0]
+                },
+                {
+                    "name": "H. Lattice 1",
+                    "loc": [2,1]
+                },
+                {
+                    "name": "H. Lattice 2",
+                    "loc": [2,2]
+                },
+                {
+                    "name": "Fat Latt AKA Large Spacing Lattice",
+                    "loc": [2,3]
+                }
+            ]
+        }
+    }
+}
