@@ -48,24 +48,24 @@ class ddsServer(DeviceServer):
     # Convenient way to get the channel output from iPython, etc.
     @setting(11, dev='s', board='i', channel='i', returns='s')
     def getChannel(self, c, dev, board, channel):
-    	
-    	# Try to open the device
+        
+        # Try to open the device
         try:
             device = self.devices[dev]
         except:
             return "Can't find device.\n"
 
-    	# Try to get the channel
+        # Try to get the channel
         try:
             ret = device.getChannel(board, channel)
         except:
             return "Can't find channel.\n"
 
-    	# Try to get the current value
+        # Try to get the current value
         if ret != None:
-    	   return "{} at {} MHz.\n".format(ret['name'], ret['frequency'])
-    	else:
-    		return "Requested channel is not initialized.\n"
+           return "{} at {} MHz.\n".format(ret['name'], ret['frequency'])
+        else:
+            return "Requested channel is not initialized.\n"
 
 
     # Updating the DDS
@@ -113,7 +113,7 @@ class ddsServer(DeviceServer):
                         # Set the current value in the dict to the current frequency
                         self.current_values[key][entry['name']] = entry['frequency']
                     except Exception as e:
-                        print e
+                        print(e)
 
 
         # Expect a dict of format:
