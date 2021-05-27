@@ -23,6 +23,9 @@ from labrad.server import LabradServer, setting
 
 import json
 import numpy as np
+from warnings import warn
+import time
+import csv
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from server_tools.hardware_interface_server import HardwareInterfaceServer
@@ -61,6 +64,13 @@ class PcoConfigError(Exception):
 class PcoRecordError(Exception):
     """
     An error raised by an issue with recording an image with a PCO camera
+    """
+    def __init__(self, msg=''):
+        super().__init__(msg)
+
+class PcoSaveError(Exception):
+    """
+    An error raised by an issue with saving an image with a PCO camera
     """
     def __init__(self, msg=''):
         super().__init__(msg)
@@ -105,7 +115,7 @@ class PcoServer(HardwareInterfaceServer):
                     del self.interfaces[key]
                     del self.cam_info[key]
                 except Exception as e:
-                    print("Error closing {}: {}".format(k, e))
+                    warn("Error closing {}: {}".format(k, e))
 
         while True:
             # pco.Camera() gets next available camera
@@ -120,7 +130,7 @@ class PcoServer(HardwareInterfaceServer):
             except ValueError: # If no camera found
                 break
             except Exception as e:
-                print(e)
+                warn(e)
                 break
     
     # Overwriting the version in HardwareInterfaceServer
@@ -147,7 +157,7 @@ class PcoServer(HardwareInterfaceServer):
             self.call_if_available('close', c)
             del self.interfaces[c['address']]
         except KeyError as e:
-            print('Camera not found: {}'.format(e))
+            warn('Camera not found: {}'.format(e))
     
     def _get_config(self, c):
         return self.call_if_available('configuration', c)
@@ -209,11 +219,11 @@ class PcoServer(HardwareInterfaceServer):
         max_exp = caps['Max Expos DESC']*1e-3
 
         if exposure < min_exp:
+            warn("Requested exposure {} is too short; setting to minimum: {}".format(exposure, min_exp))
             exposure = min_exp
-            print("Requested exposure {} is too short; setting to minimum: {}".format(exposure, min_exp))
         elif exposure > max_exp:
+            warn("Requested exposure {} is too long; setting to maximum: {}".format(exposure, max_exp))
             exposure = max_exp
-            print("Requested exposure {} is too long; setting to maximum: {}".format(exposure, max_exp))
         self.set_cam_config(c, 'exposure time', exposure)
         return exposure
 
@@ -317,7 +327,7 @@ class PcoServer(HardwareInterfaceServer):
             except Exception as e:
                 raise(PcoConfigError("Trigger mode \"{}\" not supported on {}.".format(mode, c['address'])))
         else:
-            print("Trigger mode \"{}\" not found; supported modes: {}.".format(mode, PCO_TRIGGER_MODES))    
+            warn("Trigger mode \"{}\" not found; supported modes: {}.".format(mode, PCO_TRIGGER_MODES))    
         return self._get_config(c)['trigger']
 
     @setting(11, xbins='i', ybins='i', returns='*i')
@@ -363,7 +373,7 @@ class PcoServer(HardwareInterfaceServer):
             s = sdk.get_double_image_mode()['double image']
             return 'on' in s
         except Exception:
-            print('Interframing mode not available for {}'.format(c['address']))
+            warn('Interframing mode not available for {}'.format(c['address']))
             return False
 
     @setting(13, enable='b', returns='b')
@@ -390,7 +400,7 @@ class PcoServer(HardwareInterfaceServer):
                 sdk.set_double_image_mode(s)
                 return 'on' in sdk.get_double_image_mode()['double image']
             except:
-                print('Interframing mode not available for {}'.format(c['address']))
+                warn('Interframing mode not available for {}'.format(c['address']))
                 return False
 
     def _is_running(self, c):
@@ -416,13 +426,13 @@ class PcoServer(HardwareInterfaceServer):
             return status
         except PcoRecordError:
             self.cam_info[c['address']]['record_status'] = PCO_RECORD_UNINIT
-            print("Recording not initialized.")
+            warn("Recording not initialized.")
             return False
 
     @setting(15, n_images='i', mode='s')
-    def record(self, c, n_images=1, mode='sequence non blocking'):
+    def start_record(self, c, n_images=1, mode='sequence non blocking'):
         """
-        record(self, c, n_images=1, mode='sequence non blocking')
+        start_record(self, c, n_images=1, mode='sequence non blocking')
 
         Starts recording images on the selected camera.
 
@@ -435,29 +445,133 @@ class PcoServer(HardwareInterfaceServer):
         self.call_if_available('record', c, n_images, mode)
         self.is_running(c)
 
-    @setting(16, returns='(s,*i)')
-    def get_image(self, c):
+    @setting(19, returns='i')
+    def available_images(self, c):
         """
-        get_image(self, c)
-
-        Provides the latest image, if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If no image is available, returns empty metadata and image array.
+        available_images(self, c)
 
         Args:
             c: Labrad context
 
         Returns:
-            (str, np.ndarray): A tuple containing JSON-dumped metadata and a numpy array of integers containing the image data.
+            int: Number of acquired images.
         """
-        available_images = self._get_status(c)['dwProcImgCount']
+        return self._get_status(c)['dwProcImgCount']
 
-        if available_images > 0:
-            res = self.call_if_available('image', c)
-            (image, meta) = res
-            out = (json.dumps({'poop': 'shit'}), image.flatten())
+    def check_roi(self, c, xmin, ymin, xmax, ymax):
+        """
+        check_roi(self, c, xmin, ymin, xmax, ymax)
+
+        Checks that the roi defined by (xmin, ymin, xmax, ymax) is allowed for the currently selected camera.
+
+        Note that the camera pixels are 1-indexed in the PCO software.
+
+        Args:
+            c: Labrad context
+            xmin (int): First selected horizontal pixel, 1-indexed
+            ymin (int): Last selected horizontal pixel
+            xmax (int): First selected vertical pixel, 1-indexed
+            ymax (int): Last selected vertical pixel (inclusive)
+
+        Returns:
+            (int, int, int, int): Bounds-checked roi (xmin, ymin, xmax, ymax)
+        """
+        caps = self.cam_info[c['address']]['caps']
+        cam_xmin = cam_ymin = 1
+        cam_xmax = caps['max. horizontal resolution standard']
+        cam_ymax = caps['max. vertical resolution standard']
+
+        out_xmin = min(max(cam_xmin, xmin), cam_xmax)
+        out_xmax = max(min(cam_xmax, xmax), cam_xmin)
+        out_ymin = min(max(cam_ymin, ymin), cam_ymax)
+        out_ymax = max(min(cam_ymax, ymax), cam_ymin)
+
+        if out_xmin > out_xmax:
+            temp = out_xmax
+            out_xmax = out_xmin
+            out_xmin = temp
+        if out_ymin > out_ymax:
+            temp = out_ymax
+            out_ymax = out_ymin
+            out_ymin = temp
+
+        ins = (xmin, ymin, xmax, ymax)
+        outs = (out_xmin, out_ymin, out_xmax, out_ymax)
+
+        if any(i != o for (i, o) in zip(ins, outs)):
+            warn("Requested roi {} is invalid; setting to {}".format(ins, outs))
+        return outs
+
+    def get_images(self, c, roi=None):
+        """
+        get_images(self, c)
+
+        Provides the images stored in the camera buffer, if any. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If no images are available, returns empty metadata and image array.
+
+        Args:
+            c: Labrad context
+            roi ((int), optional): A 4-tuple of integers (xmin, ymin, xmax, ymax) representing the bounds of the image to be saved. Defaults to None, in which case the whole image is saved.
+
+        Returns:
+            ([numpy array]): A list of numpy arrays of the images.
+        """
+        if self.available_images(c) > 0:
+            res = self.call_if_available('images', c, roi=roi)
+            (images, _) = res
+            out = images
         else:
-            print("No images acquired.")
-            out = ('', np.array([[0]], dtype=np.int))
+            warn("No images acquired.")
+            out = []
         return out
+
+    @setting(16, path='s', n_images='i', roi='*i', returns='s')
+    def save_images(self, c, path, n_images, roi=None):
+        """
+        save_images(self, c, path, n_images, roi)
+
+        Saves the latest `n_image` images if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If fewer than n_images have been acquired, throws a :class:`PcoSaveError`.
+
+        The images are saved as a compressed `.npz<https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format>`_ format with fields "meta" containing a zero-dimensional array with a metadata dictionary (stored pickled) and a 3-dimensional integer ndarray of dimension (n_images, y dimension, x dimension) containing the images. Note that the two frames are stacked in a single image in y if interframing is enabled.
+        
+        Args:
+            c: Labrad context
+            path (str): Path to saved imaged. The extension is automatically changed to ".npz"
+            n_images (int): Number of images to save.
+            roi ((int), optional): A 4-tuple of integers (xmin, ymin, xmax, ymax) representing the bounds of the image to be saved. Defaults to None, in which case the whole image is saved.
+
+        Returns:
+            str: Path to saved image
+        """
+        if roi is not None:
+            if len(roi) != 4:
+                roi = None
+            else:
+                roi = self.check_roi(c, *roi)
+        images = self.get_images(c, roi)
+        
+        if len(images) < n_images:
+            raise(PcoSaveError("Fewer than {} images were recorded; only got {} images").format(n_images, len(images)))
+        if len(images) > n_images:
+            images = images[-n_images:]
+        images = np.array(images)
+
+        config = self._get_config(c)
+        metadata = {
+            'images': n_images,
+            'interframing': 'on' if self.get_interframing_enabled(c) else 'off',
+            'exposure': config['exposure time'],
+            'acquire': config['acquire'],
+            'binning': config['binning'],
+            'roi': roi if roi is not None else config['roi'],
+            'readout': config['pixel rate'],
+            'trigger': config['trigger'],
+            'timestamp': time.strftime("%H:%M:%S", time.localtime())
+        }
+
+        path = os.path.splitext(path)[0]+".npz"
+        with open(path, 'wb') as f:
+            np.savez_compressed(f, data=images, meta=metadata)
+        return path
 
     def _get_status(self, c):
         try:
@@ -483,9 +597,25 @@ class PcoServer(HardwareInterfaceServer):
         try:
             out = self._get_status(c)
         except PcoRecordError as e:
-            print("Recording not initialized.")
+            warn("Recording not initialized.")
             out = {}
         return json.dumps(out)
+
+    @setting(18)
+    def stop_record(self, c):
+        """
+        stop_record(self, c)
+
+        Stop recording on the current camera.
+
+        Args:
+            c: Labrad context
+        """
+        self.call_if_available('stop', c)
+        
+        still_running = self.is_running(c) # sets self.cam_info[c['address']]['record_status']
+        if still_running:
+            raise(PcoRecordError("Problem stopping record."))
         
 
     def stopServer(self):
@@ -498,7 +628,7 @@ class PcoServer(HardwareInterfaceServer):
             try:
                 cam.stop()
             except Exception as e:
-                print(e)
+                warn(e)
         super().stopServer()
 
     # @setting(6, timeout='v', returns='v')
