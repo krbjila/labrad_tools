@@ -13,7 +13,7 @@ magnetic_evaporation/backup/*.json
 **.swp
 electrode/backup/*
 electrode/values.json
-.vscode/settings.json
+.vscode/
 magnetic_evaporation/evap.json
 *.DS_Store
 docs/_build
