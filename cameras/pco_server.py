@@ -52,26 +52,48 @@ PCO_RECORD_READY = 1
 PCO_RECORD_RUNNING = 2
 
 class PcoConfigError(Exception):
+    """
+    An error raised by an issue with the configuration of a PCO camera
+    """
     def __init__(self, msg=''):
         super().__init__(msg)
 
 class PcoRecordError(Exception):
+    """
+    An error raised by an issue with recording an image with a PCO camera
+    """
     def __init__(self, msg=''):
         super().__init__(msg)
 
 class PcoServer(HardwareInterfaceServer):
-    """Provides access to PCO cameras."""
+    """Provides access to PCO cameras.
+    
+    Uses a modified version of the PCO Python library, found in :code:`cameras/lib/pco`. For more information, refer to the `PCO SDK <https://www.pco.de/fileadmin/fileadmin/user_upload/pco-manuals/pco.sdk_manual.pdf>`_ and `PCO Python library <https://pypi.org/project/pco/>`_ documentation.
+    """
     name = '%LABRADNODE%_pco'
     cam_info = {}
 
     @staticmethod
     def get_camera_identifier(cam):
+        """
+        get_camera_identifier(cam)
+
+        Args:
+            cam (pco.Camera()): A PCO camera object
+
+        Returns:
+            str: Returns a string containing the camera type and serial number of the camera.
+        """
         name = cam.sdk.get_camera_name()['camera name']
         serial = cam.sdk.get_camera_type()['serial number']
         return name + " ({})".format(serial)
 
     def refresh_available_interfaces(self):
-        """ Fill self.interfaces with available connections using PCO dll """
+        """
+        refresh_available_interfaces(self)
+        
+        Fill :code:`self.interfaces` with available connections using PCO dll
+        """
         for k, cam in self.interfaces.items():
             try:
                 key = self.get_camera_identifier(cam)
@@ -155,10 +177,33 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(4, returns='s')
     def get_capabilities(self, c):
+        """
+        get_capabilities(self, c)
+        
+        Gets a description of the camera, including available image sizes, readout rates, etc.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            str: JSON-dumped camera description dictionary
+        """
         return json.dumps(self.cam_info[c['address']]['caps'])
 
     @setting(5, exposure='v', returns='v')
     def set_exposure(self, c, exposure):
+        """
+        set_exposure(self, c, exposure)
+
+        Sets the camera exposure. If the specified exposure is outside the camera's exposure range, clips to the range and warns the user.
+
+        Args:
+            c: Labrad context
+            exposure (numeric): Exposure in seconds.
+
+        Returns:
+            float: the camera's actual exposure setting in seconds.
+        """
         caps = self.cam_info[c['address']]['caps']
         min_exp = caps['Min Expos DESC']*1e-9
         max_exp = caps['Max Expos DESC']*1e-3
@@ -200,23 +245,70 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(7, returns='*i')
     def get_readout_rates(self, c):
+        """get_readout_rates(self, c)
+
+        Gets the possible readout rates for the selected camera, in pixels per second.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            [int]: the possible readout rates for the camera, in pixels per second
+        """
         rates = self.cam_info[c['address']]['caps']['pixel rate']
         nonzero = [i for i in rates if i > 0]
         return nonzero
 
     @setting(8, readout='i', returns='i')
     def set_readout_rate(self, c, readout):
+        """
+        set_readout_rate(self, c, readout)
+
+        Sets the readout rate for the selected camera, in pixels per second.
+
+        Args:
+            c: Labrad context
+            readout (int): the readout rates for the camera, in pixels per second. Must be one of the values returned by :meth:`get_readout_rates`
+
+        Returns:
+            int: the camera's actual readout rate, in pixels per second
+        """
         rates = self.get_readout_rates(c)
         if readout in rates:
             self.set_cam_config(c, 'pixel rate', readout)
+        else:
+            raise(PcoConfigError("Readout rate \"{}\" not supported on {}.".format(readout, c['address'])))
         return self._get_config(c)['pixel rate']
 
     @setting(9, returns='*s')
     def get_trigger_modes(self, c):
+        """
+        get_trigger_modes(self, c)
+
+        Returns a list of the possible trigger modes for PCO cameras. Not all trigger modes may be compatible with the selected camera.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            [str]: a list of the possible trigger modes for PCO cameras.
+        """
         return PCO_TRIGGER_MODES
 
     @setting(10, mode='s', returns='s')
     def set_trigger_mode(self, c, mode):
+        """
+        set_trigger_mode(self, c, mode)
+
+        Sets the trigger mode for the selected camera.
+
+        Args:
+            c: Labrad context
+            mode (str): The trigger mode for the camera. Must be one of the values returned by :meth:`get_trigger_modes`. Not all trigger modes work for all cameras.
+
+        Returns:
+            str: the camera's actual trigger mode
+        """
         if mode in PCO_TRIGGER_MODES:
             try:
                 self.set_cam_config(c, 'trigger', mode)
@@ -230,6 +322,19 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(11, xbins='i', ybins='i', returns='*i')
     def set_binning(self, c, xbins, ybins=None):
+        """
+        set_binning(self, c, xbins, ybins=None)
+        
+        Sets the selected camera's binning mode.
+
+        Args:
+            c: Labrad context
+            xbins (int): horizontal bin size
+            ybins (int, optional): vertical bin size. Defaults to None, in which case it is set equal to xbins.
+
+        Returns:
+            [int]: the camera's actual horizontal and vertical bin sizes
+        """
         if ybins is None:
             ybins = xbins
         try:
@@ -242,6 +347,17 @@ class PcoServer(HardwareInterfaceServer):
     
     @setting(12, returns='b')
     def get_interframing_enabled(self, c):
+        """
+        get_interframing_enabled(self, c)
+
+        Checks whether interframing mode is enabled for the selected camera.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            bool: whether interframing mode is enabled for the selected camera
+        """
         sdk = self.call_if_available('sdk', c)
         try:
             s = sdk.get_double_image_mode()['double image']
@@ -252,6 +368,18 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(13, enable='b', returns='b')
     def set_interframing_enabled(self, c, enable):
+        """
+        set_interframing_enabled(self, c, enable)
+
+        Sets whether interframing mode is enabled for the selected camera.
+
+        Args:
+            c: Labrad context
+            enable (bool): [description]
+
+        Returns:
+            bool: whether interframing mode is actually enabled for the selected camera
+        """
         sdk = self.call_if_available('sdk', c)
         s = 'on' if enable else 'off'
 
@@ -271,6 +399,17 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(14, returns='b')
     def is_running(self, c):
+        """
+        is_running(self, c)
+
+        Checks whether the selected camera is currently recording.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            bool: whether the selected camera is currently recording
+        """
         try:
             status = self._get_status(c)['is running']
             self.cam_info[c['address']]['record_status'] = PCO_RECORD_RUNNING if status else PCO_RECORD_READY
@@ -282,11 +421,33 @@ class PcoServer(HardwareInterfaceServer):
 
     @setting(15, n_images='i', mode='s')
     def record(self, c, n_images=1, mode='sequence non blocking'):
+        """
+        record(self, c, n_images=1, mode='sequence non blocking')
+
+        Starts recording images on the selected camera.
+
+        Args:
+            c: Labrad context
+            n_images (int, optional): The number of images to return. Defaults to 1.
+            mode (str, optional): [description]. Defaults to 'sequence non blocking'.
+        """
+        # TODO: Allow recording infinite images? Do we need a stop recording function?
         self.call_if_available('record', c, n_images, mode)
         self.is_running(c)
 
     @setting(16, returns='(s,*i)')
     def get_image(self, c):
+        """
+        get_image(self, c)
+
+        Provides the latest image, if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If no image is available, returns empty metadata and image array.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            (str, np.ndarray): A tuple containing JSON-dumped metadata and a numpy array of integers containing the image data.
+        """
         available_images = self._get_status(c)['dwProcImgCount']
 
         if available_images > 0:
@@ -308,6 +469,17 @@ class PcoServer(HardwareInterfaceServer):
         
     @setting(17, returns='s')
     def get_status(self, c):
+        """
+        get_status(self, c)
+
+        Gets the recording status of the current camera. Returns an empty JSON if recording is not initialized.
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            str: JSON-dumped recording status
+        """
         try:
             out = self._get_status(c)
         except PcoRecordError as e:
@@ -317,6 +489,11 @@ class PcoServer(HardwareInterfaceServer):
         
 
     def stopServer(self):
+        """
+        stopServer(self)
+
+        Closes camera connections and shuts down the Labrad server.
+        """
         for cam in self.interfaces.values():
             try:
                 cam.stop()
