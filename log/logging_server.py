@@ -46,6 +46,7 @@ class LoggingServer(LabradServer):
         self.last_time = datetime.now()
         self.logfile = None
         self.freqfile = None
+        self.path = None
         LabradServer.__init__(self)
         self.set_save_location()
         self.opentime = datetime.now()
@@ -127,9 +128,9 @@ class LoggingServer(LabradServer):
         if currtime.date() != self.last_time.date():
             self.next_shot = 0
         else:
-            path = PATHBASE + "%s/shots/" % (currtime.strftime('%Y/%m/%Y%m%d'))
+            self.path = PATHBASE + "%s/shots/" % (currtime.strftime('%Y/%m/%Y%m%d'))
             dirlist = []
-            for d in os.listdir(path):
+            for d in os.listdir(self.path):
                 try:
                     dirlist.append(int(d))
                 except:
@@ -153,6 +154,30 @@ class LoggingServer(LabradServer):
         print("Setting name of client %d to %s" % (c.ID[0], name))
         c["name"] = name
 
+    @setting(5, returns='s')
+    def get_path(self, c, name):
+        """
+        get_path(self, c)
+        
+        Returns the path where the current shot's data is saved.
+
+        Args:
+            c: A LabRAD context
+        """
+        return self.path
+
+    @setting(5, returns='i')
+    def get_shot(self, c, name):
+        """
+        get_path(self, c)
+        
+        Returns the current shot.
+
+        Args:
+            c: A LabRAD context
+        """
+        return self.shot
+
     def set_save_location(self):
         """
         Sets the save location based on the current time and shot number.
@@ -165,17 +190,17 @@ class LoggingServer(LabradServer):
             self.freqfile.close()
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
-            path = PATHBASE + "%s/" % (now.strftime('%Y/%m/%Y%m%d'))
-            self.ljpath = path + "labjack/"
+            self.path = PATHBASE + "%s/" % (now.strftime('%Y/%m/%Y%m%d'))
+            self.ljpath = self.path + "labjack/"
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
-            path = PATHBASE + "%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
-            self.ljpath = path
-        fname = path+"log.txt"
-        ffname = path+"freqs.txt"
+            self.path = PATHBASE + "%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
+            self.ljpath = self.path
+        fname = self.path+"log.txt"
+        ffname = self.path+"freqs.txt"
 
         try:
-            os.makedirs(path)
+            os.makedirs(self.path)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise

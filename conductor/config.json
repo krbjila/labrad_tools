@@ -75,6 +75,18 @@
                 }
             }
         },
+        "pixelfly": {
+            "recordimage": {
+                "default_recordimage" : {
+                    "enable": 0,
+                    "exposure": 1E-3,
+                    "interframing_enable": 0,
+                    "binning": [1,1],
+                    "n_images": 1,
+                    "roi": "None"
+                }
+            }
+        },
         "highFieldRbARP": {
             "duration": {
                 "default": 1

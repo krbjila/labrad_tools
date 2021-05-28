@@ -20,12 +20,13 @@ Provides access to PCO cameras.
 """
 import os, sys
 from labrad.server import LabradServer, setting
+from twisted.internet import reactor
+from datetime import datetime
 
 import json
 import numpy as np
 from warnings import warn
 import time
-import csv
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from server_tools.hardware_interface_server import HardwareInterfaceServer
@@ -53,6 +54,8 @@ PCO_RECORD_MODES = [
 PCO_RECORD_UNINIT = 0
 PCO_RECORD_READY = 1
 PCO_RECORD_RUNNING = 2
+
+POLL_TIME = 0.2 # seconds
 
 class PcoConfigError(Exception):
     """
@@ -205,7 +208,9 @@ class PcoServer(HardwareInterfaceServer):
         """
         set_exposure(self, c, exposure)
 
-        Sets the camera exposure. If the specified exposure is outside the camera's exposure range, clips to the range and warns the user.
+        Sets the camera exposure. If the specified exposure is outside the camera's exposure range, clips to the range and warns the user. 
+
+        Note that if interframing is enabled, the provided exposure is only used for the first frame, while the second has an exposure of 74 ms (for the pixelfly camera).
 
         Args:
             c: Labrad context
@@ -439,9 +444,8 @@ class PcoServer(HardwareInterfaceServer):
         Args:
             c: Labrad context
             n_images (int, optional): The number of images to return. Defaults to 1.
-            mode (str, optional): [description]. Defaults to 'sequence non blocking'.
+            mode (str, optional): The recording mode; see `PCO Python library <https://pypi.org/project/pco/>`_ documentation for options. Defaults to 'sequence non blocking'.
         """
-        # TODO: Allow recording infinite images? Do we need a stop recording function?
         self.call_if_available('record', c, n_images, mode)
         self.is_running(c)
 
@@ -529,14 +533,14 @@ class PcoServer(HardwareInterfaceServer):
         """
         save_images(self, c, path, n_images, roi)
 
-        Saves the latest `n_image` images if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If fewer than n_images have been acquired, throws a :class:`PcoSaveError`.
+        Saves the latest :code:`n_image` images if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If fewer than n_images have been acquired, throws a :class:`PcoSaveError`.
 
-        The images are saved as a compressed `.npz<https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format>`_ format with fields "meta" containing a zero-dimensional array with a metadata dictionary (stored pickled) and a 3-dimensional integer ndarray of dimension (n_images, y dimension, x dimension) containing the images. Note that the two frames are stacked in a single image in y if interframing is enabled.
+        The images are saved as a compressed `npz <https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format>`_ file with fields "meta" containing a zero-dimensional array with a metadata dictionary (stored pickled) and a 3-dimensional integer ndarray "data" of dimension (n_images (*2 if interframing enabled), y dimension, x dimension) containing the images.
         
         Args:
             c: Labrad context
-            path (str): Path to saved imaged. The extension is automatically changed to ".npz"
-            n_images (int): Number of images to save.
+            path (str): Path to saved images. The extension is automatically changed to ".npz"
+            n_images (int): Number of images to save. An image taken with interframing enabled will only count as one here, but will be saved as two images, one for each frame.
             roi ((int), optional): A 4-tuple of integers (xmin, ymin, xmax, ymax) representing the bounds of the image to be saved. Defaults to None, in which case the whole image is saved.
 
         Returns:
@@ -553,12 +557,23 @@ class PcoServer(HardwareInterfaceServer):
             raise(PcoSaveError("Fewer than {} images were recorded; only got {} images").format(n_images, len(images)))
         if len(images) > n_images:
             images = images[-n_images:]
+
+        # TODO: Test this!
+        interframing_enabled = self.get_interframing_enabled(c)
+        if interframing_enabled:
+            new_images = []
+            for image in images:
+                frame_height = image.shape[0] / 2
+                new_images.append(image[:frame_height, :])
+                new_images.append(image[frame_height:, :])
+            images = new_images
+        
         images = np.array(images)
 
         config = self._get_config(c)
         metadata = {
-            'images': n_images,
-            'interframing': 'on' if self.get_interframing_enabled(c) else 'off',
+            'images': n_images * (2 if interframing_enabled else 1),
+            'interframing': 'on' if interframing_enabled else 'off',
             'exposure': config['exposure time'],
             'acquire': config['acquire'],
             'binning': config['binning'],
@@ -617,6 +632,34 @@ class PcoServer(HardwareInterfaceServer):
         if still_running:
             raise(PcoRecordError("Problem stopping record."))
         
+    @setting(20, path='s', n_images='i', mode='s', roi='*i')
+    def record_and_save(self, c, path, n_images=1, mode='sequence non blocking', roi=None, timeout=None):
+        # TODO: Test this!
+        """
+        record_and_save(self, c, path, n_images=1, mode='sequence non blocking', roi=None, timeout=None)
+        
+        Records and saves a series of images. Stops recording when done. Non-blocking, but must be stopped with :func:`stop_record` if the configuration must be set before it completes.
+
+        Args:
+            c: Labrad context
+            path (str): Path to saved images. The extension is automatically changed to ".npz"
+            n_images (int, optional): The number of images to record and save. An image taken with interframing enabled will only count as one here, but will be saved as two images, one for each frame. Defaults to 1.
+            mode (str, optional): The recording mode; see `PCO Python library <https://pypi.org/project/pco/>`_ documentation for options. Defaults to 'sequence non blocking'.
+            roi ((int), optional): A 4-tuple of integers (xmin, ymin, xmax, ymax) representing the bounds of the image to be saved. Defaults to None, in which case the whole image is saved.
+            timeout (float, optional): The time, in seconds, before acquisition is cancelled and an error is thrown. Defaults to None.           
+        """
+        self.start_record(c, n_images=n_images, mode=mode)
+        reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, datetime.now())
+    
+    def poll_for_images(self, c, path, n_images, roi, timeout, start_time):
+        timed_out = timeout is not None and (datetime.now() - start_time).TotalSeconds > timeout
+        if self.available_images(c) >= n_images and self.is_running(c):
+            self.save_images(c, path, n_images, roi=roi)
+            self.stop_record(c)
+        elif not timed_out:
+            reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, start_time)
+        else:
+            raise(PcoRecordError("record_and_save for {} timed out after {} seconds".format(c['address'], timeout)))
 
     def stopServer(self):
         """
