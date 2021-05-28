@@ -166,7 +166,7 @@ class LoggingServer(LabradServer):
         """
         return self.path
 
-    @setting(5, returns='i')
+    @setting(6, returns='i')
     def get_shot(self, c, name):
         """
         get_path(self, c)
