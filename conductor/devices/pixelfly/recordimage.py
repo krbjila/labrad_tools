@@ -6,10 +6,16 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.internet.reactor import callLater
 from labrad.wrappers import connectAsync
 
+from datetime import datetime
+import re
+
 from conductor_device.conductor_parameter import ConductorParameter
 
 class Recordimage(ConductorParameter):
     priority = 1
+    path_base = "K:/data/{}/Pixelfly/"
+    pattern = r"pixelfly_(\d+).npz"
+    fname_base = "pixelfly_{}.npz"
 
     def __init__(self, config={}):
         super(Recordimage, self).__init__(config)
@@ -28,11 +34,15 @@ class Recordimage(ConductorParameter):
     def update(self):
         if self.value:
             try:
-                if self.value["enable"]:
-                    # shot = yield self.cxn.imaging_logging.get_shot()
-                    # path = yield self.cxn.imaging_logging.get_path()
-                    # path += "pixelfly_{}.npz".format(shot)
-                    path = "C:/Users/krbji/Desktop/pixelfly_0.npz"
+                if self.value["enable"] > 0:
+                    path = path_base.format(datetime.now().strftime('%Y/%m/%Y%m%d'))
+                    os.makedirs(path, exist_ok=True)
+                    file_number = 0
+                    for f in os.listdir(path):
+                        match = re.fullmatch(pattern, f)
+                        if match:
+                            file_number = max(file_number, 1+int(match.groups()[0]))
+                    path += fname_base.format(file_number)
                     yield self.cxn.polarkrb_pco.stop_record()
                     yield self.cxn.polarkrb_pco.set_exposure(self.value["exposure"])
                     yield self.cxn.polarkrb_pco.set_binning(self.value["binning"])
