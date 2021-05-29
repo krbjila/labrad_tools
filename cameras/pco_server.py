@@ -27,6 +27,7 @@ import json
 import numpy as np
 from warnings import warn
 import time
+import re
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from server_tools.hardware_interface_server import HardwareInterfaceServer
@@ -55,7 +56,7 @@ PCO_RECORD_UNINIT = 0
 PCO_RECORD_READY = 1
 PCO_RECORD_RUNNING = 2
 
-POLL_TIME = 0.2 # seconds
+POLL_TIME = 1.0 # seconds
 
 class PcoConfigError(Exception):
     """
@@ -89,6 +90,9 @@ class PcoServer(HardwareInterfaceServer):
     path_base = "K:/data/{}/Pixelfly/"
     pattern = r"pixelfly_(\d+).npz"
     fname_base = "pixelfly_{}.npz"
+
+    n_images = 0
+    saved = False
 
     @staticmethod
     def get_camera_identifier(cam):
@@ -656,14 +660,22 @@ class PcoServer(HardwareInterfaceServer):
             roi ((int), optional): A 4-tuple of integers (xmin, ymin, xmax, ymax) representing the bounds of the image to be saved. Defaults to None, in which case the whole image is saved.
             timeout (float, optional): The time, in seconds, before acquisition is cancelled and an error is thrown. Defaults to None.           
         """
+        self.n_images = 0
+        self.saved = False
         self.start_record(c, n_images=n_images, mode=mode)
         reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, datetime.now())
     
     def poll_for_images(self, c, path, n_images, roi, timeout, start_time):
-        print("Polling for images, have {}".format(self.available_images(c)))
+        if self.saved:
+            return
+        n_old = self.n_images
+        self.n_images = self.available_images(c)
+        if self.n_images != n_old:
+            print("Polling for images, have {}".format(self.n_images))
         timed_out = timeout is not None and (datetime.now() - start_time).TotalSeconds > timeout
         if self.available_images(c) >= n_images:
             print("Saving images!")
+            self.saved = True
             self.save_images(c, path, n_images, roi=roi)
             self.stop_record(c)
         elif not timed_out:
@@ -691,7 +703,6 @@ class PcoServer(HardwareInterfaceServer):
             match = re.match(self.pattern, f)
             if match:
                 file_number = max(file_number, 1+int(match.groups()[0]))
-                print(file_number)
         path += self.fname_base.format(file_number)
         return path
 
