@@ -5,7 +5,8 @@ A list of LabRAD servers, by node, which are started and stopped by the :mod:`no
 node_dicts = [
     {
         'node polarkrb': [
-                'labjack'
+                'labjack',
+                'pco'
             ]
     },
     {

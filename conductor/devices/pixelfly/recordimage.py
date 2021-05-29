@@ -27,7 +27,7 @@ class Recordimage(ConductorParameter):
         try:
             yield self.cxn.polarkrb_pco.select_interface(devices[0])
         except Exception as e:
-            print(e)
+            print("Pixelfly server not connected: {}".format(e))
 
     @inlineCallbacks
     def update  (self):
@@ -41,10 +41,10 @@ class Recordimage(ConductorParameter):
                     yield self.cxn.polarkrb_pco.set_exposure(self.value["interframing_enable"])
                     yield self.cxn.polarkrb_pco.set_trigger_mode("external exposure start & software trigger")
                     sleep(0.1)
-                    path = self.cxn.polarkrb_pco.get_fname()
+                    path = yield self.cxn.polarkrb_pco.get_fname()
                     if "None" in self.value["roi"]:
                         yield self.cxn.polarkrb_pco.record_and_save(path, self.value["n_images"])
                     else:
                         yield self.cxn.polarkrb_pco.record_and_save(path, self.value["n_images"], roi=self.value["roi"])
             except Exception as e:
-                print(e)
+                print("Could not update Pixelfly: {}".format(e))
