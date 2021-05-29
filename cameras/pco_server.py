@@ -447,12 +447,16 @@ class PcoServer(HardwareInterfaceServer):
             mode (str, optional): The recording mode; see `PCO Python library <https://pypi.org/project/pco/>`_ documentation for options. Defaults to 'sequence non blocking'.
         """
         self.call_if_available('record', c, n_images, mode)
+        print("Recording {} images in mode `{}` started".format(n_images, mode))
+        time.sleep(0.01)
         self.is_running(c)
 
     @setting(19, returns='i')
     def available_images(self, c):
         """
         available_images(self, c)
+
+        Returns the number of acquired images. Images with interframing count as one.
 
         Args:
             c: Labrad context
@@ -652,8 +656,10 @@ class PcoServer(HardwareInterfaceServer):
         reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, datetime.now())
     
     def poll_for_images(self, c, path, n_images, roi, timeout, start_time):
+        print("Polling for images, have {}".format(self.available_images(c)))
         timed_out = timeout is not None and (datetime.now() - start_time).TotalSeconds > timeout
-        if self.available_images(c) >= n_images and self.is_running(c):
+        if self.available_images(c) >= n_images:
+            print("Saving images!")
             self.save_images(c, path, n_images, roi=roi)
             self.stop_record(c)
         elif not timed_out:
