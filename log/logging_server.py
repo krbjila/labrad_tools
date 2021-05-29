@@ -41,7 +41,7 @@ class LoggingServer(LabradServer):
 
     def __init__(self):
         self.name = '{}_logging'.format(getNodeName())
-        self.shot = None
+        self.shot = -1
         self.next_shot = 0
         self.last_time = datetime.now()
         self.logfile = None
