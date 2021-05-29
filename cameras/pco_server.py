@@ -86,6 +86,10 @@ class PcoServer(HardwareInterfaceServer):
     name = '%LABRADNODE%_pco'
     cam_info = {}
 
+    path_base = "K:/data/{}/Pixelfly/"
+    pattern = r"pixelfly_(\d+).npz"
+    fname_base = "pixelfly_{}.npz"
+
     @staticmethod
     def get_camera_identifier(cam):
         """
@@ -666,6 +670,30 @@ class PcoServer(HardwareInterfaceServer):
             reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, start_time)
         else:
             raise(PcoRecordError("record_and_save for {} timed out after {} seconds".format(c['address'], timeout)))
+   
+    @setting(21, returns='s')
+    def get_fname(self, c):
+        """get_fname(self, c)
+
+        Gets the filename to save the next image
+
+        Args:
+            c: Labrad context
+
+        Returns:
+            str: the filename to save the next image
+        """
+        path = self.path_base.format(datetime.now().strftime('%Y/%m/%Y%m%d'))
+        if not os.path.exists(path):
+            os.makedirs(path)
+        file_number = 0
+        for f in os.listdir(path):
+            match = re.match(self.pattern, f)
+            if match:
+                file_number = max(file_number, 1+int(match.groups()[0]))
+                print(file_number)
+        path += self.fname_base.format(file_number)
+        return path
 
     def stopServer(self):
         """
