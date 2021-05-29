@@ -80,9 +80,9 @@
                 "default_recordimage" : {
                     "enable": 0,
                     "exposure": 1E-3,
-                    "interframing_enable": 0,
-                    "binning": [1,1],
-                    "n_images": 1,
+                    "interframing_enable": 1,
+                    "binning": [2,2],
+                    "n_images": 3,
                     "roi": "None"
                 }
             }

@@ -171,12 +171,15 @@ class LoggingServer(LabradServer):
         """
         get_path(self, c)
         
-        Returns the current shot.
+        Returns the current shot. If the current shot is None, return -1.
 
         Args:
             c: A LabRAD context
         """
-        return self.shot
+        if self.shot is not None:
+            return self.shot
+        else:
+            return -1
 
     def set_save_location(self):
         """
