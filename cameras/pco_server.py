@@ -575,7 +575,7 @@ class PcoServer(HardwareInterfaceServer):
         if interframing_enabled:
             new_images = []
             for image in images:
-                frame_height = image.shape[0] / 2
+                frame_height = image.shape[0] // 2
                 new_images.append(image[:frame_height, :])
                 new_images.append(image[frame_height:, :])
             images = new_images
