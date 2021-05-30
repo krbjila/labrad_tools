@@ -38,7 +38,7 @@ class Recordimage(ConductorParameter):
                     sleep(0.1)
                     yield self.cxn.polarkrb_pco.set_exposure(self.value["exposure"])
                     yield self.cxn.polarkrb_pco.set_binning(self.value["binning"])
-                    yield self.cxn.polarkrb_pco.set_exposure(self.value["interframing_enable"])
+                    yield self.cxn.polarkrb_pco.set_interframing_enabled(self.value["interframing_enable"] != 0)
                     yield self.cxn.polarkrb_pco.set_trigger_mode("external exposure start & software trigger")
                     sleep(0.1)
                     path = yield self.cxn.polarkrb_pco.get_fname()
