@@ -34,7 +34,7 @@ class Recordimage(ConductorParameter):
     def update  (self):
         if self.value:
             try:
-                if self.value["enable"] > 0:
+                if self.value["enable"]:
                     yield self.server.stop_record()
                     sleep(0.1)
                     yield self.server.set_exposure(self.value["exposure"])
