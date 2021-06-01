@@ -640,19 +640,24 @@ class PcoServer(HardwareInterfaceServer):
         Args:
             c: Labrad context
         """
+        
         self.call_if_available('stop', c)
 
         # Try to cancel poll_for_images call
         try:
             self.callbacks[c['address']].cancel()
-        except AlreadyCalled:
+
+            still_running = self.is_running(c) # sets self.cam_info[c['address']]['record_status']
+            if still_running:
+                raise(PcoRecordError("Problem stopping record."))
+        except KeyError: # self.record_and_save never called
             pass
-        except AlreadyCancelled:
+        except AlreadyCalled: # Callback already finished
             pass
-        
-        still_running = self.is_running(c) # sets self.cam_info[c['address']]['record_status']
-        if still_running:
-            raise(PcoRecordError("Problem stopping record."))
+        except AlreadyCancelled: # Callback already cancelled
+            pass
+    
+
         
     @setting(20, path='s', n_images='i', mode='s', roi='*i')
     def record_and_save(self, c, path, n_images=1, mode='sequence non blocking', roi=None, timeout=None):
