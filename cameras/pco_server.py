@@ -21,6 +21,7 @@ Provides access to PCO cameras.
 import os, sys
 from labrad.server import LabradServer, setting
 from twisted.internet import reactor
+from twisted.internet.error import AlreadyCalled, AlreadyCancelled
 from datetime import datetime
 
 import json
@@ -86,6 +87,7 @@ class PcoServer(HardwareInterfaceServer):
     """
     name = '%LABRADNODE%_pco'
     cam_info = {}
+    callbacks = {}
 
     path_base = "K:/data/{}/Pixelfly/"
     pattern = r"pixelfly_(\d+).npz"
@@ -442,7 +444,7 @@ class PcoServer(HardwareInterfaceServer):
             warn("Recording not initialized.")
             return False
 
-    @setting(15, n_images='i', mode='s')
+    # @setting(15, n_images='i', mode='s')
     def start_record(self, c, n_images=1, mode='sequence non blocking'):
         """
         start_record(self, c, n_images=1, mode='sequence non blocking')
@@ -540,7 +542,7 @@ class PcoServer(HardwareInterfaceServer):
             out = []
         return out
 
-    @setting(16, path='s', n_images='i', roi='*i', returns='s')
+    # @setting(16, path='s', n_images='i', roi='*i', returns='s')
     def save_images(self, c, path, n_images, roi=None):
         """
         save_images(self, c, path, n_images, roi)
@@ -639,6 +641,14 @@ class PcoServer(HardwareInterfaceServer):
             c: Labrad context
         """
         self.call_if_available('stop', c)
+
+        # Try to cancel poll_for_images call
+        try:
+            self.callbacks[c['address']].cancel()
+        except AlreadyCalled:
+            pass
+        except AlreadyCancelled:
+            pass
         
         still_running = self.is_running(c) # sets self.cam_info[c['address']]['record_status']
         if still_running:
@@ -662,8 +672,10 @@ class PcoServer(HardwareInterfaceServer):
         """
         self.n_images = 0
         self.saved = False
-        self.start_record(c, n_images=n_images, mode=mode)
-        reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, datetime.now())
+
+        if not self._is_running(c):
+            self.start_record(c, n_images=n_images, mode=mode)
+            self.callbacks[c['address']] = reactor.callLater(POLL_TIME, self.poll_for_images, c, path, n_images, roi, timeout, datetime.now())
     
     def poll_for_images(self, c, path, n_images, roi, timeout, start_time):
         if self.saved:
