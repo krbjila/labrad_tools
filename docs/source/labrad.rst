@@ -96,13 +96,14 @@ Currently, the Labrad manager is setup and running on the main control computer 
     WantedBy=multi-user.target
 
 
-   Above you'll want to set **username** to your Linux username. Set **password** to your desired Labrad password. `WorkingDirectory` should match the directory of your `labrad_tools` repo; `ExecStart` should have the path to your Labrad manager executable. You may also need to set the `JAVA_HOME` environment variable. To do this, add the following line to `/etc/environment/`: `JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64/"` (the exact path will depend on your Java installation). Then log out and back in to reload the environment variables.
+   Above, you'll want to set **username** to your Linux username. Set **password** to your desired Labrad password. :code:`WorkingDirectory` should match the directory of your :code:`labrad_tools` repo; :code:`ExecStart` should have the path to your Labrad manager executable. You may also need to set the :code:`JAVA_HOME` environment variable. To do this, add the following line to :code:`/etc/environment/` : :code:`JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64/"` (the exact path will depend on your Java installation). Then log out and back in to reload the environment variables.
 
 4. Check that the service is working correctly. First, run ``sudo systemctl daemon-reload`` (this must be done every time a systemd service is modified). Next, run ``sudo systemctl start labrad-manager.service`` to start the service, and ``sudo systemctl status labrad-manager.service`` to check the status. You should see a green circle indicating that the service is active. There is a log that will tell you if any errors occurred when running the manager. Finally, run ``sudo systemctl enable labrad-manager.service`` to run the manager automatically on startup.
 
 5. Next, we need to configure a few environment variables. To do this, edit ``/etc/environment`` (needs root). We need to add the following lines:
 
    ::
+
     LABRADHOST=localhost
     LABRADPASSWORD=your_labrad_password
     LABRADNODE=name_of_your_node
@@ -120,41 +121,45 @@ Currently, the Labrad manager is setup and running on the main control computer 
 
    This should print a list of running servers (e.g., ``auth``, ``manager``, ``registry``). If there are no errors, then you are good to go!
 
-7. Start your node. This is easy! Just do ``python -m labrad.node``. To check if it worked, follow the directions in (6) again. You should see a new server appear in the list, with the name of ``$LABRADNODE`` (for example, if you set ``LABRADNODE=test``, you should see a new server ``node_test``). You can now start servers on your new node.
+7. Start your node. This is easy! Just do :code:`python -m labrad.node`. To check if it worked, follow the directions in (6) again. You should see a new server appear in the list, with the name of ``$LABRADNODE`` (for example, if you set :code:`LABRADNODE=test`, you should see a new server :code:`node_test`). You can now start servers on your new node.
 
-8. Finally, we can optionally add the path to the ``labrad_tools`` folder to the Registry, so Labrad can automatically detect the available servers. This also allows us to start and stop several servers at once using ``labrad_tools/nodecontrol`` (as opposed to starting the python script for each server manually). See instructions in `Adding paths to the Registry`_.
+8. Finally, we can optionally add the path to the :code:`labrad_tools` folder to the Registry, so Labrad can automatically detect the available servers. This also allows us to start and stop several servers at once using :code:`labrad_tools/nodecontrol` (as opposed to starting the python script for each server manually). See instructions in `Adding paths to the Registry`_.
 
 Setup a new node
 ----------------------------------------------------------
 
 This is a quick guide to setting up a new Labrad node.
 
-This assumes that you already have a Labrad manager running (see detailed instructions for [Windows](https://github.com/krbjila/labrad_tools/wiki/Setup-Manager-and--First-Node:-Windows-10) or [Ubuntu](https://github.com/krbjila/labrad_tools/wiki/Setup-Manager-and-First-Node:-Ubuntu)).
+This assumes that you already have a Labrad manager running (see detailed instructions for :ref:`Windows 10` or :ref:`Ubuntu`).
 
-0. Make sure you're running Python 2 (at least for our current version of servers).
+1. Make sure you're running Python 2 (at least for our current version of servers).
 
-1. Install Labrad: `pip install pylabrad`
+2. Install Labrad: :code:`pip install pylabrad` 
 
-2. Set environment variables:
-* LABRADHOST: This should be the IP address of the computer running the Manager.
-* LABRADNODE: The name of your new node.
-* LABRADPASSWORD: The Labrad password (which was set when starting up the Manager).
-* LABRAD_TLS=off
+3. Set environment variables:
+   
+   * LABRADHOST: This should be the IP address of the computer running the Manager.
+   * LABRADNODE: The name of your new node.
+   * LABRADPASSWORD: The Labrad password (which was set when starting up the Manager).
+   * LABRAD_TLS=off
+  
 On Windows, this can be done by searching "Edit system environment variables" and using the dialog that pops up. On Ubuntu, set the environment variables in `/etc/environment` (e.g., `LABRADNODE=mynode`), then log out and in to reload the environment variables.
 
-3. Run `python -m labrad.node`.
+4. Run :code:`python -m labrad.node` .
 
-4. You can check that the node is running properly using `ipython`. Run the following lines:
-```
-import labrad
-cxn = labrad.connect()
-cxn.servers
-```
+5. You can check that the node is running properly using :code:`ipython` . Run the following lines:
+   
+.. code-block:: python
+
+   import labrad
+   cxn = labrad.connect()
+   cxn.servers
+
 This should print out a list of running Labrad servers, including the name of your new node.
 
-Finally, we can optionally add the path to the `labrad_tools` folder to the Registry, so Labrad can automatically detect the available servers. This also allows us to start and stop several servers at once using `labrad_tools/nodecontrol` (as opposed to starting the python script for each server manually).
+Finally, we can optionally add the path to the :code:`labrad_tools` folder to the Registry, so Labrad can automatically detect the available servers. This also allows us to start and stop several servers at once using :code:`labrad_tools/nodecontrol` (as opposed to starting the python script for each server manually).
 
-5. [Adding a new path to the Registry](https://github.com/krbjila/labrad_tools/wiki/Adding-paths-to-the-registry).
+6. :ref:`Adding paths to the Registry`
 
 Adding paths to the Registry
 ----------------------------------------------------------
@@ -192,6 +197,7 @@ This should print out a list of available methods to run on the server. Note the
 You can do ``r.get('directories')`` to check that this worked.
 
 4. Finally, to check that everything is working, run:
+
 .. code-block:: python
 
     cxn.servers['node\_' + 'NAME_OF_YOUR_NODE'].available_servers()
