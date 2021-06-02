@@ -568,9 +568,14 @@ class PcoServer(HardwareInterfaceServer):
             'timestamp': time.strftime("%H:%M:%S", time.localtime())
         }
 
+        # Define a temporary path to avoid conflicts when writing file
+		# Otherwise, fitting program autoloads the file before writing is complete
         path = os.path.splitext(path)[0]+".npz"
-        with open(path, 'wb') as f:
+        path_temp = path + "_temp"
+        with open(path_temp, 'wb') as f:
             np.savez_compressed(f, data=images, meta=metadata)
+        # Once file is written, rename to the correct filename
+        os.rename(path_temp, path)
         return path
 
     def _get_status(self, c):
