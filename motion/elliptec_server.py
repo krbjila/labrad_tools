@@ -110,7 +110,7 @@ class elliptecServer(HardwareInterfaceServer):
                 try:
                     query = '{:x}in'.format(channel)
                     id = yield self.ser.query(query)
-                    if len(id) == 33:
+                    if len(id) == 33: # Reply is 33 characters
                         self.interfaces["{}:{}".format(i, channel)] = {"device":i, "channel":channel}
                         print("Connected to channel {} on device {}.".format(channel, i))
                     else:
@@ -133,6 +133,7 @@ class elliptecServer(HardwareInterfaceServer):
         Yields:
             float: The stage's position in mm. Note that, if the device is not homed, the value can overflow and be very large.
         """
+        self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
         pos = yield self.ser.query("{:x}gp".format(channel))
         returnValue(twos_complement(pos[3:], 32)/self.TICKS_PER_MM)
@@ -151,6 +152,7 @@ class elliptecServer(HardwareInterfaceServer):
         Yields:
             str: A serialized JSON describing the stage's status. Includes position if the homing is complete.
         """
+        self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
         msg = yield self.ser.query("{:x}ho0".format(channel))
         returnValue(json.dumps(elliptecServer.decode_message(msg)))
@@ -169,6 +171,7 @@ class elliptecServer(HardwareInterfaceServer):
         Yields:
             str: A serialized JSON describing the stage's status.
         """
+        self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
         msg = yield self.ser.query("{:x}gs".format(channel))
         returnValue(json.dumps(elliptecServer.decode_message(msg)))
@@ -188,6 +191,7 @@ class elliptecServer(HardwareInterfaceServer):
         Yields:
             str: A serialized JSON describing the stage's status. Includes position if the move is complete.
         """
+        self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
         pos_hex = to_hex(int(pos*self.TICKS_PER_MM), 32)
         msg = yield self.ser.query("{:x}ma{}".format(channel, pos_hex))
