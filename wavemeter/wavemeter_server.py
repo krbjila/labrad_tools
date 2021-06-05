@@ -23,18 +23,18 @@ sys.path.append("../client_tools")
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
-# import urllib
+from labrad.util import getNodeName
 import json
 import pycurl
 from io import BytesIO
 
 class WavemeterServer(LabradServer):
-    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running. The URL is hardcoded."""
+    """Provides access to Highfinesse WS-7 Wavemeter. Requires that the server from https://github.com/stepansnigirev/py-ws7 be running. The URL is hardcoded to localhost port 8000."""
     name = '%LABRADNODE%_wavemeter'
-    url = 'http://192.168.141.220:8000/wavemeter/api/'
+    url = 'http://localhost:8000/wavemeter/api/'
 
     def __init__(self):
-        self.name = 'imaging_wavemeter'
+        self.name = '{}_wavemeter'.format(getNodeName())
         self.data = ''
         super(WavemeterServer, self).__init__()
 

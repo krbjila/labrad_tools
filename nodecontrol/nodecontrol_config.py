@@ -9,8 +9,12 @@ node_dicts = [
             ]
     },
     {
+        'node wavemeterlaptop': [
+                'wavemeter'
+            ]
+    },
+    {
         'node imaging' : [
-            'wavemeter',
             'ad9910',
             'okfpga',
             'usb',

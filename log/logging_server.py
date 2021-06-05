@@ -52,7 +52,7 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        self.wavemeter = yield self.client.servers['imaging_wavemeter']
+        self.wavemeter = yield self.client.servers['wavemeterlaptop_wavemeter']
         self.wavemetercall = LoopingCall(self.log_frequency)
         self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
 

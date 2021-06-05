@@ -41,7 +41,7 @@ class USBServer(HardwareInterfaceServer):
                 inst.write_termination = ''
                 #inst.clear()
                 self.interfaces[address] = inst
-                print 'connected to USB device ' + address
+                print('connected to USB device ' + address)
         for addr in deletions:
             del self.interfaces[addr]
 
