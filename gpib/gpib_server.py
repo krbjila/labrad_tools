@@ -44,7 +44,7 @@ class GPIBServer(HardwareInterfaceServer):
                 inst.write_termination = ''
                 #inst.clear()
                 self.interfaces[address] = inst
-                print 'connected to GPIB device ' + address
+                print('connected to GPIB device {}'.format(address)) 
         for addr in deletions:
             del self.interfaces[addr]
 

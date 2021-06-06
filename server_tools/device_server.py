@@ -29,7 +29,7 @@ def get_device_wrapper(device_config):
     if os.path.isdir(_device_type):
         module_path += _device_type
     module = __import__(module_path, fromlist=[device_type])
-    print module.__dict__.keys()
+    print(module.__dict__.keys())
     return getattr(module, device_type)
 
 def get_connection_wrapper(device):
@@ -84,17 +84,17 @@ class DeviceServer(LabradServer):
             device.connection = self.open_connections[device.connection_name]
             self.devices[name] = device
             yield device.initialize()
-        except Exception, e:
-            print e
-            print 'could not initialize device {}'.format(name)
-            print 'removing {} from available devices'.format(name)
+        except Exception as e:
+            print(e)
+            print('could not initialize device {}'.format(name))
+            print('removing {} from available devices'.format(name))
             self.devices.pop(name)
     
     @inlineCallbacks
     def init_connection(self, device):
         connection = get_connection_wrapper(device)()
         yield connection.initialize(device)
-        print 'connection opened: {} - {}'.format(device.servername, device.address)
+        print('connection opened: {} - {}'.format(device.servername, device.address))
         self.open_connections[device.connection_name] = connection
 
     def get_device(self, c):

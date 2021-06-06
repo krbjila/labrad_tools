@@ -59,5 +59,5 @@ class Sequence(ConductorParameter):
 
            returnValue((0, electrode_presets, e_channels))
        except Exception as e:
-           print e
+           print(e)
            returnValue((-1, {}, {}))

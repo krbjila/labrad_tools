@@ -36,7 +36,7 @@ class Electrode(ConductorParameter):
         s = yield self.server.get_presets()
         d = json_loads_byteified(s)
         for x in d:
-            if x['id'] = '0':
+            if x['id'] == '0':
                 return x['values']
         return ZEROS
 

@@ -17,7 +17,7 @@ class SuperSpinBox(QtGui.QLineEdit):
         
     def keyPressEvent(self, c):
         if len(self.text().split('*')) > 1:
-            print 'variable: ', self.text()
+            print('variable: {}'.format(self.text()))
             super(SuperSpinBox, self).keyPressEvent(c)
             return
         if c.key() in [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter]:
@@ -63,9 +63,9 @@ class SuperSpinBox(QtGui.QLineEdit):
         self.returnPressed.emit()
 
     def display(self, value):
-	if str(value)[0] == '*':
+        if str(value)[0] == '*':
             self.setText(value)
-	    return
+            return
         text = self.text().split(' ')[0] # previously displayed value, strip away unit
         cursor_position = self.cursorPosition() # position, from left, of cursor
         decimal_position = len(text.split('.')[0]) +1 #position, from left, of decimal
@@ -116,7 +116,7 @@ class NeatSpinBox(QtGui.QLineEdit):
             self.step(up=0)
 
     def display(self, value, overwrite=False):
-#        print self.hasFocus()
+#        print(self.hasFocus())
         if overwrite or not self.hasFocus():
             # keep previously displayed value
             text = self.text()

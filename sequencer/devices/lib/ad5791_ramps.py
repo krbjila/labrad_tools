@@ -41,7 +41,7 @@ def exp_ramp(p, ret_seq=False):
     try:
         p['a'] = (p['vf']-p['vi'])/(np.exp(p['dt']/p['tau'])-1)
     except Exception as e:
-        print e
+        print(e)
         sseq = [{'type': 'lin', 'ti': p['ti'], 'tf': p['tf'], 'vi': p['vi'], 'vf': p['vf']}]
         return lambda t: sum([lin_ramp(ss)(t) for ss in sseq])
     p['c'] = p['vi'] - p['a']

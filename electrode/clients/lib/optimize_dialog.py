@@ -123,7 +123,7 @@ class OptimizationDialog(QtGui.QDialog):
 		res = least_squares(opt, vs_guesses)
 		stop = timeit.default_timer()
 
-		print "Fitting complete. n iter: {}, time per iter: {}".format(res.nfev, (stop-start)/float(res.nfev))
+		print("Fitting complete. n iter: {}, time per iter: {}".format(res.nfev, (stop-start)/float(res.nfev)))
 
 		vs_results = self.calculator.EArrayToDict(VsToEvs(res.x))
 		params_results = self.calculator.parametersDump(vs_results)
