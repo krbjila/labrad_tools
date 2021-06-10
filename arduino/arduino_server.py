@@ -42,7 +42,7 @@ class ArduinoServer(HardwareInterfaceServer):
                 try:
                     self.interfaces[address].isOpen()
                 except:
-                    print '{} unavailable'.format(address)
+                    print('{} unavailable'.format(address))
                     del self.interfaces[address]
             else:
                 try:
@@ -50,7 +50,7 @@ class ArduinoServer(HardwareInterfaceServer):
                         ser = Serial(address, timeout=1)
                         ser.close()
                         self.interfaces[address] = ser
-                        print '{} available'.format(address)
+                        print('{} available'.format(address))
                 except:
                     pass
         

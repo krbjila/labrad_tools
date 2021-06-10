@@ -11,7 +11,7 @@ ad9910_address = 'COM10'
 # addresses = [cp[0] for cp in serial.tools.list_ports.comports()]
 
 # for port in addresses:
-# 	print port
+# 	print(port)
 
 # if 'COM4' in addresses:
 # 	ser = Serial('COM4', 4800, timeout=2)
@@ -30,7 +30,7 @@ class AD9910_Server(object):
 	            try:
 	                self.interfaces[address].isOpen()
 	            except:
-	                print '{} unavailable'.format(address)
+	                print('{} unavailable'.format(address))
 	                del self.interfaces[address]
 	        else:
 	            try:
@@ -38,7 +38,7 @@ class AD9910_Server(object):
 	                    ser = Serial(address, 4800, timeout=2)
 	                    ser.close()
 	                    self.interfaces[address] = ser
-	                    print '{} available'.format(address)
+	                    print('{} available'.format(address))
 	            except:
 	                pass
 
@@ -49,7 +49,7 @@ class AD9910_Server(object):
 			ser.flush()
 			response = ser.readline()
 			if response == "ad9910\n":
-				print "{} verified as ad9910".format(address)
+				print("{} verified as ad9910".format(address))
 			else:
 				ser.close()
 				del self.interfaces[address]
@@ -158,8 +158,8 @@ server.refresh_available_interfaces()
 server.verify_interface()
 
 prog = server.compileProgramStrings(dds_data.program)
-# print prog
+# print(prog)
 prof = server.compileProfileStrings(dds_data.profiles)
-# print prof
+# print(prof)
 server.writeProgramAndProfiles(server.interfaces[ad9910_address], prog, prof)
-print server.getEcho(server.interfaces[ad9910_address], dds_data.program)
+print(server.getEcho(server.interfaces[ad9910_address], dds_data.program))

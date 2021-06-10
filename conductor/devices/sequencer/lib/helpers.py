@@ -25,8 +25,8 @@ def value_to_sequence(sequence):
 #                read_sequence_file(sequence.sequence_directory, v) 
 #                for v in sequence.value
 #            ])
-#        except Exception, e:
-#            print e
+#        except Exception as e:
+#            print(e)
 #            return read_sequence_file(sequence.sequence_directory, 'all_off')
 
         
@@ -98,7 +98,7 @@ def update_electrode_values(seq, e_seq, presets, channels):
                             step[k] = presets[v][name]
                         else:
                             step[k] = presets['0'][name]
-                            print "Preset {} not found, replaced with 0".format(int(v))
+                            print("Preset {} not found, replaced with 0".format(int(v)))
                 fixed.append(step)
             seq.update({loc: fixed})
     return seq

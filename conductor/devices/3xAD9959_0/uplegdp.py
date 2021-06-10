@@ -51,9 +51,9 @@ class Uplegdp(ConductorParameter):
                 print("Couldn't find channel \"{}\".".format(CHANNEL_NAME))
                 print("Available channels:")
                 for key in channels.keys():
-                    print key
+                    print(key)
             except Exception as e:
-                print e
+                print(e)
         except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
