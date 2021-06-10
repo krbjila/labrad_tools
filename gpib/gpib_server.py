@@ -110,7 +110,7 @@ class GPIBServer(HardwareInterfaceServer):
             timeout (numeric, optional): The timeout for the interface in seconds. Defaults to None.
 
         Returns:
-            The timeout in seconds
+            The timeout in milliseconds
         """
         interface = self.get_interface(c)
         if timeout is not None:
