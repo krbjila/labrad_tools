@@ -38,11 +38,14 @@ class SerialServer(HardwareInterfaceServer):
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
             if address.startswith('ASRL'):
-                inst = rm.open_resource(address)
-                # inst.write_termination = ''
-                inst.clear()
-                self.interfaces[address] = inst
-                print('connected to ASRL device ' + address)
+                try:
+                    inst = rm.open_resource(address)
+                    # inst.write_termination = ''
+                    inst.clear()
+                    self.interfaces[address] = inst
+                    print('connected to ASRL device ' + address)
+                except Exception as e:
+                    print("Could not connect to {}: {}".format(address, e))
         for addr in deletions:
             del self.interfaces[addr]
 
