@@ -107,12 +107,34 @@ class USBServer(HardwareInterfaceServer):
             timeout (numeric, optional): The timeout for the interface in seconds. Defaults to None.
 
         Returns:
-            The timeout in seconds
+            The timeout in milliseconds
         """
         interface = self.get_interface(c)
         if timeout is not None:
             interface.timeout = timeout
         return interface.timeout
+
+    @setting(7, write='s', read='s', returns='(s)')
+    def termination(self, c, write=None, read=None):
+        """
+        termination(self, c, write=None, read=None)
+
+        Sets or gets the read or write terminations.
+
+        Args:
+            c: The LabRAD context
+            write (str, optional): The write termination to set. Defaults to None, in which case the write termination is not set.
+            read (str, optional): The read termination to set. Defaults to None, in which case the write termination is not set.
+
+        Returns:
+            (str, str): A tuple containing the write and read terminations.
+        """
+        interface = self.get_interface(c)
+        if write is not None:
+            interface.write_termination = write
+        if read is not None:
+            interface.read_termination = read
+        return (interface.write_termination, interface.read_termination)
 
 
 if __name__ == '__main__':

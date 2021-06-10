@@ -88,7 +88,7 @@ class SequencerControl(QtGui.QWidget):
         try:
             self.populate()
         except Exception as e:
-            print e
+            print(e)
         yield self.displaySequence(self.default_sequence)
         yield self.connectSignals()
         yield self.update_sequencer(None, True)

@@ -20,8 +20,8 @@ def value_to_sequence(sequence):
 #                read_sequence_file(sequence.sequence_directory, v) 
 #                for v in sequence.value
 #            ])
-#        except Exception, e:
-#            print e
+#        except Exception as e:
+#            print(e)
 #            return read_sequence_file(sequence.sequence_directory, 'all_off')
 
         return combine_sequences([

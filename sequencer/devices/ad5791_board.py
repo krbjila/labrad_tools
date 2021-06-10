@@ -223,7 +223,7 @@ class AD5791Board(DeviceWrapper):
 
             # Print a warning if there are too many ramps
             if len(final_ramps) > MAX_STEPS:
-                print "Too many steps! Program will be truncated!!!"
+                print("Too many steps! Program will be truncated!!!")
          
             # Trucate the array at the maximum program length 
             try:

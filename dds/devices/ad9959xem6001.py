@@ -112,10 +112,10 @@ class ad9959xem6001(DeviceWrapper):
                     yield self.connection.set_wire_in(0x00, 0)
                     yield self.connection.update_wire_ins()
                 else:
-                    print "Channel ({}, {}): Frequency out of range.\n".format(address[0], address[1])
+                    print("Channel ({}, {}): Frequency out of range.\n".format(address[0], address[1]))
             
             except Exception as e:
-                print e
+                print(e)
 
     def freq2word(self, frequency, clock):
         #Convert frequency in MHz to tuning word
