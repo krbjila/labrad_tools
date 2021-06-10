@@ -18,3 +18,8 @@ class ParameterNotImported(ParameterError):
     def __str__(self):
         return "parameter ({} {}) import failed".format(
                 self.device_name, self.parameter_name)
+
+class ParameterNotInitialized(ParameterError):
+    def __str__(self):
+        return "parameter ({} {}) initialization failed".format(
+                self.device_name, self.parameter_name)

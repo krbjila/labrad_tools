@@ -38,6 +38,7 @@ from lib.helpers import remaining_points
 from lib.exceptions import ParameterAlreadyRegistered
 from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
+from lib.exceptions import ParameterNotInitialized
 
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 

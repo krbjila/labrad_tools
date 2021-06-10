@@ -37,6 +37,7 @@ class ConductorParameter(object):
     """
     priority = 1
     value_type = 'single'
+    critical = False
 
     def __init__(self, config):
         """ handle config (dict)

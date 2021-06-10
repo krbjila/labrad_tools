@@ -10,6 +10,8 @@ from lib.helpers import *
 class Sequence(ConductorParameter):
     priority = 10
     value_type = 'list'
+    critical = True
+    
     def __init__(self, config={}):
         super(Sequence, self).__init__(config)
         self.value = [self.default_sequence]
