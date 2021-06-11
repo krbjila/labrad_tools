@@ -191,6 +191,7 @@ class elliptecServer(HardwareInterfaceServer):
         Yields:
             str: A serialized JSON describing the stage's status. Includes position if the move is complete.
         """
+        pos = max(0, min(28, pos))
         self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
         pos_hex = to_hex(int(pos*self.TICKS_PER_MM), 32)

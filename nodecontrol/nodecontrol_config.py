@@ -19,7 +19,9 @@ node_dicts = [
             'ad9910',
             'okfpga',
             'usb',
+            'serial',
             'dg800',
+            'elliptec',
             'logging'
         ],
         'node krbg2': [
