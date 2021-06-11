@@ -75,6 +75,11 @@
                 }
             }
         },
+        "elliptec": {
+            "position": {
+                "default": 13.0
+            }
+        },
         "pixelfly": {
             "recordimage": {
                 "default_recordimage" : {
