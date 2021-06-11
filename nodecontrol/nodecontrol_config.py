@@ -6,7 +6,7 @@ node_dicts = [
     {
         'node polarkrb': [
                 'labjack',
-                'pco'
+                # 'pco'
             ]
     },
     {

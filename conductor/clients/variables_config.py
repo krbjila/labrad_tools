@@ -2,12 +2,12 @@ variables_dict = [
     # Detunings and probe intensities
     ['*RbDet', -8.64],
     ['*RbHFBlast', -8.55],
-    ['*KDet', 0.37],
+    ['*KDet', 0.375],
     ['*RbProbeI', -4.4],
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
-    ['*KMOT', 3.5],
-    ['*RbMOT', 4.8],
+    ['*KMOT', 6.0], # was 5.1
+    ['*RbMOT', 5.1], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
     ['*NWhigh', 4.4],
@@ -15,7 +15,7 @@ variables_dict = [
     ['*SWhigh', 4.84],
     ['*SWlow',4.66], # 4.645
     # Evaporation
-    ['*MagEvapTime', 12.7],
+    ['*MagEvapTime', 12.9],
     # Plug PZTs
     ['*PLUGV', 0],
     # Plug Power
@@ -33,14 +33,15 @@ variables_dict = [
     ['*LowField', 0.457], # was 0.465
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.725], # was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.65], # was -4.65 (5/18); was -4.725, was -3.6 before moving stuff to back corridor
     ['*BiasSub', -8.45],
     ['*StableBias', -0.1], # was 0.45
-    ['*FeshBias', -5.10],
+    ['*FeshBias', -5.245],
     ['*ToeBias', -5.01],
     #Micellaneous
     ['*time', 0.1],
     ['*RFpulse', 0.001],
+    ['*RFpulse2', 0.001],
     ['*X', 0.005],
     ['*Tau', -3],
     ['*FillTime', 5.0], 
@@ -71,33 +72,14 @@ variables_dict = [
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
     ['*LSLFinal', 0.03],
-    # Electric Fields
-    ['*LowerPlate', 0.0],
-    ['*UpperPlate', 0.0],
-    ['*LowerWestRod', 0.0],
-    ['*LowerEastRod', 0.0],
-    ['*UpperWestRod', 0.0],
-    ['*UpperEastRod', 0.0],
-    ['*LowerPlateZero', -0.458/2.0016e3],
-    ['*UpperPlateZero', 1.003/2.00172e3],
-    ['*LWRodZero', 2.848/2.00192e3],
-    ['*LERodZero', -6.029/2.0014e3],
-    ['*UWRodZero', -2.496/2.00005e3],
-    ['*UERodZero', 0.15/2.0017e3],
-    ['*LPGrad', 0],
-    ['*UPGrad', 0],
-    ['*LWGrad', 0],
-    ['*LEGrad', 0],
-    ['*UWGrad', 0],
-    ['*UEGrad', 0],
-    ['*LPEvap', 0],
-    ['*UPEvap', 0],
-    ['*LWEvap', 0],
-    ['*LEEvap', 0],
-    ['*UWEvap', 0],
-    ['*UEEvap', 0],
     # Utility variables
     ['*poo', 0],
+    ['*LowerPlateZero', 0],
+    ['*UpperPlateZero', 0],
+    ['*LWRodZero', 0],
+    ['*LERodZero', 0],
+    ['*UWRodZero', 0],
+    ['*UERodZero', 0],
 #    ['*HRecompress', 0], # Evap recompression midpoint
 #    ['*MRecompress', 0], # Evap recompression midpoint
 ]

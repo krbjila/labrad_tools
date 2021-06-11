@@ -23,9 +23,9 @@ class Recordimage(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        self.server = yield self.cxn.polarkrb_pco
-        devices = yield self.server.get_interface_list()
         try:
+            self.server = yield self.cxn.polarkrb_pco
+            devices = yield self.server.get_interface_list()
             yield self.server.select_interface(devices[0])
         except Exception as e:
             print("Pixelfly server not connected: {}".format(e))

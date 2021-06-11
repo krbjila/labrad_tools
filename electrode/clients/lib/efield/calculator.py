@@ -181,7 +181,9 @@ class ECalculator(object):
 		if self._E(ea)(0,0).any() == 0:
 			return 0
 		else:
-			return (first + second) / self._E(ea)(0,0)
+			res = (first + second) / self._E(ea)(0,0)
+			print("d2|E|/dx2 = {}", res)
+			return res
 	
 	# Taylor expand around (0,0)
 	def _yQuadraticCoeff(self, ea):
@@ -198,7 +200,9 @@ class ECalculator(object):
 		if self._E(ea)(0,0).any() == 0:
 			return 0
 		else:
-			return (first + second) / self._E(ea)(0,0)
+			res = (first + second) / self._E(ea)(0,0)
+			print("d2|E|/dy2 = {}", res)
+			return res
 
 	############################################
 	############################################

@@ -6,6 +6,7 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 from lib.helpers import *
+from datetime import datetime
 
 class Sequence(ConductorParameter):
     priority = 10
@@ -39,6 +40,9 @@ class Sequence(ConductorParameter):
             parameter_values = json.loads(pv_json)['sequencer']
             sequence = substitute_sequence_parameters(parameterized_sequence,
                                                       parameter_values)
+            # fname = "/home/bialkali/labrad_tools/conductor/devices/sequencer/sequences/sequence_{}.json".format(datetime.now().strftime("%d-%m-%y_%H-%M-%S"))
+            # with open(fname, "w+") as f:
+            #     json.dump(sequence, f)
             yield self.cxn.sequencer.run_sequence(json.dumps(sequence))
             t_advance = get_duration(sequence)
             # yield self.cxn.conductor.advance_logging()
