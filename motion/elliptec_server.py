@@ -10,7 +10,7 @@ Allows control of Thorlabs elliptec stages.
     instancename = %LABRADNODE%_elliptec
 
     [startup]
-    cmdline = %PYTHON3% %FILE%
+    cmdline = %PYTHON% %FILE%
     timeout = 20
 
     [shutdown]
