@@ -11,6 +11,8 @@ from datetime import datetime
 class Sequence(ConductorParameter):
     priority = 10
     value_type = 'list'
+    critical = True
+    
     def __init__(self, config={}):
         super(Sequence, self).__init__(config)
         self.value = [self.default_sequence]
@@ -63,5 +65,5 @@ class Sequence(ConductorParameter):
 
            returnValue((0, electrode_presets, e_channels))
        except Exception as e:
-           print e
+           print(e)
            returnValue((-1, {}, {}))

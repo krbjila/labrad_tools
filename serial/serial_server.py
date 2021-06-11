@@ -1,13 +1,13 @@
 """
-Provides direct access to USB-enabled hardware.
+Provides direct access to serial-enabled hardware.
 
 ..
     ### BEGIN NODE INFO
     [info]
-    name = gpib
+    name = serial
     version = 1
     description =
-    instancename = %LABRADNODE%_gpib
+    instancename = %LABRADNODE%_serial
 
     [startup]
     cmdline = %PYTHON% %FILE%
@@ -19,32 +19,33 @@ Provides direct access to USB-enabled hardware.
     ### END NODE INFO
 """
 import sys
-
-import visa
-
+import pyvisa as visa
 from labrad.server import LabradServer, setting
-
 sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
+import json
 
 
-class GPIBServer(HardwareInterfaceServer):
-    """Provides direct access to GPIB-enabled hardware."""
-    name = '%LABRADNODE%_gpib'
+class SerialServer(HardwareInterfaceServer):
+    """Provides direct access to ASRL-enabled hardware."""
+    name = '%LABRADNODE%_serial'
 
     def refresh_available_interfaces(self):
         """ Fill self.interfaces with available connections using Python VISA """
-        rm = visa.ResourceManager('@py')
+        rm = visa.ResourceManager()
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
-            if address.startswith('GPIB'):
-                inst = rm.open_resource(address)
-                inst.write_termination = ''
-                #inst.clear()
-                self.interfaces[address] = inst
-                print('connected to GPIB device {}'.format(address)) 
+            if address.startswith('ASRL'):
+                try:
+                    inst = rm.open_resource(address)
+                    # inst.write_termination = ''
+                    inst.clear()
+                    self.interfaces[address] = inst
+                    print('connected to ASRL device ' + address)
+                except Exception as e:
+                    print("Could not connect to {}: {}".format(address, e))
         for addr in deletions:
             del self.interfaces[addr]
 
@@ -53,12 +54,12 @@ class GPIBServer(HardwareInterfaceServer):
         """
         write(self, c, data)
         
-        Write a string to the GPIB bus.
+        Write a string to the serial port.
 
         Args:
             c: The LabRAD context
-            data (string): The string to be written to the GPIB bus
-        """   
+            data (str): The string to be written to the serial port
+        """        
         self.call_if_available('write', c, data)
 
     @setting(4, n_bytes='w', returns='s')
@@ -66,7 +67,7 @@ class GPIBServer(HardwareInterfaceServer):
         """
         read(self, c, n_bytes=None)
         
-        Read from the GPIB bus.
+        Read from the serial port.
 
         Args:
             c: The LabRAD context
@@ -74,8 +75,8 @@ class GPIBServer(HardwareInterfaceServer):
             Otherwise, reads until the device stops sending. Defaults to None.
 
         Returns:
-            string: The bytes returned from the device, with leading and trailing whitespace stripped
-        """  
+            str: The bytes returned from the device, with leading and trailing whitespace stripped
+        """        
         response = self.call_if_available('read', c)
         return response.strip()
 
@@ -84,15 +85,18 @@ class GPIBServer(HardwareInterfaceServer):
         """
         query(self, c, data)
         
-        Make a GPIB query, a write followed by a read.
+        Make a serial query, a write followed by a read.
 
         This query is atomic.  No other communication to the
         device will occur while the query is in progress.
 
         Args:
             c: The LabRAD context
-            data (string): The string to be written to the USB bus
-        """ 
+            data (str): The string to be written to the serial port
+
+        Returns:
+            str: The bytes returned from the device, with leading and trailing whitespace stripped
+        """        
 #        self.call_if_available('write', c, data)
 #        ans = self.call_if_available('read_raw', c)
         response = self.call_if_available('query', c, data)
@@ -107,17 +111,39 @@ class GPIBServer(HardwareInterfaceServer):
 
         Args:
             c: The LabRAD context
-            timeout (numeric, optional): The timeout for the interface in seconds. Defaults to None.
+            timeout (numeric, optional): The timeout for the interface in milliseconds. Defaults to None.
 
         Returns:
-            The timeout in milliseconds
+            The timeout in seconds
         """
         interface = self.get_interface(c)
         if timeout is not None:
             interface.timeout = timeout
         return interface.timeout
 
+    @setting(7, write='s', read='s', returns='s')
+    def termination(self, c, write=None, read=None):
+        """
+        termination(self, c, write=None, read=None)
+
+        Sets or gets the read or write terminations.
+
+        Args:
+            c: The LabRAD context
+            write (str, optional): The write termination to set. Defaults to None, in which case the write termination is not set.
+            read (str, optional): The read termination to set. Defaults to None, in which case the write termination is not set.
+
+        Returns:
+            str: A serialized json containing the write and read terminations.
+        """
+        interface = self.get_interface(c)
+        if write is not None:
+            interface.write_termination = write
+        if read is not None:
+            interface.read_termination = read
+        return json.dumps({"read":interface.read_termination, "write":interface.write_termination})
+
 
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(GPIBServer())
+    util.runServer(SerialServer())
