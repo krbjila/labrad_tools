@@ -67,7 +67,7 @@ class elliptecServer(HardwareInterfaceServer):
     name = '%LABRADNODE%_elliptec'
 
     TICKS_PER_MM = 1024
-    N_CHANNELS = 16
+    N_CHANNELS = 1
     STATUS_DICT = {
         '00': 'OK',
         '01': 'Communication time out',
@@ -102,6 +102,7 @@ class elliptecServer(HardwareInterfaceServer):
     @inlineCallbacks
     def refresh_available_interfaces(self):
         interfaces = yield self.ser.get_interface_list()
+        interfaces = ['ASRL3::INSTR']
         self.interfaces = {}
         for i in interfaces:
             self.ser.select_interface(i)
