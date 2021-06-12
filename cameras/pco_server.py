@@ -572,7 +572,6 @@ class PcoServer(HardwareInterfaceServer):
         if len(images) > n_images:
             images = images[-n_images:]
 
-        # TODO: Test this!
         interframing_enabled = self.get_interframing_enabled(c)
         if interframing_enabled:
             new_images = []
@@ -666,7 +665,6 @@ class PcoServer(HardwareInterfaceServer):
         
     @setting(20, path='s', n_images='i', mode='s', roi='*i')
     def record_and_save(self, c, path, n_images=1, mode='sequence non blocking', roi=None, timeout=None):
-        # TODO: Test this!
         """
         record_and_save(self, c, path, n_images=1, mode='sequence non blocking', roi=None, timeout=None)
         

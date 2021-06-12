@@ -8,8 +8,6 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 
-
-# TODO: Need to test!
 class Sin(ConductorParameter):
     priority = 1
 

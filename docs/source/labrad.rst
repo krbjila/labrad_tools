@@ -33,7 +33,7 @@ Currently, the Labrad manager is setup and running on the main control computer 
 
 1. Install pylabrad and anything other python packages you need: ``pip install pylabrad``
 
-2. Install the `Labrad manager <https://github.com/labrad/scalabrad>`__. To do this, download the latest version of the binary distribution `here <https://bintray.com/labrad/generic/scalabrad#files>`__ and extract somewhere (e.g., ``C:\Users\username\Desktop\labrad``).
+2. Install the `Labrad manager <https://github.com/labrad/scalabrad>`__. To do this, download the latest version of the binary distribution `here <https://github.com/labrad/scalabrad/releases>`__ and extract somewhere (e.g., ``C:\Users\username\Desktop\labrad``).
 
 3. Next, we need to configure a few environment variables. To do this, find "Edit system environment variables". Set the following environment variables:
    ::
@@ -72,7 +72,7 @@ Currently, the Labrad manager is setup and running on the main control computer 
 
 1. Install pylabrad and anything other python packages you need: ``pip install pylabrad``
 
-2. Install the `Labrad manager <https://github.com/labrad/scalabrad>`__. To do this, download the latest version of the binary distribution `here <https://bintray.com/labrad/generic/scalabrad#files>`__ and extract somewhere (e.g., ``~/labrad``). The manager needs Java to run, so install Java if needed: ``sudo apt install openjdk-8-jdk``
+2. Install the `Labrad manager <https://github.com/labrad/scalabrad>`__. To do this, download the latest version of the binary distribution `here <https://github.com/labrad/scalabrad/releases>`__ and extract somewhere (e.g., ``~/labrad``). The manager needs Java to run, so install Java if needed: ``sudo apt install openjdk-8-jdk``
 
    Next, we need to setup a service to run the Labrad manager. We could just do this manually by running the Labrad manager. For example, if we had extracted the scalabrad distro to ``~/labrad``, we would just need to run ``~/labrad/bin/labrad`` to start the manager (and pass in some arguments). However, it's more convenient to just set up a systemd service here so it runs automatically.
 
