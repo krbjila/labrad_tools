@@ -1,9 +1,12 @@
 import numpy as np
 import json
 import math
+import sys
 
+from labrad.wrappers import connectAsync
 from twisted.internet.defer import inlineCallbacks, returnValue
 
+sys.path.append('../..')
 from server_tools.device_server import DeviceWrapper
 from lib.ad5791_ramps import RampMaker
 
@@ -84,6 +87,7 @@ class AD5791Board(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
+        self.name = "Boardy McBoardface"
         self.bitfile = 'ad5791.bit'
         self.mode_ints = {'idle': 0, 'reset': 1, 'init': 2, 'load': 3, 'run': 4}
         self.mode_wire = 0x00
@@ -122,6 +126,7 @@ class AD5791Board(DeviceWrapper):
         yield self.set_mode('idle')
         yield self.set_mode('init')
         yield self.set_mode('idle')
+        self.cxn = yield connectAsync()
 
     @inlineCallbacks
     def set_mode(self, mode):
@@ -164,11 +169,28 @@ class AD5791Board(DeviceWrapper):
         """
 
         byte_array = {}
+        print(self.channels[0].key)
+        n_ramps = len(sequence[self.channels[0].key])
+        print("There are {} ramps".format(n_ramps))
+
+        linear_ramps = {}
+        for c in self.channels:
+            linear_ramps[c.loc] = []
+        for i in range(n_ramps):
+            if sequence[self.channels[0].key][i]["type"] != "smooth":
+                for c in self.channels:
+                    column = [sequence[c.key][i]]
+                    ramps = RampMaker(column).get_programmable()
+                    linear_ramps[c.loc] += ramps
+            else:
+                # TODO: Implement handling of smooth ramps, using self.cxn to connect to the electrode server.
+                print("SMOOTH!")
+
         for c in self.channels:
             byte_array[c.loc] = []
 
             # Generate the list of ramps from the sequence
-            ramps = RampMaker(sequence[c.key]).get_programmable()
+            ramps = linear_ramps[c.loc]
 
             # Consolidate ramps:
             # The amount of RAM is limited on the FPGA
@@ -253,3 +275,19 @@ class AD5791Board(DeviceWrapper):
             byte_array[c.loc] += [0]*6
 
         return byte_array
+
+if __name__ == "__main__":
+    config_file = "/Users/cal/labrad_tools/sequencer/config.json"
+    with open(config_file, "r") as f:
+        config = json.load(f)
+
+    filename = "/Users/cal/Downloads/sequence_06-06-21_15-08-16.json"
+    # filename = "/Users/cal/Downloads/sequence_06-06-21_15-08-29.json"
+    with open(filename, "r") as f:
+        sequence = json.load(f)
+
+    board_config = config["devices"]["S"]
+    board_config["name"] = "S"
+    board = AD5791Board(board_config)
+    sequence_bytes = board.make_sequence_bytes(sequence)
+    # print(sequence_bytes)
