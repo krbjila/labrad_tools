@@ -50,7 +50,7 @@ class ElectrodeServer(LabradServer):
     presets_changed = Signal(101010, 'signal: presets changed', 'b')
     
     verbose = False
-	server_address = "http://0.0.0.0:8000/"
+    server_address = "http://0.0.0.0:8000/"
 
     def __init__(self, config_path='./config.json'):
         super(ElectrodeServer, self).__init__()
@@ -211,8 +211,8 @@ class ElectrodeServer(LabradServer):
             with open(self.relative_presets_path, 'w') as f:
                 f.write(json.dumps(presets, sort_keys=True, indent=4))
     
-           for x in presets:
-            self.lookup[x['id']] = x
+            for x in presets:
+                self.lookup[x['id']] = x
         self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
 
     @setting(4, returns='s')
@@ -228,17 +228,19 @@ class ElectrodeServer(LabradServer):
             self.verbose = False
             return "Verbose setting off."
 
-	#TODO: Finish implementing this
-	@setting(7, voltages='s', returns='s')
-	def get_params(self, c, voltages)
-		req = requests.post(server_address+"/params", voltages)
-		return req.text
+    #TODO: Finish implementing this
+    @setting(7, voltages='s', returns='s')
+    def get_params(self, c, voltages):
+        data = json.loads(voltages)
+        req = requests.post(self.server_address+"params", json=data)
+        return req.text
 
-	#TODO: Finish implementing this
-	@setting(8, message='s', returns='s')
-	def get_ramps(self, c, start, end)
-		req = requests.post(server_address+"/opt", messge)
-		return req.text
+    #TODO: Finish implementing this
+    @setting(8, params='s', returns='s')
+    def get_ramps(self, c, params):
+        data = json.loads(params)
+        req = requests.post(self.server_address+"opt", json=data)
+        return req.text
 
     
 if __name__ == "__main__":

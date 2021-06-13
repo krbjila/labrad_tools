@@ -3,7 +3,7 @@ import json
 import math
 import sys
 
-from labrad.wrappers import connectAsync
+import labrad
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 sys.path.append('../..')
@@ -116,6 +116,8 @@ class AD5791Board(DeviceWrapper):
         for c in self.channels:
             c.board = self
 
+        self.connect()
+
         super(AD5791Board, self).__init__({})
 
     @inlineCallbacks
@@ -126,7 +128,15 @@ class AD5791Board(DeviceWrapper):
         yield self.set_mode('idle')
         yield self.set_mode('init')
         yield self.set_mode('idle')
-        self.cxn = yield connectAsync()
+
+    def connect(self):
+        self.cxn = labrad.connect()
+        try:
+            servers = self.cxn.servers
+            electrode = [s for s in servers if "electrode" in s][0]
+            self.server = self.cxn[electrode]
+        except Exception as e:
+            print("Could not connect to electrode server. Smooth ramps will be replaced by linear ramps: {}".format(e))
 
     @inlineCallbacks
     def set_mode(self, mode):
@@ -162,35 +172,111 @@ class AD5791Board(DeviceWrapper):
     def issue_master_reset(self):
         yield self.connection.activate_trigger_in(self.reset_trigger, 0)
 
+    @staticmethod
+    def get_short_name(name):
+        """
+        get_short_name(name)
+
+        Gets the short name of an electrode, to be used in queries to the electrode server
+
+        Args:
+            name (str): The electrode channel's name
+
+        Returns:
+            str: The short name of the electrode
+        """
+        if "Upper West" in name:
+            return "UW"
+        elif "Upper East" in name:
+            return "UE"
+        elif "Lower East" in name:
+            return "LE"
+        elif "Lower West" in name:
+            return "LW"
+        elif "Upper Plate" in name:
+            return "UP"
+        elif "Lower Plate" in name:
+            return "LP"
+        else:
+            raise(ValueError("Electrode name {} not recognized".format(name)))
+
 
     def make_sequence_bytes(self, sequence):
         """ 
         take readable {channel: [{}]} to programmable [end_voltage[20], duration[28]]
         """
 
-        byte_array = {}
-        print(self.channels[0].key)
-        n_ramps = len(sequence[self.channels[0].key])
-        print("There are {} ramps".format(n_ramps))
-
-        linear_ramps = {}
+        # Create a dictionary (indexed by channel) of lists (indexed by column) to record the ramps once the smooth ramps are expanded
+        expanded_ramps = {}
         for c in self.channels:
-            linear_ramps[c.loc] = []
-        for i in range(n_ramps):
-            if sequence[self.channels[0].key][i]["type"] != "smooth":
-                for c in self.channels:
-                    column = [sequence[c.key][i]]
-                    ramps = RampMaker(column).get_programmable()
-                    linear_ramps[c.loc] += ramps
-            else:
-                # TODO: Implement handling of smooth ramps, using self.cxn to connect to the electrode server.
-                print("SMOOTH!")
+            expanded_ramps[c.key] = []
 
+        # Query the electrode server to find parameters for smooth ramps
+        electrodes = ["LP", "UP", "LW", "UW", "LE", "UE"]
+        vi = {}
+        for e in electrodes:
+            vi[e] = 0.0
+
+        n_ramps = len(sequence[self.channels[0].key])
+        for i in range(n_ramps):
+            if sequence[self.channels[0].key][i]["type"] == "smooth":
+                try:
+                    # Determine final voltages for each channel
+                    vf = {}
+                    for c in self.channels:
+                        vf[AD5791Board.get_short_name(c.key)] = sequence[c.key][i]["vf"]
+                    params_query = json.dumps({"vi": [vi], "vf": [vf]})
+                    # Query parameters (bias, angle, dEdy, dEdx, ...) of initial and final fields
+                    params = json.loads(self.server.get_params(params_query))
+                    # Determine step size and dt per ramp
+                    if "n" in sequence[self.channels[0].key][i]:
+                        n_steps = sequence[self.channels[0].key][i]["n"]
+                    else:
+                        n_steps = 10
+                    dt = sequence[self.channels[0].key][i]["dt"] / n_steps
+                    # Determine series of intermediate voltages for the smooth ramp
+                    v_query = {"ramp": []}
+                    for s in range(n_steps):
+                        step_params = {}
+                        for k in params["vi"][0].keys():
+                            p_i = params["vi"][0][k]
+                            p_f = params["vf"][0][k]
+                            step_params[k] = p_i + (p_f - p_i) * (float(s) / n_steps)
+                        # If on the first step, define the initial guess
+                        if s == 0:
+                            step_params.update(vi)
+                        v_query["ramp"].append(step_params)
+                    # Query electrode voltages for ramps
+                    ramps = json.loads(self.server.get_ramps(json.dumps(v_query)))
+                    # Add linear ramps to sequence
+                    for c in self.channels:
+                        for r in ramps["ramp"][1:]:
+                            vf_ramp = r[AD5791Board.get_short_name(c.key)]
+                            c_ramp = {"type": "lin", "dt": dt, "vf":vf_ramp}
+                            expanded_ramps[c.key].append(c_ramp)
+                        # Add a final ramp to the last voltage
+                        vf_ramp = vf[AD5791Board.get_short_name(c.key)]
+                        c_ramp = {"type": "lin", "dt": dt, "vf":vf_ramp}
+                        expanded_ramps[c.key].append(c_ramp)
+                except Exception as e:
+                    print("Could not add smooth ramp, using linear ramp: {}".format(e))
+                    ramp = sequence[c.key][i]
+                    ramp["type"] = "lin"
+                    expanded_ramps[c.key].append(ramp)
+            else:
+                # If not a smooth ramp, add to the sequence
+                for c in self.channels:
+                    expanded_ramps[c.key].append(sequence[c.key][i])
+            # Update initial voltages for next ramp
+            for c in self.channels:
+                vi[AD5791Board.get_short_name(c.key)] = sequence[c.key][i]["vf"]
+                
+        byte_array = {}
         for c in self.channels:
             byte_array[c.loc] = []
 
             # Generate the list of ramps from the sequence
-            ramps = linear_ramps[c.loc]
+            ramps = RampMaker(expanded_ramps[c.key]).get_programmable()
 
             # Consolidate ramps:
             # The amount of RAM is limited on the FPGA
@@ -290,4 +376,4 @@ if __name__ == "__main__":
     board_config["name"] = "S"
     board = AD5791Board(board_config)
     sequence_bytes = board.make_sequence_bytes(sequence)
-    # print(sequence_bytes)
+    print(sequence_bytes)
