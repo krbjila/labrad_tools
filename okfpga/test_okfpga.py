@@ -24,7 +24,7 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
-sys.path.append('../../')
+sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 SEP = os.path.sep
@@ -82,6 +82,9 @@ class TestOkfpga(HardwareInterfaceServer):
         # self.call_if_available('UpdateWireIns', c)
         pass
 
-if __name__ == "__main__":
+def main(): 
     from labrad import util
     util.runServer(TestOkfpga())
+
+if __name__ == "__main__":
+    main()
