@@ -82,9 +82,6 @@ class TestOkfpga(HardwareInterfaceServer):
         # self.call_if_available('UpdateWireIns', c)
         pass
 
-def main(): 
+if __name__ == "__main__":
     from labrad import util
     util.runServer(TestOkfpga())
-
-if __name__ == "__main__":
-    main()

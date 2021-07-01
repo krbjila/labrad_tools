@@ -1,12 +1,9 @@
 import sys
 sys.path.append('../')
-from generic_device.generic_parameter import GenericParameter
+from conductor_device.conductor_parameter import ConductorParameter
 
 from twisted.internet.defer import inlineCallbacks, Deferred
-from twisted.internet.reactor import callLater
 from labrad.wrappers import connectAsync
-
-from conductor_device.conductor_parameter import ConductorParameter
 
 class Duration(ConductorParameter):
     priority = 1
