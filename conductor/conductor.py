@@ -256,11 +256,15 @@ class ConductorServer(LabradServer):
             }
         }
         """
+        fire_signal = False
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
                 yield self.set_parameter_value(device_name, parameter_name, 
                                                parameter_value, 
                                                generic_parameter, value_type)
+                fire_signal = True
+        if fire_signal: # Don't fire if no parameters were actually set
+            yield self.parameters_updated(True)
         returnValue(True)
 
     @inlineCallbacks
