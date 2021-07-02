@@ -6,12 +6,6 @@ import matplotlib
 from twisted.internet.defer import inlineCallbacks
 matplotlib.use('Qt4Agg')
 
-import helpers
-
-import sys
-sys.path.append('../../../client_tools')
-from connection import connection
-
 class DigitalVariableSelector(QtGui.QInputDialog):
     def __init__(self, variables):
         super(DigitalVariableSelector, self).__init__()
@@ -44,8 +38,11 @@ class SequencerButton(QtGui.QLabel):
         super(SequencerButton, self).__init__(None)
         self.setFrameShape(2)
         self.setLineWidth(1)
+
         self.on_color = '#ff69b4'
         self.off_color = '#ffffff'
+        self.variable_on_color = '#ff69b4'
+
         self.name = ''
         self.variable = None
         
@@ -120,15 +117,26 @@ class DigitalColumn(QtGui.QWidget):
                 self.layout.addWidget(Spacer(self.config))
             self.layout.addWidget(self.buttons[nl])
             self.buttons[nl].on_color = self.config.digital_colors[i%len(self.config.digital_colors)]
+            self.buttons[nl].variable_on_color = self.config.variable_colors[i%len(self.config.variable_colors)]
         self.layout.addWidget(QtGui.QWidget())
         self.setLayout(self.layout)
 
     def getLogic(self):
-        return {nl: int(self.buttons[nl].is_checked) for nl in self.channels}
+        return {
+            nl: b.getVariable() if b.getVariable() is not None else int(b.is_checked)
+            for (nl, b) in [(nl, self.buttons[nl]) for nl in self.channels]
+        }
 
     def setLogic(self, sequence):
         for nameloc in self.channels:
-            self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
+            val = sequence[nameloc][self.position]['out']
+
+            if type(val) == int:
+                self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
+            elif type(val) == str:
+                self.buttons[nameloc].setVariable(val)
+            else:
+                raise(Exception("Only ints and strings (variables) are allowed in as digital out values"))
 
     # added KM 1/23/19
     def handle_click(self, mouse_button, nl):
