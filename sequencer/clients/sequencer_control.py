@@ -293,7 +293,7 @@ class SequencerControl(QtGui.QWidget):
         for l in self.electrodeControl.nameColumn.labels.values():
             l.clicked.connect(self.onElectrodeNameClick(l.nameloc))
 
-        self.digitalControl.array.variable_changed.connect(self.onDigitalVariableChange())
+        self.digitalControl.array.variable_changed.connect(self.onDigitalVariableChange)
 
         # KM added below 05/07/18
         # for tracking changes
@@ -334,7 +334,7 @@ class SequencerControl(QtGui.QWidget):
 #        self.analogControl.array.mouseover_col = -1
 #        self.electrodeControl.array.mouseover_col = -1
 
-    def onDigitalVariableChange(self):
+    def onDigitalVariableChange(self, nameloc, column):
         @inlineCallbacks
         def odvc():
             pvs = yield self.getParameters()
@@ -348,10 +348,9 @@ class SequencerControl(QtGui.QWidget):
                 0,
                 True,
             )
-            # TODO: Use this value
             if success:
-                print(str(v))
-        return odvc
+                self.digitalControl.array.set_button_variable(str(nameloc), int(column), str(v))
+        return odvc()
 
     def onDigitalNameClick(self, channel_name):
         channel_name = str(channel_name)

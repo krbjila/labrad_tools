@@ -36,7 +36,7 @@ class SequencerButton(QtGui.QLabel):
     # added KM 05/07/18
     changed_signal = QtCore.pyqtSignal()
     # added KM 1/23/19
-    # payload is (button_clicked, button_name)
+    # payload is (mouse_button_clicked, sequencer_button_nameloc)
     # button_clicked: 1 = Left, 2 = Right
     clicked_signal = QtCore.pyqtSignal(int,str)
 
@@ -70,25 +70,31 @@ class SequencerButton(QtGui.QLabel):
     # modified KM 1/23/19
     def mousePressEvent(self, event):
         # 1 is Left, 2 is Right click
-        button = event.button()
-        self.changeState()
-        self.clicked_signal.emit(button, self.name)
+        mouse_button = event.button()
+        
+        if mouse_button == 1:
+            if self.variable is not None:
+                event.accept()
+                return 
+            self.changeState()
+        self.clicked_signal.emit(mouse_button, self.name)
         event.accept()
 
     # TODO: Call this when the variable is set via the dialog
-    def setVariable(self, variable):
+    def setVariable(self, variable=None):
         self.variable = variable
-        self.setText(self.variable)
+        if variable is not None:
+            self.setText(self.variable)
+        else:
+            self.setText("")
 
-    # TODO: Call this when the variable should be cleared
-    def clearVariable(self):
-        self.variable = None
-        self.setText("")
+    def getVariable(self):
+        return self.variable
 
 class DigitalColumn(QtGui.QWidget):
 
     # added KM 1/23/19
-    # payload: (button_clicked, button_name, column_index)
+    # payload: (mouse_button_clicked, sequence_button_nameloc, column_index)
     clicked_signal = pyqtSignal(int,str,int)
 
     def __init__(self, channels, config, position):
@@ -125,17 +131,18 @@ class DigitalColumn(QtGui.QWidget):
             self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
 
     # added KM 1/23/19
-    def handle_click(self, button, nl):
-        self.clicked_signal.emit(button, nl, self.position)
+    def handle_click(self, mouse_button, nl):
+        self.clicked_signal.emit(mouse_button, nl, self.position)
 
 class DigitalArray(QtGui.QWidget):
 
     # added KM 1/23/19
     shift_toggled = False
     toggle_sign = False
-    last_clicked = {'nl': '', 'position': 0}
+    last_clicked = {'nl': '', 'column': 0, 'mouse_button': 1}
 
-    variable_changed = pyqtSignal()
+    # Payload is nameloc, column
+    variable_changed = pyqtSignal(str, int)
 
     def __init__(self, channels, config):
         super(DigitalArray, self).__init__(None)
@@ -191,55 +198,87 @@ class DigitalArray(QtGui.QWidget):
         else:
             super(DigitalArray, self).keyPressEvent(event)
 
+    def get_button_ranges(self, first, first_nl, last, last_nl):
+        first_index = self.channel_to_index[first_nl]
+        last_index = self.channel_to_index[last_nl]
+        
+        # generate array of indices so we can grab every sequencer button
+        # between the two that were clicked
+        channel_index = range(min(first_index, last_index), max(first_index, last_index) + 1)
+        col_index = range(min(first, last), max(first, last) + 1)
+
+        return (col_index, channel_index)
+
+    def buttons_from_ranges(self, col_index, channel_index):
+        return [self.columns[i].buttons[self.index_to_channel[j]] for (i,j) in [(i,j) for i in col_index for j in channel_index]]
+
+    def poll_and_change_state(self, buttons):
+        # take a poll to determine what sign to set the buttons to
+        poll = 0
+        for b in buttons:
+            if b.getVariable() is None:
+                if b.is_checked:
+                    poll += 1
+                else: 
+                    poll -= 1
+        state = False if poll > 0 else True
+        
+        for b in buttons:
+            if b.getVariable() is None:
+                b.setChecked(state)
+        
     # added KM 1/23/19
     # receives signals for clicks on the sequencer buttons
     # changes state of entire intermediate region when shift is depressed
-    def handle_click(self, button, nl, position):
+    def handle_click(self, mouse_button, nl, column):
         nl = str(nl) # name loc of currently clicked channel
         last_nl = self.last_clicked['nl']
-        last_position = self.last_clicked['position']
-
-        if button == 2:
-            self.variable_changed.emit()
+        last_column = self.last_clicked['column']
+        last_mouse_button = self.last_clicked['mouse_button']
 
         # look for shift toggled
-        if self.shift_toggled:
-            # get indices
-            last_index = self.channel_to_index[last_nl]
-            current_index = self.channel_to_index[nl]
-            
-            # generate array of indices so we can grab every sequencer button
-            # between the two that were clicked
-            channel_index = range(min(last_index,current_index), max(last_index,current_index)+1)
-            col_index = range(min(last_position, position), max(last_position, position) + 1)
+        if self.shift_toggled and last_mouse_button == mouse_button:
+            clicked_buttons = (
+                self.columns[last_column].buttons[last_nl], # Previously clicked button
+                self.columns[column].buttons[nl] # Most recently clicked
+            )
 
-            # flip the state of the two buttons that were most recently clicked
-            # this is required to get a fair polling in the limit of few buttons being selected
-            last_bool = self.columns[last_position].buttons[last_nl].is_checked
-            curr_bool = self.columns[position].buttons[last_nl].is_checked
-            self.columns[last_position].buttons[last_nl].setChecked(not last_bool)
-            self.columns[position].buttons[last_nl].setChecked(not curr_bool)
+            # Get all buttons contained in the rectangle with edges defined by clicked_buttons
+            buttons = self.buttons_from_ranges(
+                *self.get_button_ranges(last_column, last_nl, column, nl)
+            )
 
-            # take a poll to determine what sign to set the buttons to
-            poll = 0
-            for i in col_index:
-                for j in channel_index:
-                    # Checked counts as +1, unchecked as -1
-                    if self.columns[i].buttons[self.index_to_channel[j]].is_checked:
-                        poll += 1
-                    else:
-                        poll += -1
+            if mouse_button == 1: # Left click
+                # flip one of the two buttons state for fairness in the poll
+                clicked_buttons[0].setChecked(not clicked_buttons[0].is_checked)
+                self.poll_and_change_state(buttons)
 
-            # Set the state of all the buttons to the minority state
-            if poll > 0:
-                state = False
-            else:
-                state = True
-            for i in col_index:
-                for j in channel_index:
-                    self.columns[i].buttons[self.index_to_channel[j]].setChecked(state)
+            elif mouse_button == 2: # Right click
+                prev_variable = clicked_buttons[0].getVariable()
+
+                # Two interaction patterns:
+                # If the previously clicked button has a variable,
+                # then by shift-clicking we are trying to set the variable in every intermediate button.
+                # Otherwise, we are trying to clear the variable in every intermediate button.
+                # Both are handled by the following loop
+                for b in buttons:
+                    b.setChecked(False)
+                    b.setVariable(prev_variable)
+        else:
+            if mouse_button == 2:
+                clicked_button = self.columns[column].buttons[nl]
+
+                if clicked_button.getVariable() is None:
+                    clicked_button.setChecked(False)
+                    self.variable_changed.emit(nl, column)
+                else:
+                    clicked_button.setVariable(None)
+
         # Update what the last clicked button is
-        self.last_clicked = {'nl': nl, 'position': position}
+        self.last_clicked = {'nl': nl, 'column': column, 'mouse_button': mouse_button}
+
+    def set_button_variable(self, nl, column, variable):
+        self.columns[column].buttons[nl].setVariable(variable)
 
 class NameBox(QtGui.QLabel):
     clicked = QtCore.pyqtSignal()
