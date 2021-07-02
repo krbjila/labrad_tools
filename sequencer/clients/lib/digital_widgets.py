@@ -58,8 +58,6 @@ class SequencerButton(QtGui.QLabel):
             self.setFrameShadow(0x0020)
             self.setStyleSheet('QWidget {background-color: %s}' % self.off_color)
             self.is_checked = False
-        if self.variable:
-            self.setText(self.variable)
         # added KM 05/07/18
         self.changed_signal.emit()
 
@@ -76,6 +74,16 @@ class SequencerButton(QtGui.QLabel):
         self.changeState()
         self.clicked_signal.emit(button, self.name)
         event.accept()
+
+    # TODO: Call this when the variable is set via the dialog
+    def setVariable(self, variable):
+        self.variable = variable
+        self.setText(self.variable)
+
+    # TODO: Call this when the variable should be cleared
+    def clearVariable(self):
+        self.variable = None
+        self.setText("")
 
 class DigitalColumn(QtGui.QWidget):
 

@@ -348,6 +348,7 @@ class SequencerControl(QtGui.QWidget):
                 0,
                 True,
             )
+            # TODO: Use this value
             if success:
                 print(str(v))
         return odvc
