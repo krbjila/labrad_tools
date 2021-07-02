@@ -293,7 +293,7 @@ class SequencerControl(QtGui.QWidget):
         for l in self.electrodeControl.nameColumn.labels.values():
             l.clicked.connect(self.onElectrodeNameClick(l.nameloc))
 
-        self.digitalControl.array.variable_changed.connect(self.onDigitalVariableChange)
+        self.digitalControl.array.trigger_variable_dialog.connect(self.onDigitalVariableChange)
 
         # KM added below 05/07/18
         # for tracking changes
@@ -350,6 +350,7 @@ class SequencerControl(QtGui.QWidget):
             )
             if success:
                 self.digitalControl.array.set_button_variable(str(nameloc), int(column), str(v))
+            self.displaySequence(self.getSequence())
         return odvc()
 
     def onDigitalNameClick(self, channel_name):

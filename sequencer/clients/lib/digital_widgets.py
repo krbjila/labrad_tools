@@ -33,7 +33,7 @@ class SequencerButton(QtGui.QLabel):
     # payload is (mouse_button_clicked, sequencer_button_nameloc)
     # button_clicked: 1 = Left, 2 = Right
     clicked_signal = QtCore.pyqtSignal(int,str)
-
+    
     def __init__(self):
         super(SequencerButton, self).__init__(None)
         self.setFrameShape(2)
@@ -49,14 +49,16 @@ class SequencerButton(QtGui.QLabel):
     def setChecked(self, state):
         if state:
             self.setFrameShadow(0x0030)
-            self.setStyleSheet('QWidget {background-color: %s}' % self.on_color)
+            color = self.variable_on_color if self.variable else self.on_color
+            self.setStyleSheet('QWidget {background-color: %s}' % color)
             self.is_checked = True
         else:
             self.setFrameShadow(0x0020)
             self.setStyleSheet('QWidget {background-color: %s}' % self.off_color)
             self.is_checked = False
         # added KM 05/07/18
-        self.changed_signal.emit()
+        if self.variable is None:
+            self.changed_signal.emit()
 
     def changeState(self):
         if self.is_checked:
@@ -80,6 +82,8 @@ class SequencerButton(QtGui.QLabel):
     # TODO: Call this when the variable is set via the dialog
     def setVariable(self, variable=None):
         self.variable = variable
+        self.setChecked(False)
+
         if variable is not None:
             self.setText(self.variable)
         else:
@@ -88,8 +92,14 @@ class SequencerButton(QtGui.QLabel):
     def getVariable(self):
         return self.variable
 
-class DigitalColumn(QtGui.QWidget):
+    def updateParameters(self, parameter_values):
+        if self.variable:
+            try:
+                self.setChecked(parameter_values[self.variable] > 0)
+            except KeyError:
+                raise(Exception("{} wasn't found in Conductor parameters; TODO: add QMessageBox warning".format(self.variable)))
 
+class DigitalColumn(QtGui.QWidget):
     # added KM 1/23/19
     # payload: (mouse_button_clicked, sequence_button_nameloc, column_index)
     clicked_signal = pyqtSignal(int,str,int)
@@ -142,6 +152,10 @@ class DigitalColumn(QtGui.QWidget):
     def handle_click(self, mouse_button, nl):
         self.clicked_signal.emit(mouse_button, nl, self.position)
 
+    def updateParameters(self, parameter_values):
+        for b in self.buttons.values():
+            b.updateParameters(parameter_values)
+
 class DigitalArray(QtGui.QWidget):
 
     # added KM 1/23/19
@@ -150,12 +164,13 @@ class DigitalArray(QtGui.QWidget):
     last_clicked = {'nl': '', 'column': 0, 'mouse_button': 1}
 
     # Payload is nameloc, column
-    variable_changed = pyqtSignal(str, int)
+    trigger_variable_dialog = pyqtSignal(str, int)
 
     def __init__(self, channels, config):
         super(DigitalArray, self).__init__(None)
         self.channels = channels
         self.config = config
+        self.parameter_values = {}
         self.populate()
 
         # added KM 1/23/19
@@ -272,13 +287,14 @@ class DigitalArray(QtGui.QWidget):
                 for b in buttons:
                     b.setChecked(False)
                     b.setVariable(prev_variable)
+                    b.updateParameters(self.parameter_values)
         else:
             if mouse_button == 2:
                 clicked_button = self.columns[column].buttons[nl]
 
                 if clicked_button.getVariable() is None:
                     clicked_button.setChecked(False)
-                    self.variable_changed.emit(nl, column)
+                    self.trigger_variable_dialog.emit(nl, column)
                 else:
                     clicked_button.setVariable(None)
 
@@ -287,6 +303,11 @@ class DigitalArray(QtGui.QWidget):
 
     def set_button_variable(self, nl, column, variable):
         self.columns[column].buttons[nl].setVariable(variable)
+
+    def updateParameters(self, parameter_values):
+        self.parameter_values = parameter_values
+        for c in self.columns:
+            c.updateParameters(parameter_values)
 
 class NameBox(QtGui.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -377,7 +398,7 @@ class DigitalControl(QtGui.QWidget):
         self.array.displaySequence(sequence)
 
     def updateParameters(self, parameter_values):
-        pass
+        self.array.updateParameters(parameter_values)
     
     def connectWidgets(self):
         self.vscrolls = [self.nameColumn.scrollArea.verticalScrollBar(),
