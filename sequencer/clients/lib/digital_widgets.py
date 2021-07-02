@@ -1,9 +1,29 @@
 from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
+from PyQt4.QtCore import pyqtSignal
 import numpy as np
 import json
 import matplotlib
+from twisted.internet.defer import inlineCallbacks
 matplotlib.use('Qt4Agg')
+
+import helpers
+
+import sys
+sys.path.append('../../../client_tools')
+from connection import connection
+
+class DigitalVariableSelector(QtGui.QInputDialog):
+    def __init__(self, variables):
+        super(DigitalVariableSelector, self).__init__()
+        self.setWindowTitle('TTL variable selection')
+        self.setLabelText('Variable: ')
+        
+        self.variables = variables
+        self.populate()
+
+    def populate(self):
+        self.setComboBoxItems(self.variables)
+        self.setComboBoxEditable(True)
 
 class Spacer(QtGui.QFrame):
     def __init__(self, config):
@@ -12,11 +32,13 @@ class Spacer(QtGui.QFrame):
         self.setFrameShape(1)
         self.setLineWidth(0)
 
-class SequencerButton(QtGui.QFrame):
+class SequencerButton(QtGui.QLabel):
     # added KM 05/07/18
     changed_signal = QtCore.pyqtSignal()
     # added KM 1/23/19
-    clicked_signal = QtCore.pyqtSignal(str)
+    # payload is (button_clicked, button_name)
+    # button_clicked: 1 = Left, 2 = Right
+    clicked_signal = QtCore.pyqtSignal(int,str)
 
     def __init__(self):
         super(SequencerButton, self).__init__(None)
@@ -25,7 +47,8 @@ class SequencerButton(QtGui.QFrame):
         self.on_color = '#ff69b4'
         self.off_color = '#ffffff'
         self.name = ''
-
+        self.variable = None
+        
     def setChecked(self, state):
         if state:
             self.setFrameShadow(0x0030)
@@ -35,6 +58,8 @@ class SequencerButton(QtGui.QFrame):
             self.setFrameShadow(0x0020)
             self.setStyleSheet('QWidget {background-color: %s}' % self.off_color)
             self.is_checked = False
+        if self.variable:
+            self.setText(self.variable)
         # added KM 05/07/18
         self.changed_signal.emit()
 
@@ -46,15 +71,17 @@ class SequencerButton(QtGui.QFrame):
 
     # modified KM 1/23/19
     def mousePressEvent(self, event):
+        # 1 is Left, 2 is Right click
+        button = event.button()
         self.changeState()
-        self.clicked_signal.emit(self.name)
+        self.clicked_signal.emit(button, self.name)
         event.accept()
-
 
 class DigitalColumn(QtGui.QWidget):
 
     # added KM 1/23/19
-    clicked_signal = pyqtSignal(str,int)
+    # payload: (button_clicked, button_name, column_index)
+    clicked_signal = pyqtSignal(int,str,int)
 
     def __init__(self, channels, config, position):
         super(DigitalColumn, self).__init__(None)
@@ -90,8 +117,8 @@ class DigitalColumn(QtGui.QWidget):
             self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
 
     # added KM 1/23/19
-    def handle_click(self, nl):
-        self.clicked_signal.emit(nl, self.position)
+    def handle_click(self, button, nl):
+        self.clicked_signal.emit(button, nl, self.position)
 
 class DigitalArray(QtGui.QWidget):
 
@@ -99,6 +126,8 @@ class DigitalArray(QtGui.QWidget):
     shift_toggled = False
     toggle_sign = False
     last_clicked = {'nl': '', 'position': 0}
+
+    variable_changed = pyqtSignal()
 
     def __init__(self, channels, config):
         super(DigitalArray, self).__init__(None)
@@ -157,10 +186,13 @@ class DigitalArray(QtGui.QWidget):
     # added KM 1/23/19
     # receives signals for clicks on the sequencer buttons
     # changes state of entire intermediate region when shift is depressed
-    def handle_click(self, nl, position):
+    def handle_click(self, button, nl, position):
         nl = str(nl) # name loc of currently clicked channel
         last_nl = self.last_clicked['nl']
         last_position = self.last_clicked['position']
+
+        if button == 2:
+            self.variable_changed.emit()
 
         # look for shift toggled
         if self.shift_toggled:
@@ -298,7 +330,7 @@ class DigitalControl(QtGui.QWidget):
                 self.vscroll.verticalScrollBar()]
         for vs in self.vscrolls:
             vs.valueChanged.connect(self.adjust_for_vscroll(vs))
-
+    
     def adjust_for_vscroll(self, scrolled):
         def afv():
             val = scrolled.value()
