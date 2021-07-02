@@ -141,9 +141,9 @@ class DigitalColumn(QtGui.QWidget):
         for nameloc in self.channels:
             val = sequence[nameloc][self.position]['out']
 
-            if type(val) == int:
-                self.buttons[nameloc].setChecked(sequence[nameloc][self.position]['out'])
-            elif type(val) == str:
+            if type(val) is int:
+                self.buttons[nameloc].setChecked(val)
+            elif type(val) is str or type(val) is unicode:
                 self.buttons[nameloc].setVariable(val)
             else:
                 raise(Exception("Only ints and strings (variables) are allowed in as digital out values"))
