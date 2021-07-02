@@ -159,7 +159,7 @@ class SequencerServer(DeviceServer):
                                         for s in sequence[TRIGGER_CHANNEL]]
                     fixed_sequence.update({c.key: default_sequence})
         return fixed_sequence
-    
+
     @setting(2)
     def send_update(self, c):
         yield self.update(True)

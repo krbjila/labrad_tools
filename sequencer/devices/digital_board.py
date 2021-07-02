@@ -14,7 +14,9 @@ def time_to_ticks(clk, time):
 def get_out(channel_sequence, t):
     for s in channel_sequence[::-1]:
         if s['t'] <= t:
-            return s['out']
+            # 7/2/2021: changed below to support possibly negative values
+            # for sequence outputs. We consider anything positive to be 'on'
+            return 1 if s['out'] > 0 else 0
 
 class DigitalChannel(object):
     def __init__(self, config):
@@ -52,8 +54,8 @@ class DigitalBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-     	# # removed KM 08/10/2017
-	# self.bitfile = 'digital_sequencer.bit'
+         # # removed KM 08/10/2017
+    # self.bitfile = 'digital_sequencer.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -70,11 +72,11 @@ class DigitalBoard(DeviceWrapper):
         for key, value in config.items():
             setattr(self, key, value)
 
-	# added KM 08/10/2017	
-	if self.address == 'KRbDigi01':	
-#		self.bitfile = 'digital_sequencer.bit'
+        # added KM 08/10/2017    
+        if self.address == 'KRbDigi01':    
+    #        self.bitfile = 'digital_sequencer.bit'
             self.bitfile = 'digital_lower_drive_no_zero.bit'
-	else:
+        else:
 #            self.bitfile = 'digital_lower_drive_no_zero.bit'
             self.bitfile = 'digital_triggered_lower_drive.bit'
 
@@ -82,10 +84,10 @@ class DigitalBoard(DeviceWrapper):
             c['board_name'] = self.name
             wrapper = DigitalChannel(c)
             row, column = wrapper.rowcol
-	    if row < 'E':
+        if row < 'E':
                 channel_wrappers[(ord(row)%32-1)*16 + column] = wrapper
-	    else:
-		#If the row does not start at 'A', indexing is wrong. Change so index starts at 'A' (thus the -4)
+        else:
+        #If the row does not start at 'A', indexing is wrong. Change so index starts at 'A' (thus the -4)
                 channel_wrappers[((ord(row)-4)%32-1)*16 + column] = wrapper
         self.channels = channel_wrappers
 
@@ -121,17 +123,17 @@ class DigitalBoard(DeviceWrapper):
 
     def make_sequence_bytes(self, sequence):
         # make sure trigger happens on first run
-	if self.address == 'KRbDigi01':        
-		for c in self.channels:
-		    s = {'dt': T_TRIG, 'out': sequence[c.key][0]['out']}
-		    sequence[c.key].insert(0, s)
+        if self.address == 'KRbDigi01':        
+            for c in self.channels:
+                s = {'dt': T_TRIG, 'out': sequence[c.key][0]['out']}
+                sequence[c.key].insert(0, s)
 
-		# trigger other boards
-		for s in sequence[TRIGGER_CHANNEL]:
-		    s['out'] = False
-		sequence[TRIGGER_CHANNEL][0]['out'] = True
-		# allow for analog's ramp to zero, last item will not be written
-		sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
+        # trigger other boards
+        for s in sequence[TRIGGER_CHANNEL]:
+            s['out'] = False
+        sequence[TRIGGER_CHANNEL][0]['out'] = True
+        # allow for analog's ramp to zero, last item will not be written
+        sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
 
         for c in self.channels:
             total_ticks = 0
@@ -154,7 +156,7 @@ class DigitalBoard(DeviceWrapper):
         byte_array = []
         for t, l in programmable_sequence:
             # each point in sequence specifies all 64 logic outs with 64 bit number
-            # e.g. all off is 0...0, channel 1 on is 10...0
+            # e.g. all off is 0...0, channel 1 on is 10....
             byte_array += list([sum([2**j for j, b in enumerate(l[i:i+8]) if b]) 
                     for i in range(0, 64, 8)])
             # time to keep these outs is 32 bit number in units of clk ticks
