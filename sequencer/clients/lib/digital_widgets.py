@@ -93,7 +93,7 @@ class SequencerButton(QtGui.QLabel):
         return self.variable
 
     def updateParameters(self, parameter_values):
-        if self.variable:
+        if self.variable is not None:
             try:
                 self.setChecked(parameter_values[self.variable] > 0)
             except KeyError:
@@ -142,6 +142,7 @@ class DigitalColumn(QtGui.QWidget):
             val = sequence[nameloc][self.position]['out']
 
             if type(val) is int:
+                self.buttons[nameloc].setVariable(None)
                 self.buttons[nameloc].setChecked(val)
             elif type(val) is str or type(val) is unicode:
                 self.buttons[nameloc].setVariable(val)
@@ -155,6 +156,14 @@ class DigitalColumn(QtGui.QWidget):
     def updateParameters(self, parameter_values):
         for b in self.buttons.values():
             b.updateParameters(parameter_values)
+
+    def clear_variables(self):
+        for b in self.buttons.values():
+            b.setVariable(None)
+
+    def hide(self):
+        self.clear_variables()
+        super(DigitalColumn, self).hide()
 
 class DigitalArray(QtGui.QWidget):
 
