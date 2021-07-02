@@ -302,7 +302,6 @@ class DigitalArray(QtGui.QWidget):
                 clicked_button = self.columns[column].buttons[nl]
 
                 if clicked_button.getVariable() is None:
-                    clicked_button.setChecked(False)
                     self.trigger_variable_dialog.emit(nl, column)
                 else:
                     clicked_button.setVariable(None)
@@ -311,7 +310,9 @@ class DigitalArray(QtGui.QWidget):
         self.last_clicked = {'nl': nl, 'column': column, 'mouse_button': mouse_button}
 
     def set_button_variable(self, nl, column, variable):
-        self.columns[column].buttons[nl].setVariable(variable)
+        if variable is not None:
+            self.columns[column].buttons[nl].setChecked(False)
+            self.columns[column].buttons[nl].setVariable(variable)
 
     def updateParameters(self, parameter_values):
         self.parameter_values = parameter_values

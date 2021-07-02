@@ -348,9 +348,10 @@ class SequencerControl(QtGui.QWidget):
                 0,
                 True,
             )
-            if success:
-                self.digitalControl.array.set_button_variable(str(nameloc), int(column), str(v))
-            self.displaySequence(self.getSequence())
+            v = str(v)
+            if success and v in variables:
+                self.digitalControl.array.set_button_variable(str(nameloc), int(column), v)
+                self.displaySequence(self.getSequence())
         return odvc()
 
     def onDigitalNameClick(self, channel_name):
