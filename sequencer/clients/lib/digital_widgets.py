@@ -79,7 +79,6 @@ class SequencerButton(QtGui.QLabel):
         self.clicked_signal.emit(mouse_button, self.name)
         event.accept()
 
-    # TODO: Call this when the variable is set via the dialog
     def setVariable(self, variable=None):
         self.variable = variable
         self.setChecked(False)
@@ -95,6 +94,8 @@ class SequencerButton(QtGui.QLabel):
     def getVariable(self):
         return self.variable
 
+    # TODO: open dialog box to warn, ask if we want to initialize the unfound variables
+    # This should be done for the analog channels as well!
     def updateParameters(self, parameter_values):
         if self.variable is not None:
             try:
