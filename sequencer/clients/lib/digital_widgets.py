@@ -86,8 +86,11 @@ class SequencerButton(QtGui.QLabel):
 
         if variable is not None:
             self.setText(self.variable)
+            self.setToolTip("Variable: {}".format(self.variable))
         else:
             self.setText("")
+            self.setToolTip("")
+
 
     def getVariable(self):
         return self.variable
