@@ -1,19 +1,24 @@
 """
-### BEGIN NODE INFO
-[info]
-name = ad9910
-version = 1.1
-description = 
-instancename = %LABRADNODE%_ad9910
+Interface for talking to Arduino + AD9910 hardware.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+TODO: Add a link or something here to document the Arduino + AD9910 setup
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = ad9910
+    version = 1.1
+    description = 
+    instancename = %LABRADNODE%_ad9910
+
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 
@@ -32,9 +37,12 @@ import helpers # helper functions for calculating bytes to transfer
 sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
-
 ad9910_address = 'COM4' # address for AD9910 arduino
 
+ADDRESSES = {
+    'N=1': 'COM4',
+    'N=2': 'COM10',
+}
 
 class AD9910Server(HardwareInterfaceServer):
     """Provides access to hardware's serial interface """
@@ -52,44 +60,67 @@ class AD9910Server(HardwareInterfaceServer):
                     del self.interfaces[address]
             else:
                 try:
-                    if address == ad9910_address:
+                    if address in ADDRESSES.values():
                         ser = Serial(address, 4800, timeout=2)
-                        ser.close()
-                        self.interfaces[address] = ser
-                        print('{} available'.format(address))
+                        ser.open()
+                        verified = self.verify_interface(ser)
+
+                        if verified:
+                            name = ADDRESSES[address]
+                            self.interfaces[name] = ser
+                            print('{} available'.format(address))
+                        else:
+                            ser.close()
                 except:
                     pass
         
-    def get_interface(self, c, suppress_output=False):
-        interface = super(AD9910Server, self).get_interface(c)
-        if not interface.isOpen():
-            interface.open()
-        self.verify_interface(c, suppress_output)
-        return interface
+    # def get_interface(self, c, suppress_output=False):
+    #     interface = super(AD9910Server, self).get_interface(c)
+    #     if not interface.isOpen():
+    #         interface.open()
+    #     self.verify_interface(c, suppress_output)
+    #     return interface
     
-    def verify_interface(self, c, suppress_output=False):
-        ser = super(AD9910Server, self).get_interface(c)
-        if not ser.isOpen():
-            ser.open()
-        ser.write('cxn?\n')
-        ser.flush()
-        response = ser.readline()
-        if response == "ad9910\n":
-            if not suppress_output:
-                print("verified as ad9910")
-        else:
-            ser.close()
-            del self.interfaces[ser]
+    # def verify_interface(self, c, suppress_output=False):
+    #     ser = super(AD9910Server, self).get_interface(c)
+    #     if not ser.isOpen():
+    #         ser.open()
+    #     ser.write('cxn?\n')
+    #     ser.flush()
+    #     response = ser.readline()
+    #     if response == "ad9910\n":
+    #         if not suppress_output:
+    #             print("verified as ad9910")
+    #     else:
+    #         ser.close()
+    #         del self.interfaces[ser]
 
-    @setting(2, returns='b')
-    def disconnect(self, c):
-        self.refresh_available_interfaces()
-        if c['address'] not in self.interfaces:
-            raise Exception(c['address'] + 'is unavailable')
-        interface = self.get_interface(c)
-        interface.close()
-        del c['address']
-        return True
+    def verify_interface(self, device):
+        if not device.isOpen():
+            device.open()
+        device.write('cxn?\n')
+        device.flush()
+        response = device.readline()
+        return response == "ad9910\n"
+
+    def stopServer(self):
+        for k in self.interfaces.keys():
+            try:
+                dev = self.interfaces.pop(k)
+                dev.close()
+            except Exception as e:
+                print(e)
+        return super().stopServer()
+
+    # @setting(2, returns='b')
+    # def disconnect(self, c):
+    #     self.refresh_available_interfaces()
+    #     if c['address'] not in self.interfaces:
+    #         raise Exception(c['address'] + 'is unavailable')
+    #     interface = self.get_interface(c)
+    #     interface.close()
+    #     del c['address']
+    #     return True
 
     def createProgramString(self, line, data_type, byte_string):
         addr = "0x{0:02X},".format(line)
@@ -190,6 +221,68 @@ class AD9910Server(HardwareInterfaceServer):
     
     @setting(3, 'Parse JSON Strings And Update', prog_dump='s', prof_dump='s', suppress_output='b')
     def parseJSONStringsAndProgram(self, c, prog_dump, prof_dump, suppress_output=False):
+        """
+        parseJSONStringsAndProgram(self, c, prog_dump, prof_dump, suppress_output=False)
+        
+        Takes JSON-dumped program and profile strings and send them to the Arduino.
+
+        The "program" is a list of output settings that are programmed sequentially to the DDS (stepped through by the trigger input to the Arduino).
+        Each program line can be a single tone:::
+
+            line = {"mode": "single", "freq": 100, "ampl": 0, "phase": 0}
+
+        or a sweep:::
+    
+            line = {"mode": "sweep", "start": 10, "stop": 1, "dt": 10, "nsteps": 1000}
+
+        Frequencies are specified in MHz, amplitudes in dB relative to full scale, phases in degrees, and times in ms.
+        The single tone setting above corresponds to a 100 MHz tone with full amplitude and no phase offset.
+        The sweep above is a 10 ms long sweep from 10 MHz to 1 MHz composed of 1000 frequency steps.
+
+        Here is an example program list, similar to the one we use for doing the K state preparation:::
+        
+            program = [
+                {"mode": "sweep", "start": 10.5, "stop": 7.5, "dt": 70, "nsteps": 10000},
+                {"mode": "single", "freq": 80, "ampl": 0, "phase": 0},
+                {"mode": "single", "freq": 0, "ampl": 0, "phase": 0},
+            ]
+            prog_dump = json.dumps(program)
+
+        The profiles are single tone settings that can be rapidly (and phase-coherently) switched using the P0, P1, and P2 digital inputs on the DDS.
+        The index of the active profile is given by interpreting the list of bits [P2, P1, P0] as an unsigned int
+        (so [P2, P1, P0] = [HIGH, LOW, LOW] is profile 4, [P2, P1, P0] = [LOW, HIGH, LOW] is profile 2, etc.).
+
+        Here is an example profiles list:::
+        
+            profiles = [
+                # Profile 0 is reserved (used for executing the program list)
+                {'profile': 0, 'freq': 0, 'ampl': 0, 'phase': 0},
+
+                # Setup some pulse sequence at 120 MHz
+                {'profile': 1, 'freq': 120, 'ampl': 0, 'phase': 0},
+                {'profile': 3, 'freq': 120, 'ampl': 0, 'phase': -90},
+                {'profile': 2, 'freq': 120, 'ampl': 0, 'phase': 45},
+                {'profile': 6, 'freq': 120, 'ampl': 0, 'phase': 135},
+                {'profile': 7, 'freq': 120, 'ampl': 0, 'phase': -180},
+
+                # Setup another Ramsey sequence at 220 MHz
+                {'profile': 5, 'freq': 220, 'ampl': -10, 'phase': 0},
+                {'profile': 4, 'freq': 220, 'ampl': -10, 'phase': 45},
+            ]
+            prof_dump = json.dumps(profiles)
+
+        Technical note: our TTLs (which drive P0-P2) ring a bit, so changing multiple profile TTLs at the same time may result in an unreliable output.
+        In the example above, the profiles are ordered in a Gray encoding, so they can be stepped through in the above order by changing only one of the profile TTLs in each step.
+        It is fine (maybe?) to omit unused profiles.
+
+        This method accepts the ``json.dumps``'ed lists since data transmitted through LabRAD needs to be serialized.
+
+        Args:
+            c: LabRAD context
+            prog_dump (str): JSON-dumped list of program lines
+            prof_dump (str): JSON-dumped list of profiles
+            suppress_output (bool, optional): Flag to suppress verbose output. Defaults to False.
+        """
         interface = self.get_interface(c, suppress_output)
 
         prog = json.loads(prog_dump)
