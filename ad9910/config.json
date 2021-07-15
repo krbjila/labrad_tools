@@ -1,0 +1,10 @@
+{
+    "devices": {
+        "N=1": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "kyle_xps159500_serial",
+            "address": "ASRL/dev/ttyACM0::INSTR"
+        }
+    }
+}

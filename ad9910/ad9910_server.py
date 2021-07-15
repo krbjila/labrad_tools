@@ -34,15 +34,165 @@ from datetime import datetime
 
 import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
-from server_tools.hardware_interface_server import HardwareInterfaceServer
+from server_tools.device_server import DeviceServer
 
 ADDRESSES = {
     '/dev/ttyACM0': 'N=1',
     'COM10': 'N=2',
 }
-SERIAL_SERVER = 'imaging_serial'
+SERIAL_SERVER = 'kyle_xps159500_serial'
 
-class AD9910Server(HardwareInterfaceServer):
+class AD9910Server(DeviceServer):
+    name = '%LABRADNODE%_ad9910'
+
+    @setting(10, "Write data", prog_dump='s', prof_dump='s')
+    def write_data(self, c, prog_dump, prof_dump):
+        """
+        write_data(self, c, prog_dump, prof_dump)
+        
+        Takes JSON-dumped program and profile strings and send them to the Arduino.
+
+        The "program" is a list of output settings that are programmed sequentially to the DDS (stepped through by the trigger input to the Arduino).
+        Each program line can be a single tone:::
+
+            line = {"mode": "single", "freq": 100, "ampl": 0, "phase": 0}
+
+        or a sweep:::
+    
+            line = {"mode": "sweep", "start": 10, "stop": 1, "dt": 10, "nsteps": 1000}
+
+        Frequencies are specified in MHz, amplitudes in dB relative to full scale, phases in degrees, and times in ms.
+        The single tone setting above corresponds to a 100 MHz tone with full amplitude and no phase offset.
+        The sweep above is a 10 ms long sweep from 10 MHz to 1 MHz composed of 1000 frequency steps.
+
+        Here is an example program list, similar to the one we use for doing the K state preparation:::
+        
+            program = [
+                {"mode": "sweep", "start": 10.5, "stop": 7.5, "dt": 70, "nsteps": 10000},
+                {"mode": "single", "freq": 80, "ampl": 0, "phase": 0},
+                {"mode": "single", "freq": 0, "ampl": 0, "phase": 0},
+            ]
+            prog_dump = json.dumps(program)
+
+        The profiles are single tone settings that can be rapidly (and phase-coherently) switched using the P0, P1, and P2 digital inputs on the DDS.
+        The index of the active profile is given by interpreting the list of bits [P2, P1, P0] as an unsigned int
+        (so [P2, P1, P0] = [HIGH, LOW, LOW] is profile 4, [P2, P1, P0] = [LOW, HIGH, LOW] is profile 2, etc.).
+
+        Here is an example profiles list:::
+        
+            profiles = [
+                # Profile 0 is reserved (used for executing the program list)
+                {'profile': 0, 'freq': 0, 'ampl': 0, 'phase': 0},
+
+                # Setup some pulse sequence at 120 MHz
+                {'profile': 1, 'freq': 120, 'ampl': 0, 'phase': 0},
+                {'profile': 3, 'freq': 120, 'ampl': 0, 'phase': -90},
+                {'profile': 2, 'freq': 120, 'ampl': 0, 'phase': 45},
+                {'profile': 6, 'freq': 120, 'ampl': 0, 'phase': 135},
+                {'profile': 7, 'freq': 120, 'ampl': 0, 'phase': -180},
+
+                # Setup another Ramsey sequence at 220 MHz
+                {'profile': 5, 'freq': 220, 'ampl': -10, 'phase': 0},
+                {'profile': 4, 'freq': 220, 'ampl': -10, 'phase': 45},
+            ]
+            prof_dump = json.dumps(profiles)
+
+        Technical note: our TTLs (which drive P0-P2) ring a bit, so changing multiple profile TTLs at the same time may result in an unreliable output.
+        In the example above, the profiles are ordered in a Gray encoding, so they can be stepped through in the above order by changing only one of the profile TTLs in each step.
+        It is fine (maybe?) to omit unused profiles.
+
+        This method accepts the ``json.dumps``'ed lists since data transmitted through LabRAD needs to be serialized.
+
+        Args:
+            c: LabRAD context
+            prog_dump (str): JSON-dumped list of program lines
+            prof_dump (str): JSON-dumped list of profiles
+        """
+
+        try:
+            name = c['name']
+        except KeyError:
+            raise Exception('Please select a device first; devices: {}'.format(self.devices.keys()))
+
+        dev = self.devices[name]
+        yield dev.write_data(json.loads(prog_dump), json.loads(prof_dump))
+        print("updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    @setting(11, "Inspect echo", returns='s')
+    def inspect_echo(self, c):
+        """
+        inspect_echo(self, c)
+        
+        Takes JSON-dumped program and profile strings and send them to the Arduino.
+
+        The "program" is a list of output settings that are programmed sequentially to the DDS (stepped through by the trigger input to the Arduino).
+        Each program line can be a single tone:::
+
+            line = {"mode": "single", "freq": 100, "ampl": 0, "phase": 0}
+
+        or a sweep:::
+    
+            line = {"mode": "sweep", "start": 10, "stop": 1, "dt": 10, "nsteps": 1000}
+
+        Frequencies are specified in MHz, amplitudes in dB relative to full scale, phases in degrees, and times in ms.
+        The single tone setting above corresponds to a 100 MHz tone with full amplitude and no phase offset.
+        The sweep above is a 10 ms long sweep from 10 MHz to 1 MHz composed of 1000 frequency steps.
+
+        Here is an example program list, similar to the one we use for doing the K state preparation:::
+        
+            program = [
+                {"mode": "sweep", "start": 10.5, "stop": 7.5, "dt": 70, "nsteps": 10000},
+                {"mode": "single", "freq": 80, "ampl": 0, "phase": 0},
+                {"mode": "single", "freq": 0, "ampl": 0, "phase": 0},
+            ]
+            prog_dump = json.dumps(program)
+
+        The profiles are single tone settings that can be rapidly (and phase-coherently) switched using the P0, P1, and P2 digital inputs on the DDS.
+        The index of the active profile is given by interpreting the list of bits [P2, P1, P0] as an unsigned int
+        (so [P2, P1, P0] = [HIGH, LOW, LOW] is profile 4, [P2, P1, P0] = [LOW, HIGH, LOW] is profile 2, etc.).
+
+        Here is an example profiles list:::
+        
+            profiles = [
+                # Profile 0 is reserved (used for executing the program list)
+                {'profile': 0, 'freq': 0, 'ampl': 0, 'phase': 0},
+
+                # Setup some pulse sequence at 120 MHz
+                {'profile': 1, 'freq': 120, 'ampl': 0, 'phase': 0},
+                {'profile': 3, 'freq': 120, 'ampl': 0, 'phase': -90},
+                {'profile': 2, 'freq': 120, 'ampl': 0, 'phase': 45},
+                {'profile': 6, 'freq': 120, 'ampl': 0, 'phase': 135},
+                {'profile': 7, 'freq': 120, 'ampl': 0, 'phase': -180},
+
+                # Setup another Ramsey sequence at 220 MHz
+                {'profile': 5, 'freq': 220, 'ampl': -10, 'phase': 0},
+                {'profile': 4, 'freq': 220, 'ampl': -10, 'phase': 45},
+            ]
+            prof_dump = json.dumps(profiles)
+
+        Technical note: our TTLs (which drive P0-P2) ring a bit, so changing multiple profile TTLs at the same time may result in an unreliable output.
+        In the example above, the profiles are ordered in a Gray encoding, so they can be stepped through in the above order by changing only one of the profile TTLs in each step.
+        It is fine (maybe?) to omit unused profiles.
+
+        This method accepts the ``json.dumps``'ed lists since data transmitted through LabRAD needs to be serialized.
+
+        Args:
+            c: LabRAD context
+            prog_dump (str): JSON-dumped list of program lines
+            prof_dump (str): JSON-dumped list of profiles
+        """
+        try:
+            name = c['name']
+        except KeyError:
+            raise Exception('Please select a device first; devices: {}'.format(self.devices.keys()))
+
+        dev = self.devices[name]
+        return dev.get_echo()
+
+
+
+from server_tools.hardware_interface_server import HardwareInterfaceServer
+class AD9910ServerOld(HardwareInterfaceServer):
     """Provides access to hardware's serial interface """
     name = '%LABRADNODE%_ad9910'
 
@@ -262,7 +412,7 @@ class AD9910Server(HardwareInterfaceServer):
             print("updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
-__server__ = AD9910Server()
+__server__ = AD9910Server('./config.json')
 
 if __name__ == '__main__':
     from labrad import util
