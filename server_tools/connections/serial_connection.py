@@ -3,7 +3,7 @@ import os
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
-LABRADHOST = os.getenv('LABRADHOST')
+LABRADHOST = os.getenv('LABRADHOST', 'localhost')
 
 class SerialConnection(object):
     @inlineCallbacks
@@ -32,15 +32,15 @@ class SerialConnection(object):
         ans = yield self.server.write(x)
         returnValue(ans)
 
-    @inlineCallbacks
-    def write_line(self, x):
-        ans = yield self.server.write_line(x)
-        returnValue(ans)
+    # @inlineCallbacks
+    # def write_line(self, x):
+    #     ans = yield self.server.write_line(x)
+    #     returnValue(ans)
     
-    @inlineCallbacks
-    def write_lines(self, x):
-        ans = yield self.server.write_lines(x)
-        returnValue(ans)
+    # @inlineCallbacks
+    # def write_lines(self, x):
+    #     ans = yield self.server.write_lines(x)
+    #     returnValue(ans)
     
     @inlineCallbacks
     def read(self, x=0):
@@ -52,10 +52,10 @@ class SerialConnection(object):
         ans = yield self.server.read_line()
         returnValue(ans)
 
-    @inlineCallbacks
-    def read_lines(self):
-        ans = yield self.server.read_lines()
-        returnValue(ans)
+    # @inlineCallbacks
+    # def read_lines(self):
+    #     ans = yield self.server.read_lines()
+    #     returnValue(ans)
 
     @inlineCallbacks
     def close(self):
