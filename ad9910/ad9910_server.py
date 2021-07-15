@@ -36,8 +36,6 @@ import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
-ad9910_address = 'COM4' # address for AD9910 arduino
-
 ADDRESSES = {
     '/dev/ttyACM0': 'N=1',
     'COM10': 'N=2',
