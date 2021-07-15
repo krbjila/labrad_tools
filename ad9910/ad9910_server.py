@@ -36,13 +36,17 @@ import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.device_server import DeviceServer
 
-ADDRESSES = {
-    '/dev/ttyACM0': 'N=1',
-    'COM10': 'N=2',
-}
-SERIAL_SERVER = 'kyle_xps159500_serial'
-
 class AD9910Server(DeviceServer):
+    """
+    Server for communicating with AD9910 + Arduino setup.
+
+    The current hardware setup uses an Arduino to program the AD9910 evaluation board over SPI.
+    The AD9910 has a set of 8 single-frequency registers (called the "profiles") that can be rapidly and phase-coherently switched via external digital inputs.
+    Additionally, the Arduino can hold an array (length < 12) of values (called the "program"), which are advanced by an external trigger input to the Arduino.
+    The program also allows for frequency sweeps, which are useful for performing adiabatic rapid passages (ARPs).
+    
+    Currently, this server assumes this general architecture; however, it should be straightforward to add new hardware implementations (``./devices``) in the future.
+    """
     name = '%LABRADNODE%_ad9910'
 
     @setting(10, "Write data", prog_dump='s', prof_dump='s')
@@ -99,9 +103,9 @@ class AD9910Server(DeviceServer):
 
         Technical note: our TTLs (which drive P0-P2) ring a bit, so changing multiple profile TTLs at the same time may result in an unreliable output.
         In the example above, the profiles are ordered in a Gray encoding, so they can be stepped through in the above order by changing only one of the profile TTLs in each step.
-        It is fine (maybe?) to omit unused profiles.
+        It is fine to omit unused profiles.
 
-        This method accepts the ``json.dumps``'ed lists since data transmitted through LabRAD needs to be serialized.
+        This method accepts the ``json.dumps``'ed lists since data must be serialized before transmitting over LabRAD.
 
         Args:
             c: LabRAD context
