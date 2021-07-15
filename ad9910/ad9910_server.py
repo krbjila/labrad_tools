@@ -33,8 +33,7 @@ import json
 from datetime import datetime
 
 import helpers # helper functions for calculating bytes to transfer
-
-sys.path.append('../')
+sys.path.append('..')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 ad9910_address = 'COM4' # address for AD9910 arduino
@@ -110,7 +109,7 @@ class AD9910Server(HardwareInterfaceServer):
                 dev.close()
             except Exception as e:
                 print(e)
-        return super().stopServer()
+        return super(AD9910Server, self).stopServer()
 
     # @setting(2, returns='b')
     # def disconnect(self, c):
@@ -283,7 +282,7 @@ class AD9910Server(HardwareInterfaceServer):
             prof_dump (str): JSON-dumped list of profiles
             suppress_output (bool, optional): Flag to suppress verbose output. Defaults to False.
         """
-        interface = self.get_interface(c, suppress_output)
+        interface = self.get_interface(c)
 
         prog = json.loads(prog_dump)
         program = self.compileProgramStrings(prog)
