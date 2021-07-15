@@ -39,9 +39,10 @@ from server_tools.hardware_interface_server import HardwareInterfaceServer
 ad9910_address = 'COM4' # address for AD9910 arduino
 
 ADDRESSES = {
-    'N=1': 'COM4',
-    'N=2': 'COM10',
+    '/dev/ttyACM0': 'N=1',
+    'COM10': 'N=2',
 }
+SERIAL_SERVER = 'imaging_serial'
 
 class AD9910Server(HardwareInterfaceServer):
     """Provides access to hardware's serial interface """
@@ -58,20 +59,20 @@ class AD9910Server(HardwareInterfaceServer):
                     print('{} unavailable'.format(address))
                     del self.interfaces[address]
             else:
-                try:
-                    if address in ADDRESSES.values():
+                if address in ADDRESSES.keys():
+                    try:
                         ser = Serial(address, 4800, timeout=2)
-                        ser.open()
-                        verified = self.verify_interface(ser)
+                        if not ser.isOpen():
+                            ser.open()
 
-                        if verified:
+                        if self.verify_interface(ser):
                             name = ADDRESSES[address]
                             self.interfaces[name] = ser
                             print('{} available'.format(address))
                         else:
                             ser.close()
-                except:
-                    pass
+                    except Exception as e:
+                        print(e)
         
     # def get_interface(self, c, suppress_output=False):
     #     interface = super(AD9910Server, self).get_interface(c)
@@ -95,12 +96,10 @@ class AD9910Server(HardwareInterfaceServer):
     #         del self.interfaces[ser]
 
     def verify_interface(self, device):
-        if not device.isOpen():
-            device.open()
-        device.write('cxn?\n')
+        device.write(b'cxn?\n')
         device.flush()
         response = device.readline()
-        return response == "ad9910\n"
+        return response == b'ad9910\n'
 
     def stopServer(self):
         for k in self.interfaces.keys():
