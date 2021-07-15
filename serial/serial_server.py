@@ -39,11 +39,14 @@ class SerialServer(HardwareInterfaceServer):
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
-            if address.startswith('ASRL') and not ignore in address:
+            if address.startswith('ASRL') and not self.ignore in address:
                 try:
                     inst = rm.open_resource(address)
                     # inst.write_termination = ''
-                    inst.clear()
+                    try:
+                        inst.clear()
+                    except:
+                        pass
                     self.interfaces[address] = inst
                     print('connected to ASRL device ' + address)
                 except Exception as e:
@@ -81,6 +84,28 @@ class SerialServer(HardwareInterfaceServer):
         """        
         response = self.call_if_available('read', c)
         return response.strip()
+
+    @setting(8, returns='s')
+    def read_line(self, c):
+        """
+        read_line(self, c)
+        
+        Reads a line from the serial port (``\n``).
+
+        Args:
+            c: The LabRAD context
+
+        Returns:
+            str: The bytes returned from the device, with leading and trailing whitespace stripped
+        """
+        interface = self.get_interface(c) 
+        read_term = interface.read_termination
+
+        self.termination(c, None, '\n')
+        response = self.call_if_available('read', c) 
+        self.termination(c, None, read_term)
+        return response.strip() 
+
 
     @setting(5, data='s', returns='s')
     def query(self, c, data):
