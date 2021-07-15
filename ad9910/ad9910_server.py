@@ -73,27 +73,6 @@ class AD9910Server(HardwareInterfaceServer):
                             ser.close()
                     except Exception as e:
                         print(e)
-        
-    # def get_interface(self, c, suppress_output=False):
-    #     interface = super(AD9910Server, self).get_interface(c)
-    #     if not interface.isOpen():
-    #         interface.open()
-    #     self.verify_interface(c, suppress_output)
-    #     return interface
-    
-    # def verify_interface(self, c, suppress_output=False):
-    #     ser = super(AD9910Server, self).get_interface(c)
-    #     if not ser.isOpen():
-    #         ser.open()
-    #     ser.write('cxn?\n')
-    #     ser.flush()
-    #     response = ser.readline()
-    #     if response == "ad9910\n":
-    #         if not suppress_output:
-    #             print("verified as ad9910")
-    #     else:
-    #         ser.close()
-    #         del self.interfaces[ser]
 
     def verify_interface(self, device):
         device.write(b'cxn?\n')
@@ -109,16 +88,6 @@ class AD9910Server(HardwareInterfaceServer):
             except Exception as e:
                 print(e)
         return super(AD9910Server, self).stopServer()
-
-    # @setting(2, returns='b')
-    # def disconnect(self, c):
-    #     self.refresh_available_interfaces()
-    #     if c['address'] not in self.interfaces:
-    #         raise Exception(c['address'] + 'is unavailable')
-    #     interface = self.get_interface(c)
-    #     interface.close()
-    #     del c['address']
-    #     return True
 
     def createProgramString(self, line, data_type, byte_string):
         addr = "0x{0:02X},".format(line)
