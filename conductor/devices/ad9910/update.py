@@ -84,4 +84,13 @@ class Update(ConductorParameter):
                     yield self.server.write_data(program, profiles)
                 except Exception as e:
                     print(e)
+        else:
+            for d in DEVICES:
+                try:
+                    data = self.default[d]
+                    yield self.server.select_device(d)
+                    yield self.server.write_data(json.dumps(data['program']), json.dumps(data['profiles']))
+                except Exception as e:
+                    print(e)
+
 
