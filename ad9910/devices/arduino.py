@@ -146,25 +146,17 @@ def create_profile_string(profile, byte_string):
     return addr + data_type + byte_string + "\n"
 
 def compile_program_strings(program_array):
-    length = len(program_array)
-    if length > 12: # truncate program to 12 if longer
-        length = 12
-
     program = ""
-    for i in range(0, length):
-        line = program_array[i]
+    for (i, line) in enumerate(program):
         line_str = ""
-        if line['mode'] == 'single':
-            ampl_str = calc_ampl(line['ampl'])
-            pow_str = calc_pow(line['phase'])
-            ftw_str = calc_ftw(line['freq'])
+        if line.mode == 'single':
+            ampl_str = calc_ampl(line.amplitude)
+            pow_str = calc_pow(line.phase)
+            ftw_str = calc_ftw(line.frequency)
             line_str = create_program_string(i, 'single', ampl_str + pow_str + ftw_str) + "\n"
-        elif line['mode'] == 'sweep':
-            if 'nsteps' in line:
-                sweep_dict = calc_ramp_parameters(line['start'], line['stop'], line['dt'], line['nsteps'])
-            else:
-                sweep_dict = calc_ramp_parameters(line['start'], line['stop'], line['dt'])
-
+        elif line.mode == 'sweep':
+            sweep_dict = calc_ramp_parameters(line.start, line.stop, line.dt, line.nsteps)
+            
             # Create ramp limits string (DDS reg 0x0B)
             limits_string = calc_ftw(sweep_dict['upper']) + calc_ftw(sweep_dict['lower'])
             line_str = create_program_string(i, 'drLimits', limits_string) + "\n"
@@ -192,12 +184,11 @@ def compile_profile_strings(profiles_array):
         length = 8
 
     profile_string = ""
-    for i in range(0, length):
-        line = profiles_array[i]
-        ftw_str = calc_ftw(line['freq'])
-        ampl_str = calc_ampl(line['ampl'])
-        pow_str = calc_pow(line['phase'])
-        line_str = create_profile_string(line['profile'], ampl_str + pow_str + ftw_str) + "\n"
+    for line in profiles_array:
+        ftw_str = calc_ftw(line.frequency)
+        ampl_str = calc_ampl(line.amplitude)
+        pow_str = calc_pow(line.phase)
+        line_str = create_profile_string(line.index, ampl_str + pow_str + ftw_str) + "\n"
         profile_string += line_str
     return profile_string
 
@@ -227,9 +218,15 @@ class Arduino(DeviceWrapper):
 
     @inlineCallbacks
     def write_data(self, program, profiles):
-        self.program = program
-        self.profiles = profiles
+        """
+        write_data(self, program, profiles)
 
+        Writes data to the Arduino. See ``ad9910_server.py`` for definition of ``ProgramLine`` and ``Profile``.
+
+        Args:
+            program (list(ProgramLine)): list of ``ProgramLine``s
+            profiles (list(Profile)): list of ``Profile``s
+        """
         program_string = compile_program_strings(program)
         profile_string = compile_profile_strings(profiles)
 
@@ -249,9 +246,9 @@ class Arduino(DeviceWrapper):
         if length > 12:
             length = 12
         for line in program_array[0:length]:
-            if line['mode'] == 'single':
+            if line.mode == 'single':
                 num_lines += 2
-            elif line['mode'] == 'sweep':
+            elif line.mode == 'sweep':
                 num_lines += 4
 
         echo = ''

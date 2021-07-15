@@ -36,6 +36,54 @@ import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.device_server import DeviceServer
 
+MAX_PROGRAM_LEN = 12
+N_PROFILES = 8
+
+class ProgramLine(object):
+    """
+    Class for validating the data for a line of the program.
+    """
+    def __init__(self, data):
+        try:
+            self.mode = data['mode']
+
+            if self.mode == 'single':
+                self.frequency = float(data['freq'])
+                self.amplitude = float(data['ampl'])
+                self.phase = float(data['phase'])
+
+            elif self.mode == 'sweep':
+                self.start = float(data['start'])
+                self.stop = float(data['stop'])
+                self.dt = float(data['dt'])
+                self.nsteps = int(data['nsteps'])
+
+            else:
+                raise Exception('Invalid mode {} for program line'.format(self.mode))
+        except KeyError as e:
+            raise Exception('Invalid program input, missing key: {}'.format(e))
+        except ValueError as e:
+            raise Exception('Invalid program input, bad value: {}'.format(e))
+        except Exception as e:
+            raise(e)
+
+class Profile(object):
+    """
+    Class for validating the data for a single profile.
+    """
+    def __init__(self, data):
+        try:
+            self.index = int(data['profile'])
+            self.frequency = float(data['freq'])
+            self.amplitude = float(data['ampl'])
+            self.phase = float(data['phase'])
+        except KeyError as e:
+            raise Exception('Invalid profile input, missing key: {}'.format(e))
+        except ValueError as e:
+            raise Exception('Invalid profile input, bad value: {}'.format(e))
+        except Exception as e:
+            raise(e)
+
 class AD9910Server(DeviceServer):
     """
     Server for communicating with AD9910 + Arduino setup.
@@ -49,10 +97,10 @@ class AD9910Server(DeviceServer):
     """
     name = '%LABRADNODE%_ad9910'
 
-    @setting(10, "Write data", prog_dump='s', prof_dump='s')
-    def write_data(self, c, prog_dump, prof_dump):
+    @setting(10, "Write data", program_dump='s', profiles_dump='s')
+    def write_data(self, c, program_dump, profiles_dump):
         """
-        write_data(self, c, prog_dump, prof_dump)
+        write_data(self, c, program_dump, profiles_dump)
         
         Takes JSON-dumped program and profile strings and send them to the Arduino.
 
@@ -76,7 +124,7 @@ class AD9910Server(DeviceServer):
                 {"mode": "single", "freq": 80, "ampl": 0, "phase": 0},
                 {"mode": "single", "freq": 0, "ampl": 0, "phase": 0},
             ]
-            prog_dump = json.dumps(program)
+            program_dump = json.dumps(program)
 
         The profiles are single tone settings that can be rapidly (and phase-coherently) switched using the P0, P1, and P2 digital inputs on the DDS.
         The index of the active profile is given by interpreting the list of bits [P2, P1, P0] as an unsigned int
@@ -99,7 +147,7 @@ class AD9910Server(DeviceServer):
                 {'profile': 5, 'freq': 220, 'ampl': -10, 'phase': 0},
                 {'profile': 4, 'freq': 220, 'ampl': -10, 'phase': 45},
             ]
-            prof_dump = json.dumps(profiles)
+            profiles_dump = json.dumps(profiles)
 
         Technical note: our TTLs (which drive P0-P2) ring a bit, so changing multiple profile TTLs at the same time may result in an unreliable output.
         In the example above, the profiles are ordered in a Gray encoding, so they can be stepped through in the above order by changing only one of the profile TTLs in each step.
@@ -109,8 +157,8 @@ class AD9910Server(DeviceServer):
 
         Args:
             c: LabRAD context
-            prog_dump (str): JSON-dumped list of program lines
-            prof_dump (str): JSON-dumped list of profiles
+            program_dump (str): JSON-dumped list of program lines
+            profiles_dump (str): JSON-dumped list of profiles
         """
 
         try:
@@ -118,8 +166,19 @@ class AD9910Server(DeviceServer):
         except KeyError:
             raise Exception('Please select a device first; devices: {}'.format(self.devices.keys()))
 
+        prog = json.loads(program_dump)
+        prof = json.loads(profiles_dump)
+
+        if len(prog) > MAX_PROGRAM_LEN:
+            raise Exception('Program too long; must be < {} lines'.format(MAX_PROGRAM_LEN))
+        if len(prof) > N_PROFILES:
+            raise Exception('Too many profile lines set')
+
+        program = [ProgramLine(l) for l in prog]
+        profiles = [Profile(l) for l in prof]
+
         dev = self.devices[name]
-        yield dev.write_data(json.loads(prog_dump), json.loads(prof_dump))
+        yield dev.write_data(program, profiles)
         print("updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     @setting(11, "Inspect echo", returns='s')
