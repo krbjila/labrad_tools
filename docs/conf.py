@@ -61,4 +61,4 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}
 
 master_doc = 'index'
 
-autodoc_mock_imports = ['pycurl', 'pywin32', 'krbcollisionmodule', 'pexpect', 'pypiwin32', 'pyttsx3', 'labjack.ljm', 'PyQt5', 'cameras.lib', 'serial']
+autodoc_mock_imports = ['pycurl', 'pywin32', 'krbcollisionmodule', 'pexpect', 'pypiwin32', 'pyttsx3', 'labjack.ljm', 'PyQt5', 'cameras.lib']

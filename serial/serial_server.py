@@ -87,7 +87,7 @@ class SerialServer(HardwareInterfaceServer):
         """
         read_line(self, c)
         
-        Reads a line from the serial port (terminated by ``\n``).
+        Reads a line from the serial port (terminated by ``\\n``).
 
         Args:
             c: The LabRAD context
