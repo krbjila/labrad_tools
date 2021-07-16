@@ -210,7 +210,6 @@ class AD9910Server(DeviceServer):
         dev = self.devices[name]
         return dev.get_echo()
 
-__server__ = AD9910Server('./config.json')
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(__server__)
+    util.runServer(AD9910Server())
