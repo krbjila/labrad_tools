@@ -177,7 +177,6 @@ class AD9910Server(DeviceServer):
 
         dev = self.devices[name]
         yield dev.write_data(program, profiles)
-        print("updated " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     @setting(11, "Inspect echo", returns='s')
     def inspect_echo(self, c):
