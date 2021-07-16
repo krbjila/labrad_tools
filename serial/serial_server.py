@@ -39,7 +39,7 @@ class SerialServer(HardwareInterfaceServer):
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
-            if address.startswith('ASRL') and not ignore in address:
+            if address.startswith('ASRL') and not self.ignore in address:
                 try:
                     inst = rm.open_resource(address)
                     # inst.write_termination = ''
