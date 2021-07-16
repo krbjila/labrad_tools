@@ -18,10 +18,10 @@ node_dicts = [
         'node imaging' : [
             'okfpga',
             'usb',
-            # 'serial',
+            'serial',
             'dg800',
             'elliptec',
-            # 'ad9910', # needs serial server
+            'ad9910', # needs serial server
             'logging'
         ],
         'node krbg2': [
@@ -40,7 +40,7 @@ node_dicts = [
             # start device servers next
             'sequencer',
             # start conductor last
-            # 'conductor', 
+            'conductor', 
         ],
         'node polarkrb': [
             # start hardware interfaces first
