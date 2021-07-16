@@ -3,8 +3,14 @@
         "N=1": {
             "device_type": "Arduino",
             "connection_type": "Serial",
-            "servername": "kyle_xps159500_serial",
-            "address": "ASRL/dev/ttyACM0::INSTR"
+            "servername": "imaging_serial",
+            "address": "ASRL4::INSTR"
+        },
+        "N=2": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "imaging_serial",
+            "address": "ASRL5::INSTR"
         }
     }
 }

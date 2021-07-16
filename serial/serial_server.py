@@ -25,12 +25,9 @@ sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 import json
 
-
 class SerialServer(HardwareInterfaceServer):
     """Provides direct access to ASRL-enabled hardware."""
     name = '%LABRADNODE%_serial'
-    
-    ignore = 'ASRL4' # Arduino for AD9910, sketchy fix for now
 
     def refresh_available_interfaces(self):
         """ Fill self.interfaces with available connections using Python VISA """
@@ -39,7 +36,7 @@ class SerialServer(HardwareInterfaceServer):
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
         for address in additions:
-            if address.startswith('ASRL') and not self.ignore in address:
+            if address.startswith('ASRL'):
                 try:
                     inst = rm.open_resource(address)
                     # inst.write_termination = ''

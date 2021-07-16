@@ -26,8 +26,6 @@ from time import sleep
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
-from serial import Serial
-import serial.tools.list_ports
 
 import json
 from datetime import datetime
