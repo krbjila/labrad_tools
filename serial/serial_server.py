@@ -87,7 +87,7 @@ class SerialServer(HardwareInterfaceServer):
         """
         read_line(self, c)
         
-        Reads a line from the serial port (``\n``).
+        Reads a line from the serial port (terminated by ``\n``).
 
         Args:
             c: The LabRAD context
@@ -96,7 +96,7 @@ class SerialServer(HardwareInterfaceServer):
             str: The bytes returned from the device, with leading and trailing whitespace stripped
         """
         response = self.call_if_available('read', c, '\n') 
-        return response.strip() 
+        return response.strip()
 
 
     @setting(5, data='s', returns='s')
@@ -171,6 +171,15 @@ class SerialServer(HardwareInterfaceServer):
             interface.flush(visa.constants.VI_READ_BUF)
         elif buffer == 'output':
             interface.flush(visa.constants.VI_WRITE_BUF)
+
+    @setting(10, baud='w', returns='w')
+    def baud_rate(self, c, baud=None):
+        """
+        """
+        interface = self.get_interface(c)
+        if baud is not None:
+            interface.baud_rate = baud
+        return interface.baud_rate
 
 
 if __name__ == '__main__':

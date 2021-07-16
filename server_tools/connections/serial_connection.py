@@ -18,8 +18,8 @@ class SerialConnection(object):
                 yield getattr(self.server, attr)(value)
     
     @inlineCallbacks
-    def baudrate(self, x=None):
-        ans = yield self.server.baudrate(x)
+    def baud_rate(self, x=None):
+        ans = yield self.server.baud_rate(x)
         returnValue(ans)
    
     @inlineCallbacks

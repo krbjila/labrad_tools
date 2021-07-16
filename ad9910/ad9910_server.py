@@ -64,6 +64,12 @@ class ProgramLine(object):
             raise Exception('Invalid program input, bad value: {}'.format(e))
         except Exception as e:
             raise(e)
+    
+    def __str__(self):
+        if self.mode == 'single':
+            return json.dumps({'mode': self.mode, 'freq': self.frequency, 'ampl': self.amplitude, 'phase': self.phase})
+        elif self.mode == 'sweep':
+            return json.dumps({'mode': self.mode, 'start': self.start, 'stop': self.stop, 'dt': self.dt, 'nsteps': self.nsteps})
 
 class Profile(object):
     """
@@ -81,6 +87,9 @@ class Profile(object):
             raise Exception('Invalid profile input, bad value: {}'.format(e))
         except Exception as e:
             raise(e)
+
+    def __str__(self):
+        return json.dumps({'profile': self.index, 'freq': self.frequency, 'ampl': self.amplitude, 'phase': self.phase})
 
 class AD9910Server(DeviceServer):
     """
@@ -173,9 +182,9 @@ class AD9910Server(DeviceServer):
             raise Exception('Too many profile lines set')
 
         program = [ProgramLine(l) for l in prog]
-        if len(program) == 0:
-            program = [ProgramLine({"mode": "single", "freq": 0, "ampl": 0, "phase": 0})]
-            
+        if len(program) == 0 or program[-1].mode == 'sweep':
+            program.append(ProgramLine({"mode": "single", "freq": 0, "ampl": 0, "phase": 0}))
+
         profiles = [Profile(l) for l in prof]
 
         dev = self.devices[name]
