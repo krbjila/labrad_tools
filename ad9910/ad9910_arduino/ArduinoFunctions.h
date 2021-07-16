@@ -90,7 +90,7 @@ int readLineFromSerial(void) {
     if (str.length() == 0)
       str = Serial.readStringUntil('\n');
 
-    if (str.equals("cxn?")) {
+    if (str.equals("*IDN?")) {
       Serial.print("ad9910\n");
       return -1;
     }
