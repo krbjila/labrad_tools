@@ -195,7 +195,9 @@ class elliptecServer(HardwareInterfaceServer):
         pos = max(0, min(28, pos))
         self.ser.select_interface(self.interfaces[c['address']]['device'])
         channel = self.interfaces[c['address']]['channel']
+        print(pos)
         pos_hex = to_hex(int(pos*self.TICKS_PER_MM), 32)
+        print(pos_hex)
         msg = yield self.ser.query("{:x}ma{}".format(channel, pos_hex))
         returnValue(json.dumps(elliptecServer.decode_message(msg)))
 
