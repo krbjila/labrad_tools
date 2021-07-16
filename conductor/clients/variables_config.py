@@ -42,6 +42,7 @@ variables_dict = [
     ['*time', 0.1],
     ['*RFpulse', 0.001],
     ['*RFpulse2', 0.001],
+    ['*RFpulse20', 0.001],
     ['*X', 0.005],
     ['*Tau', -3],
     ['*FillTime', 5.0], 
@@ -54,16 +55,18 @@ variables_dict = [
     ['*VLattPhaseFinal', 0],
     ['*VLattInitialPhase', 0],
     # Optical traps
-    ['*HOTLoad', 3.5], # was 3.6 (9/23/20); was 3.77 (11/27/19); was 5.2 before calibration changed
-    ['*HOTMid', 1.0], # was 0.8 (10/09/20); was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
+    ['*HOTLoad', 2.322], # was 3.6 (9/23/20); was 3.77 (11/27/19); was 5.2 before calibration changed
+    ['*HOTMid', 0.9675], # was 0.8 (10/09/20); was 0.9 (11/27/19); was 1.6 (7/11/19); was 1.8 before calibration changed
     ['*HOTFinal', 0.5], # was 0.9 before calibration changed
+    ['*HOTFinal2', 0.5],
     ['*HOTBottom', 0.4],
     ['*HOTRecom', 0.42],
     ['*HOTFilter', 0.4],
     ['*HOTQuad', 0.5],
-    ['*MARIALoad', 3.5], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
-    ['*MARIAMid', 1.26], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
-    ['*MARIAFinal', 0.7], # was 0.5
+    ['*MARIALoad', -8.37], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
+    ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
+    ['*MARIAFinal', -0.9765], # was 0.5
+    ['*MARIAFinal2', -0.9765],
     ['*MARIABottom', 0.344],
     ['*MARIARecom', 0.4],
     ['*MARIAFilter', 0.4],
