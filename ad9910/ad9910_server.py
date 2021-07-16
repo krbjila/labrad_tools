@@ -173,6 +173,9 @@ class AD9910Server(DeviceServer):
             raise Exception('Too many profile lines set')
 
         program = [ProgramLine(l) for l in prog]
+        if len(program) == 0:
+            program = [ProgramLine({"mode": "single", "freq": 0, "ampl": 0, "phase": 0})]
+            
         profiles = [Profile(l) for l in prof]
 
         dev = self.devices[name]
