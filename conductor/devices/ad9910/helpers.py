@@ -58,23 +58,26 @@ class AD9910Device(ConductorParameter):
 
                 # Handle a corner case: if the last line in the program is a sweep,
                 # the profiles don't work correctly. So ensure that the last line in the program
-                # is not a sweep:
-                last = program[-1]
-                if last['mode'] == 'sweep':
-                    program.append({u'mode': u'single', u'freq': 0, u'ampl': 0, u'phase': 0})
+                # # is not a sweep:
+                # last = program[-1]
+                # if last['mode'] == 'sweep':
+                #     program.append({u'mode': u'single', u'freq': 0, u'ampl': 0, u'phase': 0})
+
+                print(program)
 
                 program = json.dumps(program)
                 profiles = json.dumps(self.value['profiles'])
 
-                yield self.server.select_device(self.device)
+                s = yield self.server.select_device(self.device)
+                print(s)
                 yield self.server.write_data(program, profiles)
             except Exception as e:
                 print(e)
-        else:
-            try:
-                data = self.default
-                yield self.server.select_device(self.device)
-                yield self.server.write_data(json.dumps(data['program']), json.dumps(data['profiles']))
-            except Exception as e:
-                print(e)
+        # else:
+        #     try:
+        #         data = self.default
+        #         yield self.server.select_device(self.device)
+        #         yield self.server.write_data(json.dumps(data['program']), json.dumps(data['profiles']))
+        #     except Exception as e:
+        #         print(e)
 
