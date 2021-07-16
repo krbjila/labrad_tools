@@ -34,6 +34,7 @@ class Update(ConductorParameter):
         try:
             self.server = self.cxn.imaging_ad9910
             interfaces = yield self.server.get_interface_list()
+            print("Interfaces: {}".format(interfaces))
             if len(interfaces) == 1:
                 interface = interfaces[0]
             else:
