@@ -231,8 +231,11 @@ class Arduino(DeviceWrapper):
         profile_string = compile_profile_strings(profiles)
 
         yield self.connection.write(program_string)
+        yield self.connection.flush_output()
         yield self.connection.write(profile_string)
+        yield self.connection.flush_output()
         yield self.connection.write("Done\n")
+        yield self.connection.flush_output()
         self.echo = yield self.read_echo(self.program)
 
     def get_echo(self):

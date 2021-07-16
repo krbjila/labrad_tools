@@ -167,6 +167,16 @@ class SerialServer(HardwareInterfaceServer):
             interface.read_termination = read
         return json.dumps({"read":interface.read_termination, "write":interface.write_termination})
 
+    @setting(9, buffer='s')
+    def flush(self, c, buffer=None):
+        """
+        """
+        interface = self.get_interface(c)
+        if buffer == 'input':
+            interface.flush(visa.constants.VI_READ_BUF)
+        elif buffer == 'output':
+            interface.flush(visa.constants.VI_WRITE_BUF)
+
 
 if __name__ == '__main__':
     from labrad import util

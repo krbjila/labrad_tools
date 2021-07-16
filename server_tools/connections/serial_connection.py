@@ -62,9 +62,9 @@ class SerialConnection(object):
         yield self.server.close()
     
     @inlineCallbacks
-    def flushinput(self):
-        yield self.server.flushinput()
+    def flush_input(self):
+        yield self.server.flush('input')
     
     @inlineCallbacks
-    def flushoutput(self):
-        yield self.server.flushoutput()
+    def flush_output(self):
+        yield self.server.flush('output')
