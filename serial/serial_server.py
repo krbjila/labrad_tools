@@ -95,12 +95,7 @@ class SerialServer(HardwareInterfaceServer):
         Returns:
             str: The bytes returned from the device, with leading and trailing whitespace stripped
         """
-        interface = self.get_interface(c) 
-        read_term = interface.read_termination
-
-        self.termination(c, None, '\n')
-        response = self.call_if_available('read', c) 
-        self.termination(c, None, read_term)
+        response = self.call_if_available('read', c, '\n') 
         return response.strip() 
 
 

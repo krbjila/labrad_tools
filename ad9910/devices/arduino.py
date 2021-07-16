@@ -178,11 +178,6 @@ def compile_program_strings(program_array):
     return program
 
 def compile_profile_strings(profiles_array):
-    length = len(profiles_array)
-    # If too many profiles, just keep first 8
-    if length > 8:
-        length = 8
-
     profile_string = ""
     for line in profiles_array:
         ftw_str = calc_ftw(line.frequency)
@@ -227,6 +222,9 @@ class Arduino(DeviceWrapper):
             program (list(ProgramLine)): list of ``ProgramLine``s
             profiles (list(Profile)): list of ``Profile``s
         """
+        self.program = program
+        self.profiles = profiles
+
         program_string = compile_program_strings(program)
         profile_string = compile_profile_strings(profiles)
 
@@ -244,18 +242,14 @@ class Arduino(DeviceWrapper):
     @inlineCallbacks
     def read_echo(self, program_array):
         num_lines = 2 * 8
-
-        length = len(program_array)
-        if length > 12:
-            length = 12
-        for line in program_array[0:length]:
+        for line in program_array:
             if line.mode == 'single':
                 num_lines += 2
             elif line.mode == 'sweep':
                 num_lines += 4
 
         echo = ''
-        for _ in range(0, num_lines):
+        for _ in range(num_lines):
             s = yield self.connection.read_line()
             echo += s + '\n'
         returnValue(echo)
