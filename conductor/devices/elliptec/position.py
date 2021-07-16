@@ -10,11 +10,11 @@ from conductor_device.conductor_parameter import ConductorParameter
 
 from time import sleep
 
-class Update(ConductorParameter):
+class Position(ConductorParameter):
     priority = 1
 
     def __init__(self, config={}):
-        super(Update, self).__init__(config)
+        super(Position, self).__init__(config)
         try:
             self.value = self.default
         except AttributeError:
