@@ -147,13 +147,15 @@ def create_profile_string(profile, byte_string):
 
 def compile_program_strings(program_array):
     program = ""
-    for (i, line) in enumerate(program):
+    for (i, line) in enumerate(program_array):
         line_str = ""
+
         if line.mode == 'single':
             ampl_str = calc_ampl(line.amplitude)
             pow_str = calc_pow(line.phase)
             ftw_str = calc_ftw(line.frequency)
             line_str = create_program_string(i, 'single', ampl_str + pow_str + ftw_str) + "\n"
+
         elif line.mode == 'sweep':
             sweep_dict = calc_ramp_parameters(line.start, line.stop, line.dt, line.nsteps)
             
@@ -201,15 +203,20 @@ class Arduino(DeviceWrapper):
 
     @inlineCallbacks
     def verify_interface(self):
-        yield self.connection.write(b'cxn?\n')
+        yield self.connection.write(b'*IDN?\n')
         response = yield self.connection.read_line()
         returnValue(response == 'ad9910')
 
     @inlineCallbacks
     def initialize(self):
+        yield self.connection.baud_rate(self.baud)
+        yield self.connection.timeout(self.timeout)
+
         verified = yield self.verify_interface()
         if not verified:
-            raise Exception("Could not verify {} as ad9910\n".format(self.address))
+            raise Exception("Could not verify {} as ad9910".format(self.address))
+        else:
+            print("{} verified as ad9910".format(self.address))
 
     @inlineCallbacks
     def write_data(self, program, profiles):
@@ -228,13 +235,19 @@ class Arduino(DeviceWrapper):
         program_string = compile_program_strings(program)
         profile_string = compile_profile_strings(profiles)
 
+        # print(program_string)
+
+        yield self.connection.flush_input()
+        yield self.connection.flush_output()
+
         yield self.connection.write(program_string)
-        yield self.connection.flush_output()
         yield self.connection.write(profile_string)
-        yield self.connection.flush_output()
         yield self.connection.write("Done\n")
         yield self.connection.flush_output()
+
         self.echo = yield self.read_echo(self.program)
+        # print(self.address)
+        # print(self.echo)
 
     def get_echo(self):
         return self.echo
@@ -251,6 +264,7 @@ class Arduino(DeviceWrapper):
         echo = ''
         for _ in range(num_lines):
             s = yield self.connection.read_line()
+            print(s)
             echo += s + '\n'
         returnValue(echo)
 
