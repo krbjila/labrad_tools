@@ -34,7 +34,7 @@ import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.device_server import DeviceServer
 
-MAX_PROGRAM_LEN = 12
+MAX_PROGRAM_LEN = 11
 N_PROFILES = 8
 
 class ProgramLine(object):
@@ -182,8 +182,8 @@ class AD9910Server(DeviceServer):
             raise Exception('Too many profile lines set')
 
         program = [ProgramLine(l) for l in prog]
-        if len(program) == 0 or program[-1].mode == 'sweep':
-            program.append(ProgramLine({"mode": "single", "freq": 0, "ampl": 0, "phase": 0}))
+        # Ensure set to zero at end
+        program.append(ProgramLine({"mode": "single", "freq": 0, "ampl": 0, "phase": 0}))
 
         profiles = [Profile(l) for l in prof]
 
@@ -210,7 +210,6 @@ class AD9910Server(DeviceServer):
         dev = self.devices[name]
         return dev.get_echo()
 
-__server__ = AD9910Server('./config.json')
 if __name__ == '__main__':
     from labrad import util
-    util.runServer(__server__)
+    util.runServer(AD9910Server())

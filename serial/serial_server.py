@@ -1,6 +1,8 @@
 """
 Provides direct access to serial-enabled hardware.
 
+MAKE SURE YOU CHECK THE WRITE TERMINATION... it is set to ``\r\n`` by default.
+
 ..
     ### BEGIN NODE INFO
     [info]
@@ -39,7 +41,6 @@ class SerialServer(HardwareInterfaceServer):
             if address.startswith('ASRL'):
                 try:
                     inst = rm.open_resource(address)
-                    # inst.write_termination = ''
                     try:
                         inst.clear()
                     except:
@@ -146,6 +147,8 @@ class SerialServer(HardwareInterfaceServer):
         termination(self, c, write=None, read=None)
 
         Sets or gets the read or write terminations.
+
+        TODO: check if you can set terminations for read and write separately (Labrad issue with sending optional args?)
 
         Args:
             c: The LabRAD context

@@ -210,6 +210,7 @@ class Arduino(DeviceWrapper):
     @inlineCallbacks
     def initialize(self):
         yield self.connection.baud_rate(self.baud)
+        yield self.connection.write_termination('')
         yield self.connection.timeout(self.timeout)
 
         verified = yield self.verify_interface()
@@ -235,8 +236,6 @@ class Arduino(DeviceWrapper):
         program_string = compile_program_strings(program)
         profile_string = compile_profile_strings(profiles)
 
-        # print(program_string)
-
         yield self.connection.flush_input()
         yield self.connection.flush_output()
 
@@ -246,8 +245,6 @@ class Arduino(DeviceWrapper):
         yield self.connection.flush_output()
 
         self.echo = yield self.read_echo(self.program)
-        # print(self.address)
-        # print(self.echo)
 
     def get_echo(self):
         return self.echo

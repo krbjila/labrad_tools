@@ -32,6 +32,11 @@ class SerialConnection(object):
         ans = yield self.server.write(x)
         returnValue(ans)
 
+    @inlineCallbacks
+    def write_termination(self, t):
+        ans = yield self.server.termination(t)
+        returnValue(ans)
+
     # @inlineCallbacks
     # def write_line(self, x):
     #     ans = yield self.server.write_line(x)
