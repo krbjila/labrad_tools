@@ -8,11 +8,18 @@ tx_types_dictionary = {
 
 SYSCLK = 1000 # MHz
 
-# Returns string of bytes MSB
-# In format "byte_3,byte_2,byte_1,byte_0,"
-#
-# Argument: frequency in MHz
 def calcFTW(freq):
+	"""
+	calcFTW(freq)
+
+	Returns string of bytes MSB in format "byte_3,byte_2,byte_1,byte_0,"
+
+	Args:
+		freq (float): frequency in MHz
+
+	Returns:
+		str: string of bytes MSB in format "byte_3,byte_2,byte_1,byte_0,"
+	"""
 	FTW = int(2**(32) * float(freq) / SYSCLK)
 	# Format string MSB first
 	hex_str = '{:08X}'.format(FTW)
@@ -21,11 +28,18 @@ def calcFTW(freq):
 		res = res + "0x" + hex_str[2*i:(2*i+2)] + ","
 	return res
 
-# Returns string of bytes MSB
-# in format "byte_1,byte_0,"
-#
-# Argument: phase in degrees
 def calcPOW(phase):
+	"""
+	calcPOW(phase)
+
+	Returns string of bytes MSB in format "byte_1,byte_0,"
+
+	Args:
+		phase (float): phase in degrees
+
+	Returns:
+		str: string of bytes MSB in format "byte_1,byte_0,"
+	"""
 	phase = phase % 360
 	POW = int(2**(16) * float(phase) / 360)
 
@@ -36,12 +50,18 @@ def calcPOW(phase):
 		res = res + "0x" + hex_str[2*i:(2*i + 2)] + ","
 	return res
 
-# Returns string of bytes MSB
-# in format "byte_1,byte_0,"
-#
-# Argument: relative amplitude in dB relative to full scale
-# Range is 0 to -80 dB
 def calcAMPL(ampl):
+	"""
+	calcAMPL(ampl)
+
+	Returns string of bytes MSB in format "byte_1,byte_0,"
+
+	Args:
+		ampl (float): relative amplitude in dB relative to full scale. Range is 0 to -80 dB.
+
+	Returns:
+		str: string of bytes MSB in format "byte_1,byte_0,"
+	"""
 	# Upper limit is 0 dB
 	if ampl >= 0:
 		return "0x3F,0xFF,"
@@ -56,11 +76,18 @@ def calcAMPL(ampl):
 		res = res + "0x" + hex_str[2*i:(2*i + 2)] + ","
 	return res
 
-# Returns string of bytes MSB
-# in format "byte_1,byte_0,"
-#
-# Argument: step interval in microseconds
 def calcStepInterval(interval):
+	"""
+	calcStepInterval(interval)
+
+	Returns string of bytes MSB in format "byte_1,byte_0,"
+
+	Args:
+		interval (float): step interval in microseconds
+
+	Returns:
+		str: Returns string of bytes MSB in format "byte_1,byte_0,"
+	"""
 	min_interval = float(4) / SYSCLK
 	max_interval = (2**(16) - 1) * min_interval
 	if (interval < min_interval):
@@ -76,20 +103,26 @@ def calcStepInterval(interval):
 		res = res + "0x" + hex_str[2*i:(2*i + 2)] + ","
 	return res
 
-# Calculates ramp parameters
-# Input:
-# 	start: start frequency in MHz
-#	stop: stop frequency in MHz
-#	dt: duration in milliseconds
-#	nsteps (optional): number of steps in sweep, default=1000
-#
-# Returns: Dictionary with items:
-#	upper: upper limit frequency in MHz
-#	lower: lower limit frequency in MHz
-#	slope: slope polarity (+1 for positive ramp, -1 for negative ramp)
-#	interval: step interval for accumulator in microseconds
-#	step: frequency change per step in MHz
 def calcRampParameters(start, stop, dt, nsteps=1000):
+	"""
+	calcRampParameters(start, stop, dt, nsteps=1000)
+
+	Calculates ramp parameters
+
+	Args:
+		start (float): start frequency in MHz
+		stop (float): stop frequency in MHz
+		dt (float): duration in milliseconds
+		nsteps (int, optional): number of steps in sweep. Defaults to 1000.
+
+	Returns:
+		dict: Dictionary with items:
+			upper: upper limit frequency in MHz
+			lower: lower limit frequency in MHz
+			slope: slope polarity (+1 for positive ramp, -1 for negative ramp)
+			interval: step interval for accumulator in microseconds
+			step: frequency change per step in MHz
+	"""
 	slope = 0
 	if start <= stop:
 		slope = 1
