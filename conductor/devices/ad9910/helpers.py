@@ -8,13 +8,23 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 
-from time import sleep
+import json
 
-class Position(ConductorParameter):
+class AD9910Device(ConductorParameter):
+    """
+    Data format:::
+
+        value = {
+            'program': [...],
+            'profiles': [...],
+        }
+
+    See documentation for AD9910Server for the correct format for the ``program`` and ``profile`` lists.
+    """
     priority = 1
 
     def __init__(self, config={}):
-        super(Position, self).__init__(config)
+        super(AD9910Device, self).__init__(config)
         try:
             self.value = self.default
         except AttributeError:
@@ -23,29 +33,31 @@ class Position(ConductorParameter):
             # with invalid arguments. just set it to 0
             self.value = 0
             self.default = 0
-
+    
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
         try:
-            self.server = self.cxn.imaging_elliptec
-            interfaces = yield self.server.get_interface_list()
-            interface = interfaces[0]
-            yield self.server.select_interface(interface)
-            yield self.server.home()
-            sleep(2)
-            yield self.server.move_abs(self.default)
-        except Exception as e:
+            self.server = self.cxn.imaging_ad9910
+            devs = yield self.server.get_device_list()
+            
+            if self.device not in devs:
+                print('Device {} not found'.format(self.device))
+
+        except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
-            print("Could not connect to elliptec stage: {}".format(e))
+            print("ad9910's update: Imaging server not connected.")
 
 
     @inlineCallbacks
     def update(self):
         if self.value:
             try:
-                yield self.server.move_abs(self.value)
-            except Exception as e:
-                print("Could not move elliptec stage to position {}: {}".format(self.value, e))
+                program = json.dumps(self.value['program'])
+                profiles = json.dumps(self.value['profiles'])
 
+                s = yield self.server.select_device(self.device)
+                yield self.server.write_data(program, profiles)
+            except Exception as e:
+                print(e)

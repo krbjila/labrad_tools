@@ -38,21 +38,12 @@
         },
         "ad9910": {
             "update": {
-                "default": {
-                    "program": [
-                        {"mode": "single", "freq": 0, "ampl": 0, "phase": 0}
-                    ],
-                    "profiles": [
-                        {"profile": 0, "freq": 10, "ampl": 0, "phase": 0},
-                        {"profile": 1, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 2, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 3, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 4, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 5, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 6, "freq": 0, "ampl": 0, "phase": 0},
-                        {"profile": 7, "freq": 0, "ampl": 0, "phase": 0}
-                    ]
-                }
+                "device": "N=1",
+                "default": 0
+            },
+            "shelver": {
+                "device": "N=2",
+                "default": 0
             }
         },
         "dg800": {
@@ -73,11 +64,6 @@
                     "ncycles2": 1,
                     "gated2": 1
                 }
-            }
-        },
-        "elliptec": {
-            "position": {
-                "default": 13.0
             }
         },
         "pixelfly": {

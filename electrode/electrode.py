@@ -125,19 +125,22 @@ class ElectrodeServer(LabradServer):
 
 
 	def backup_presets(self):
-		folder_s = datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
-		file_s = datetime.now().strftime("%H%M%S.json")
-	
-		backup_folder = self.relative_backup_path + folder_s
-		backup_file = backup_folder + file_s
-	
-		if not os.path.exists(backup_folder):
-			os.mkdir(backup_folder)
-	
-		with open(backup_file, 'w') as f:
-			f.write(json.dumps(self.presets, sort_keys=True, indent=4))
-	
-		print("Settings backed up at {}".format(backup_file))
+		try:
+			folder_s = datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
+			file_s = datetime.now().strftime("%H%M%S.json")
+		
+			backup_folder = self.relative_backup_path + folder_s
+			backup_file = backup_folder + file_s
+		
+			if not os.path.exists(backup_folder):
+				os.mkdir(backup_folder)
+		
+			with open(backup_file, 'w') as f:
+				f.write(json.dumps(self.presets, sort_keys=True, indent=4))
+		
+			print("Settings backed up at {}".format(backup_file))
+		except Exception as e:
+			print(e)
 
 	@setting(3)
 	def reload_presets(self, c):

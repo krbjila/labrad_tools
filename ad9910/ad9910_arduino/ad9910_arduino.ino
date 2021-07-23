@@ -15,7 +15,7 @@ int dummy = 0; // GET RID OF ME!
 void setup() {
   // Initialize and start serial
   initialize();
-  Serial.begin(4800);
+  Serial.begin(2400);
   initProgram();
   initProfiles();
 }

@@ -26,8 +26,8 @@ from gui_defaults_helpers import *
 OPT_FIELDS = ['Bias', 'Angle', 'dEdx', 'dEdy', 'nux', 'nuy']
 OPT_LONG = ['Bias (V/cm)', 'Angle from vertical (deg)', 'd|E|/dx (V/cm^2)', 'd|E|/dy (V/cm^2)', 'nu_x (Hz)', 'nu_y (Hz)']
 OPT_PRECISIONS = [2, 1, 2, 2, 2, 2]
-OPT_MAX = [13333., 180., 10000., 10000., 300., 300.]
-OPT_MIN = [-13333., -180., -10000., -10000., -300., -300.]
+OPT_MAX = [13333., 180., 10000., 18000., 300., 300.]
+OPT_MIN = [-13333., -180., -10000., -18000., -300., -300.]
 
 SYM_FIELDS = ['EastWest', 'UpperLowerEqual', 'UpperLowerNegative']
 SYM_LONG = ['East = West?', 'Upper = Lower?', 'Upper = (-1)*Lower?']

@@ -16,18 +16,18 @@ node_dicts = [
     },
     {
         'node imaging' : [
-            'ad9910',
             'okfpga',
             'usb',
             'serial',
             'dg800',
             'elliptec',
+            'ad9910', # needs serial server
             'logging'
         ],
-        'node krbg2': [
-            'okfpga',
-            'dds'
-        ]
+        # 'node krbg2': [
+        #     'okfpga',
+        #     'dds'
+        # ]
     },
     {
         'node krbjila': [
