@@ -3,7 +3,7 @@ import os
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
-LABRADHOST = os.getenv('LABRADHOST')
+LABRADHOST = os.getenv('LABRADHOST', 'localhost')
 
 class SerialConnection(object):
     @inlineCallbacks
@@ -18,8 +18,8 @@ class SerialConnection(object):
                 yield getattr(self.server, attr)(value)
     
     @inlineCallbacks
-    def baudrate(self, x=None):
-        ans = yield self.server.baudrate(x)
+    def baud_rate(self, x=None):
+        ans = yield self.server.baud_rate(x)
         returnValue(ans)
    
     @inlineCallbacks
@@ -33,14 +33,19 @@ class SerialConnection(object):
         returnValue(ans)
 
     @inlineCallbacks
-    def write_line(self, x):
-        ans = yield self.server.write_line(x)
+    def write_termination(self, t):
+        ans = yield self.server.termination(t)
         returnValue(ans)
+
+    # @inlineCallbacks
+    # def write_line(self, x):
+    #     ans = yield self.server.write_line(x)
+    #     returnValue(ans)
     
-    @inlineCallbacks
-    def write_lines(self, x):
-        ans = yield self.server.write_lines(x)
-        returnValue(ans)
+    # @inlineCallbacks
+    # def write_lines(self, x):
+    #     ans = yield self.server.write_lines(x)
+    #     returnValue(ans)
     
     @inlineCallbacks
     def read(self, x=0):
@@ -52,19 +57,19 @@ class SerialConnection(object):
         ans = yield self.server.read_line()
         returnValue(ans)
 
-    @inlineCallbacks
-    def read_lines(self):
-        ans = yield self.server.read_lines()
-        returnValue(ans)
+    # @inlineCallbacks
+    # def read_lines(self):
+    #     ans = yield self.server.read_lines()
+    #     returnValue(ans)
 
     @inlineCallbacks
     def close(self):
         yield self.server.close()
     
     @inlineCallbacks
-    def flushinput(self):
-        yield self.server.flushinput()
+    def flush_input(self):
+        yield self.server.flush('input')
     
     @inlineCallbacks
-    def flushoutput(self):
-        yield self.server.flushoutput()
+    def flush_output(self):
+        yield self.server.flush('output')

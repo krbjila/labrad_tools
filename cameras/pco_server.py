@@ -547,9 +547,9 @@ class PcoServer(HardwareInterfaceServer):
         """
         save_images(self, c, path, n_images, roi)
 
-        Saves the latest :code:`n_image` images if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If fewer than n_images have been acquired, throws a :class:`PcoSaveError`.
+        Saves the latest :code:`n_image` images if available. If :meth:`record` has not been run, throws a :class:`PcoRecordError`. If fewer than :code:`n_image` have been acquired, throws a :class:`PcoSaveError`.
 
-        The images are saved as a compressed `npz <https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format>`_ file with fields "meta" containing a zero-dimensional array with a metadata dictionary (stored pickled) and a 3-dimensional integer ndarray "data" of dimension (n_images (*2 if interframing enabled), y dimension, x dimension) containing the images.
+        The images are saved as a compressed `npz <https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format>`_ file with fields "meta" containing a zero-dimensional array with a metadata dictionary (stored pickled) and a 3-dimensional integer ndarray "data" of dimension (n_images (\*2 if interframing enabled), y dimension, x dimension) containing the images.
         
         Args:
             c: Labrad context
