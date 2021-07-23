@@ -67,6 +67,8 @@ class SequencerControl(QtGui.QWidget):
 
         self.metadata = {}
 
+        self.parameters = []
+
         self.connect()
 
     def load_config(self, path=None):
@@ -335,10 +337,8 @@ class SequencerControl(QtGui.QWidget):
 #        self.electrodeControl.array.mouseover_col = -1
 
     def onDigitalVariableChange(self, nameloc, column):
-        @inlineCallbacks
         def odvc():
-            pvs = yield self.getParameters()
-            variables = list(sorted(pvs.keys()))
+            variables = list(sorted(self.parameters))
 
             (v, success) = QtGui.QInputDialog.getItem(
                 self,
@@ -573,7 +573,7 @@ class SequencerControl(QtGui.QWidget):
     @inlineCallbacks
     def updateParameters(self):
         parameters = {'sequencer': get_sequence_parameters(self.sequence)}
-        parameter_values = yield self.getParameters(parameters)
+        parameter_values = yield self.getParameters()
         self.durationRow.updateParameters(parameter_values)
         self.digitalControl.updateParameters(parameter_values)
         self.analogControl.updateParameters(parameter_values)
@@ -590,7 +590,10 @@ class SequencerControl(QtGui.QWidget):
             pv_json = yield conductor.get_parameter_values(parameters_json, True)
         else:
             pv_json = yield conductor.get_parameter_values()
-        returnValue(json.loads(pv_json)['sequencer'])
+        
+        pv = json.loads(pv_json)['sequencer']
+        self.parameters = pv.keys()
+        returnValue(pv)
 
 
     @inlineCallbacks
