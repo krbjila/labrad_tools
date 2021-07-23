@@ -54,8 +54,8 @@ class DigitalBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-         # # removed KM 08/10/2017
-    # self.bitfile = 'digital_sequencer.bit'
+        # removed KM 08/10/2017
+        # self.bitfile = 'digital_sequencer.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -74,20 +74,20 @@ class DigitalBoard(DeviceWrapper):
 
         # added KM 08/10/2017    
         if self.address == 'KRbDigi01':    
-    #        self.bitfile = 'digital_sequencer.bit'
+            # self.bitfile = 'digital_sequencer.bit'
             self.bitfile = 'digital_lower_drive_no_zero.bit'
         else:
-#            self.bitfile = 'digital_lower_drive_no_zero.bit'
+            # self.bitfile = 'digital_lower_drive_no_zero.bit'
             self.bitfile = 'digital_triggered_lower_drive.bit'
 
         for c in self.channels:
             c['board_name'] = self.name
             wrapper = DigitalChannel(c)
             row, column = wrapper.rowcol
-        if row < 'E':
+            if row < 'E':
                 channel_wrappers[(ord(row)%32-1)*16 + column] = wrapper
-        else:
-        #If the row does not start at 'A', indexing is wrong. Change so index starts at 'A' (thus the -4)
+            else:
+            #If the row does not start at 'A', indexing is wrong. Change so index starts at 'A' (thus the -4)
                 channel_wrappers[((ord(row)-4)%32-1)*16 + column] = wrapper
         self.channels = channel_wrappers
 
