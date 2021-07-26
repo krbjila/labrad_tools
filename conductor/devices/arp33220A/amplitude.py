@@ -18,12 +18,9 @@ class Amplitude(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-	yield self.cxn.krbjila_gpib.select_interface('GPIB0::22::INSTR')
-#        yield self.cxn.krbjila_gpib.write("FUNC RAMP; FUNC:RAMP:SYMM 0;")
-#        yield self.cxn.krbjila_gpib.write("BURS:NCYC 1; TRIG:SLOP POS; TRIG:SOUR EXT;")
-#        yield self.cxn.krbjila_gpib.write("BURS:STAT ON; OUTP:STAT ON")
+        yield self.cxn.krbjila_gpib.select_interface('GPIB0::22::INSTR')
 
     @inlineCallbacks
     def update(self):
         if self.value:
-	    yield self.cxn.krbjila_gpib.write('VOLT ' + str(self.value) +"V")
+            yield self.cxn.krbjila_gpib.write('VOLT ' + str(self.value) +"V")
