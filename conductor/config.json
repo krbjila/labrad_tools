@@ -36,6 +36,12 @@
                 "default_amplitude": 1
             }
         },
+        "pulseShaperAWG": {
+            "blackman": {
+                "default_period": 100E-6,
+                "default_amplitude": 1
+            }
+        },
         "ad9910": {
             "update": {
                 "device": "N=1",
