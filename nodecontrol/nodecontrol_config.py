@@ -5,7 +5,9 @@ A list of LabRAD servers, by node, which are started and stopped by the :mod:`no
 node_dicts = [
     {
         'node polarkrb': [
-                'labjack',
+                # start hardware interfaces first
+                'usb', 
+                # 'labjack',
                 # 'pco'
             ]
     },
@@ -37,14 +39,12 @@ node_dicts = [
             'arduino',
 #            # electrode gui
             'electrode',
-            # start device servers next
+#            # start device servers next
             'sequencer',
             # start conductor last
             'conductor', 
         ],
         'node polarkrb': [
-            # start hardware interfaces first
-            'usb', 
             # start multimeter monitoring
             'ag34410a',
             'alerter'
