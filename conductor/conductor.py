@@ -174,12 +174,17 @@ class ConductorServer(LabradServer):
 
         Yields:
             bool: True if an error occurs
-        """        
+        """
+        updated_parameters = {}
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_config in device_parameters.items():
                 yield self.register_parameter(device_name, parameter_name, 
                         parameter_config, generic_parameter, value_type)
+                if device_name not in updated_parameters:
+                        updated_parameters[device_name] = {}
+                updated_parameters[device_name][parameter_name] = parameter_config
 
+        yield self.parameters_updated(json.dumps(updated_parameters))
         returnValue(True)
     
     @inlineCallbacks
@@ -296,16 +301,25 @@ class ConductorServer(LabradServer):
 
         Yields:
             bool: True
-        """                             
-        fire_signal = False
+        """
+        updated_parameters = {}
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
+                param_modified = False
+                try:
+                    if self.parameters[device_name][parameter_name].value != parameter_value:
+                        param_modified = True
+                except KeyError:
+                    param_modified = True
+                if param_modified:
+                    if device_name not in updated_parameters:
+                        updated_parameters[device_name] = {}
+                    updated_parameters[device_name][parameter_name] = parameter_value
                 yield self.set_parameter_value(device_name, parameter_name, 
                                                parameter_value, 
                                                generic_parameter, value_type)
-                fire_signal = True
-        if fire_signal: # Don't fire if no parameters were actually set
-            yield self.parameters_updated(True)
+        if len(updated_parameters): # Don't fire signal if no parameters were actually set
+            yield self.parameters_updated(json.dumps(updated_parameters))
         returnValue(True)
 
     @inlineCallbacks
@@ -334,7 +348,7 @@ class ConductorServer(LabradServer):
         self.parameters[device_name][parameter_name].value = parameter_value
 
     @setting(5, parameters='s', use_registry='b', returns='s')
-    def get_parameter_values(self, c, parameters=None, use_registry=False):
+    def get_parameter_values(self, c, parameters=None, use_registry=False, get_by_device=False):
         """
         get_parameter_values(self, c, parameters=None, use_registry=False)
 
@@ -347,11 +361,13 @@ class ConductorServer(LabradServer):
                 {
                     device_name: {
                         parameter_name: None
-                    }
+                    },
+                    other_device_name: {}
                 }
             
               Defaults to None, in which case all parameter values are returned.
             use_registry (bool, optional): Look for parameter in registry (deprecated). Defaults to False.
+            get_by_device (bool, optional): If a device has an empty list of parameters, returns all the device's parameters if True. Defaults to False.
 
         Yields:
             str: json dumped string (:py:meth:`json.dumps(...)`) of dict of parameter values
@@ -364,6 +380,8 @@ class ConductorServer(LabradServer):
         parameter_values = {}
         for device_name, device_parameters in parameters.items():
             parameter_values[device_name] = {}
+            if get_by_device and len(device_parameters) == 0:
+                device_parameters = self.parameters[device_name].keys()
             for parameter_name in device_parameters:
                 parameter_values[device_name][parameter_name] = \
                         yield self.get_parameter_value(device_name, 
@@ -625,11 +643,25 @@ class ConductorServer(LabradServer):
         
         # call parameter updates in order of priority. 
         # 1 is called last. 0 is never called.
+        updated_parameters = {}
         for parameter in sorted(priority_parameters, key=lambda x: x.priority)[::-1]:
-            yield self.update_parameter(parameter)
+            param_modified = False
+            try:
+                if self.parameters[parameter.device_name][parameter.name].value != parameter.value:
+                    param_modified = True
+            except KeyError:
+                param_modified = True
+
+            updated = yield self.update_parameter(parameter)
+            param_modified = param_modified and updated
+
+            if param_modified:
+                if parameter.device_name not in updated_parameters:
+                    updated_parameters[parameter.device_name] = {}
+                updated_parameters[parameter.device_name][parameter.name] = parameter.value
 
         # signal update
-        yield self.parameters_updated(True)
+        yield self.parameters_updated(json.dumps(updated_parameters))
 
     @inlineCallbacks
     def update_parameter(self, parameter):
@@ -640,15 +672,21 @@ class ConductorServer(LabradServer):
 
         Args:
             parameter (ConductorParameter): The parameter to update.
+
+        Returns:
+            bool: True if parameter was updated, False if there was an error and the parameter was removed.
         """        
         try:
             yield parameter.update()
         except Exception as e:
             # remove parameter is update failed.
             print(e)
-            print('could not update {}\'s {}. removing parameter'.format(
+            print('Could not update {}\'s {}. Removing parameter.'.format(
                     parameter.device_name, parameter.name))
+            # TODO: Do not remove parameter, but show a warning in "Experiment Status" instead
             yield self.remove_parameter(parameter.device_name, parameter.name)
+            returnValue(False)
+        returnValue(True)
     
     def save_parameters(self):
         """
