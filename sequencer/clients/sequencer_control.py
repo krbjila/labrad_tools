@@ -67,9 +67,10 @@ class SequencerControl(QtGui.QWidget):
 
         self.metadata = {}
 
-        self.parameters = []
+        self.parameters = {}
 
         self.connect()
+        self.getParameters()
 
     def load_config(self, path=None):
         if path is not None:
@@ -338,7 +339,7 @@ class SequencerControl(QtGui.QWidget):
 
     def onDigitalVariableChange(self, nameloc, column):
         def odvc():
-            variables = list(sorted(self.parameters))
+            variables = list(sorted(self.parameters.keys()))
 
             (v, success) = QtGui.QInputDialog.getItem(
                 self,
@@ -568,17 +569,21 @@ class SequencerControl(QtGui.QWidget):
         self.analogControl.displaySequence(sequence)
         self.electrodeControl.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
-        yield self.updateParameters()
+        yield self.updateParameters(signal={})
     
     @inlineCallbacks
-    def updateParameters(self):
-        parameters = {'sequencer': get_sequence_parameters(self.sequence)}
-        parameter_values = yield self.getParameters()
-        self.durationRow.updateParameters(parameter_values)
-        self.digitalControl.updateParameters(parameter_values)
-        self.analogControl.updateParameters(parameter_values)
-        self.electrodeControl.updateParameters(parameter_values)
-        self.addDltRow.updateParameters(parameter_values)
+    def updateParameters(self, signal=None):
+        if signal is not None:
+            if 'sequencer' in self.parameters:
+                self.parameters.update(self.parameters['sequencer'])
+            parameters = self.parameters
+        else:
+            parameters = yield self.getParameters()
+        self.durationRow.updateParameters(parameters)
+        self.digitalControl.updateParameters(parameters)
+        self.analogControl.updateParameters(parameters)
+        self.electrodeControl.updateParameters(parameters)
+        self.addDltRow.updateParameters(parameters)
         self.setSizes()
 
     @inlineCallbacks
@@ -592,14 +597,14 @@ class SequencerControl(QtGui.QWidget):
             pv_json = yield conductor.get_parameter_values()
         
         pv = json.loads(pv_json)['sequencer']
-        self.parameters = pv.keys()
+        self.parameters = pv
         returnValue(pv)
 
 
     @inlineCallbacks
     def update_parameters(self, c, signal):
         if signal:
-            yield self.updateParameters()
+            yield self.updateParameters(signal=json.loads(signal))
 
     @inlineCallbacks
     def update_sequencer(self, c, signal):
