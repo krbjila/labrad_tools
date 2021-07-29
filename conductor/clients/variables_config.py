@@ -38,14 +38,10 @@ variables_dict = [
     ['*StableBias', -0.1], # was 0.45
     ['*FeshBias', -5.245],
     ['*ToeBias', -5.01],
-    #Micellaneous
-    ['*time', 0.1],
+    # RF
     ['*RFpulse', 0.001],
     ['*RFpulse2', 0.001],
     ['*RFpulse20', 0.001],
-    ['*X', 0.005],
-    ['*Tau', -3],
-    ['*FillTime', 5.0], 
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
@@ -75,6 +71,19 @@ variables_dict = [
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
     ['*LSLFinal', 0.03],
+      # Micellaneous
+    ['*time', 0.1],
+    ['*X', 0.005],
+    ['*Tau', -3],
+    ['*FillTime', 5.0],
+    # Digital variables
+    ['*?HOT', 1],
+    ['*?MARIA', 1],
+    ['*?VLATT', 1],
+    ['*?LSL', 1],
+    ['*?Blackman', 0],
+    ['*?RFpulse', 0.001],
+    ['*?stirap', 1],
     # Utility variables
     ['*poo', 0],
     ['*LowerPlateZero', 0],

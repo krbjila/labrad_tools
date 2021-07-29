@@ -23,5 +23,13 @@
         "#0000ff",
         "#8a2be2"
     ],
+    "variable_colors": [
+        "#ff8887",
+        "#fed8b1",
+        "#fffcbb",
+        "#90ee90",
+        "#add8e6",
+        "#cbc8e3"
+    ],
     "electrode_channel_map": ["LP", "UP", "LW", "LE", "UW", "UE"]
 }

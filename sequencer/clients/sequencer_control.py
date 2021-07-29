@@ -6,13 +6,13 @@ import sys
 
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 sys.path.append('../../client_tools')
 from connection import connection
 from widgets import SuperSpinBox
 from lib.duration_widgets import DurationRow
-from lib.digital_widgets import DigitalControl
+from lib.digital_widgets import DigitalControl, DigitalVariableSelector
 from lib.analog_widgets import AnalogControl
 
 # from lib.ad5791_widgets import AD5791Control
@@ -66,6 +66,8 @@ class SequencerControl(QtGui.QWidget):
         self.cxn = cxn
 
         self.metadata = {}
+
+        self.parameters = []
 
         self.connect()
 
@@ -293,6 +295,8 @@ class SequencerControl(QtGui.QWidget):
         for l in self.electrodeControl.nameColumn.labels.values():
             l.clicked.connect(self.onElectrodeNameClick(l.nameloc))
 
+        self.digitalControl.array.trigger_variable_dialog.connect(self.onDigitalVariableChange)
+
         # KM added below 05/07/18
         # for tracking changes
         for col in self.digitalControl.array.columns:
@@ -331,6 +335,24 @@ class SequencerControl(QtGui.QWidget):
 #
 #        self.analogControl.array.mouseover_col = -1
 #        self.electrodeControl.array.mouseover_col = -1
+
+    def onDigitalVariableChange(self, nameloc, column):
+        def odvc():
+            variables = list(sorted(self.parameters))
+
+            (v, success) = QtGui.QInputDialog.getItem(
+                self,
+                'Digital Variable Selector',
+                'Variable: ',
+                variables,
+                0,
+                True,
+            )
+            v = str(v)
+            if success and v in variables:
+                self.digitalControl.array.set_button_variable(str(nameloc), int(column), v)
+                self.displaySequence(self.getSequence())
+        return odvc()
 
     def onDigitalNameClick(self, channel_name):
         channel_name = str(channel_name)
@@ -551,16 +573,28 @@ class SequencerControl(QtGui.QWidget):
     @inlineCallbacks
     def updateParameters(self):
         parameters = {'sequencer': get_sequence_parameters(self.sequence)}
-        parameters_json = json.dumps(parameters)
-        conductor = yield self.cxn.get_server(self.conductor_servername)
-        pv_json = yield conductor.get_parameter_values(parameters_json, True)
-        parameter_values = json.loads(pv_json)['sequencer']
+        parameter_values = yield self.getParameters()
         self.durationRow.updateParameters(parameter_values)
         self.digitalControl.updateParameters(parameter_values)
         self.analogControl.updateParameters(parameter_values)
         self.electrodeControl.updateParameters(parameter_values)
         self.addDltRow.updateParameters(parameter_values)
         self.setSizes()
+
+    @inlineCallbacks
+    def getParameters(self, parameters=None):
+        conductor = yield self.cxn.get_server(self.conductor_servername)
+        
+        if parameters:
+            parameters_json = json.dumps(parameters)
+            pv_json = yield conductor.get_parameter_values(parameters_json, True)
+        else:
+            pv_json = yield conductor.get_parameter_values()
+        
+        pv = json.loads(pv_json)['sequencer']
+        self.parameters = pv.keys()
+        returnValue(pv)
+
 
     @inlineCallbacks
     def update_parameters(self, c, signal):
