@@ -1,4 +1,5 @@
 {
+    "NOTE": "variables are in: conductor/clients/variables_config.py",
     "data_directory": "/home/bialkali/data/{}/",
     "time_format": "%Y%m%d",
     "default_values_path": "./default_values.json",

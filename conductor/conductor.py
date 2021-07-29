@@ -1,19 +1,22 @@
 """
-### BEGIN NODE INFO
-[info]
-name = conductor
-version = 1.0
-description = 
-instancename = conductor
+Coordinate setting and saving experiment parameters.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = conductor
+    version = 1.0
+    description = 
+    instancename = conductor
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 
 import json
@@ -43,15 +46,18 @@ from lib.exceptions import ParameterNotInitialized
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
-    """ coordinate setting and saving experiment parameters.
+    """
+    ConductorServer(LabradServer)
     
-    parameters are classes defined in ./devices/...
-        parameters hold values representing real world attributes.
-        typically send/receive data to/from hardware.
-        see ./devices/conductor_device/conductor_parameter.py for documentation
+    Coordinate setting and saving experiment parameters.
     
-    experiments specify parameter values to be iterated over 
-        and a filename for saving data.
+    Parameters are classes defined in ./devices/. TODO: fancy link
+
+        * parameters hold values representing real world attributes.
+        * typically send/receive data to/from hardware.
+        * see ./devices/conductor_device/conductor_parameter.py for documentation TODO: fancy link
+    
+    Experiments specify parameter values to be iterated over and a filename for saving data.
     """
 
     name = 'conductor'
@@ -79,7 +85,14 @@ class ConductorServer(LabradServer):
         self.advance_counter = 0
     
     def load_config(self, path=None):
-        """ set instance attributes defined in json config """
+        """
+        load_config(self, path=None)
+
+        Set instance attributes defined in json config.
+
+        Args:
+            path (str, optional): [description]. Defaults to None, in which case the object's ``self.config_path`` is loaded.
+        """        
         if path is not None:
             self.config_path = path
         with open(self.config_path, 'r') as infile:
@@ -89,7 +102,11 @@ class ConductorServer(LabradServer):
         # TODO: RUN conductor/clients/variables_config.py and setattr from those also. Refer to conductor/clients/forceWriteValue in parameter_values_control.py
 
     def initServer(self):
-        # register default parameters after connected to labrad
+        """
+        initServer(self)
+
+        Registers default parameters after connected to labrad
+        """
         callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
 
 
@@ -98,9 +115,12 @@ class ConductorServer(LabradServer):
     @setting(18)
     def refresh_default_parameters(self, c):
         """
-        refresh parameters
+        refresh_default_parameters(self, c)
 
-        tries to register all default parameters defined in the config.json file
+        Tries to register all default parameters defined in the ``config.json`` file
+
+        Args:
+            c: LabRAD context
         """
 
         # Signal to clients that parameters are being refreshed
@@ -127,29 +147,34 @@ class ConductorServer(LabradServer):
 
     @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
     def register_parameters(self, c, parameters, generic_parameter=False, value_type=None):
-        """ 
-        load parameters into conductor
-        
-        parameters are defined in conductor/devices/device_name/parameter_name.py
-        view defined parameters with conductor.available_parameters
-        
-        Args:
-            parameters: json.dumps(...) of
-                {
-                    device_name: {
-                        parameter_name: {
-                            parameter_config
-                        }
-                }.
-                device_name: string e.g. "dds1"
-                parameter_name: string e.g. "frequency"
-                parameter_config: passed to parameter's __init__
-            generic_parameter: bool. If true and no defined parameter is found,
-                will create generic_parameter for holding values.AA
-            value_type: string. e.g. "single", "list", "data"
-        Returns:
-            bool. true if no errors.
         """
+        register_parameters(self, c, parameters, generic_parameter=False, value_type=None)
+
+        Load parameters into conductor.
+        
+        Parameters are defined in conductor/devices/device_name/parameter_name.py.
+
+        View defined parameters with conductor.available_parameters
+
+        Args:
+            c: LabRAD context
+            parameters (str): ``json.dumps(...)`` of::
+
+               {
+                   device_name: {
+                       parameter_name: {
+                           parameter_config
+                       }
+               }
+
+              where ``device_name`` is a string (e.g. "dds1"), ``parameter_name`` is a string (e.g. "frequency"), and ``parameter_config`` is passed to parameter's ``__init__``.
+
+            generic_parameter (bool, optional): If ``True`` and no defined parameter is found, will create generic_parameter for holding values. Defaults to False.
+            value_type (str, optional): e.g. "single", "list", "data". Defaults to None.
+
+        Yields:
+            bool: True if an error occurs
+        """        
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_config in device_parameters.items():
                 yield self.register_parameter(device_name, parameter_name, 
@@ -160,27 +185,25 @@ class ConductorServer(LabradServer):
     @inlineCallbacks
     def register_parameter(self, device_name, parameter_name, parameter_config,
                            generic_parameter, value_type):
-        """ populate self.parameters with specified parameter
+        """register_parameter(self, device_name, parameter_name, parameter_config, generic_parameter, value_type)
 
-        look in ./devices/ for specified parameter
-        if no suitable parameter is found and generic_parameter is True, 
-        create generic parameter for holding values.
+        Populate ``self.parameters`` with specified parameter.
+
+        Look in ``./devices/`` for specified parameter.
+
+        If no suitable parameter is found and generic_parameter is ``True``, create generic parameter for holding values.
 
         Args:
-            device_name: string e.g. "dds1"
-            parameter_name: string e.g. "frequency"
-            parameter_config: passed to parameter's __init__
-            generic_parameter: bool. specifies whether or not to use 
-                devices/conductor_device/conductor_parameter.py if 
-                devices/device_name/parameter_name.py is not found.
-            value_type: string. e.g. "single", "list", "data"
-        Returns:
-            None
+            device_name (str): Name of device (e.g. "dds1")
+            parameter_name (str): Name of parameter (e.g. "frequency")
+            parameter_config (str): passed to parameter's ``__init__``
+            generic_parameter (bool): Specifies whether or not to use ``devices/conductor_device/conductor_parameter.py`` if ``devices/device_name/parameter_name.py`` is not found.
+            value_type (str): Description of parameter value (e.g. "single", "list", "data")
+
         Raises:
-            ParameterAlreadyRegistered: if specified parameter is already in 
-                self.parameters
-            ParameterNotImported: if import of specified parameter fails.
-        """
+            ParameterAlreadyRegistered: if specified parameter is already in ``self.parameters``
+            ParameterNotImported: if import of specified parameter fails
+        """        
       
         if not self.parameters.get(device_name):
             self.parameters[device_name] = {}
@@ -206,17 +229,24 @@ class ConductorServer(LabradServer):
 
     @setting(3, parameters='s', returns='b')
     def remove_parameters(self, c, parameters):
-        """ 
-        remove specified parameters
+        """
+        remove_parameters(self, c, parameters)
+
+        Remove specified parameters.
 
         Args:
-            parameters: json dumped string [json.dumps(...)] of dict
+            c: LabRAD context
+            parameters (str): json dumped string (:py:meth:`json.dumps(...)`) of dict::
+
                 {
                     device_name: {
                         parameter_name: None
                     }
                 }
-        """
+
+        Yields:
+            bool: True
+        """        
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, _ in device_parameters.items():
                 yield self.remove_parameter(device_name, parameter_name)
@@ -224,15 +254,16 @@ class ConductorServer(LabradServer):
     
     @inlineCallbacks
     def remove_parameter(self, device_name, parameter_name):
-        """ remove specified parameter from self.parameters
+        """
+        remove_parameter(self, device_name, parameter_name)
+        
+        Remove specified parameter from ``self.parameters``.
 
         Args:
-            device_name: string e.g. "dds1"
-            parameter_name: string e.g. "frequency"
-        Returns:
-            None
+            device_name (str): Name of device (e.g. "dds1")
+            parameter_name (str): Name of parameter (e.g. "frequency")
         Raises:
-            ParameterNotRegistered: if specified parameter not in self.parameters
+            ParameterNotRegistered: if specified parameter not in ``self.parameters``
         """
         try:
             parameter = self.parameters[device_name][parameter_name]
@@ -248,14 +279,24 @@ class ConductorServer(LabradServer):
     @setting(4, parameters='s', generic_parameter='b', returns='b')
     def set_parameter_values(self, c, parameters, generic_parameter=False, 
                              value_type=None):
-        """  set specified parameter values
-
-        parameters = {
-            device_name: {
-                parameter_name: value
-            }
-        }
         """
+        set_parameter_values(self, c, parameters, generic_parameter=False, value_type=None)
+
+        Args:
+            c: A LabRAD context
+            parameters (str): json dumped string (:py:meth:`json.dumps(...)`) of dict::
+
+                {
+                    device_name: {
+                        parameter_name: value
+                    }
+                }
+            generic_parameter (bool, optional): Specifies whether or not to use ``devices/conductor_device/conductor_parameter.py`` if ``devices/device_name/parameter_name.py`` is not found. Defaults to False.
+            value_type (str, optional): Description of parameter value (e.g. "single", "list", "data"). Defaults to None.
+
+        Yields:
+            bool: True
+        """                             
         fire_signal = False
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
@@ -270,19 +311,19 @@ class ConductorServer(LabradServer):
     @inlineCallbacks
     def set_parameter_value(self, device_name, parameter_name, parameter_value,
                             generic_parameter=False, value_type=None):
-        """ assign parameter value to specified parameter.value
-
-        register parameter if not already in self.parameters
+        """
+        set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None)
 
         Args:
-            device_name: string e.g. "dds1"
-            parameter_name: string e.g. "frequency"
-            parameter_value: anything e.g. 20e6
-        Returns:
-            None
+            device_name (str): Name of device (e.g. "dds1")
+            parameter_name (str): Name of parameter (e.g. "frequency")
+            parameter_value (any): Any type (e.g. 20E6)
+            generic_parameter (bool, optional): Specifies whether or not to use ``devices/conductor_device/conductor_parameter.py`` if ``devices/device_name/parameter_name.py`` is not found. Defaults to False.
+            value_type (str, optional): Description of parameter value (e.g. "single", "list", "data"). Defaults to None.
         Raises:
             ParameterNotImported: if import of specified parameter fails.
-        """
+
+        """        
         try:
             self.parameters[device_name][parameter_name]
         except KeyError:
@@ -294,14 +335,27 @@ class ConductorServer(LabradServer):
 
     @setting(5, parameters='s', use_registry='b', returns='s')
     def get_parameter_values(self, c, parameters=None, use_registry=False):
-        """ get specified parameter values
-
-        parameters = {
-            device_name: {
-                parameter_name: None
-            }
-        }
         """
+        get_parameter_values(self, c, parameters=None, use_registry=False)
+
+        Gets specified parameter values.
+
+        Args:
+            c: LabRAD context
+            parameters (str, optional): json dumped string (:py:meth:`json.dumps(...)`) of dict::
+
+                {
+                    device_name: {
+                        parameter_name: None
+                    }
+                }
+            
+              Defaults to None, in which case all parameter values are returned.
+            use_registry (bool, optional): Look for parameter in registry (deprecated). Defaults to False.
+
+        Yields:
+            str: json dumped string (:py:meth:`json.dumps(...)`) of dict of parameter values
+        """        
         if parameters is None:
             parameters = {dn: dp.keys() for dn, dp in self.parameters.items()}
         else:
@@ -319,6 +373,20 @@ class ConductorServer(LabradServer):
 
     @inlineCallbacks
     def get_parameter_value(self, device_name, parameter_name, use_registry=False):
+        """
+        get_parameter_value(self, device_name, parameter_name, use_registry=False)
+
+        Args:
+            device_name (str): Name of device (e.g. "dds1")
+            parameter_name (str): Name of parameter (e.g. "frequency")
+            use_registry (bool, optional): Look for parameter in registry (deprecated). Defaults to False.
+
+        Raises:
+            Exception: Throws an error if an invalid parameter is used.
+
+        Yields:
+            any: The value of the selected parameter
+        """        
         message = None
         try:
             try: 
@@ -353,16 +421,22 @@ class ConductorServer(LabradServer):
     
     @setting(8, experiment='s', run_next='b', returns='i')
     def queue_experiment(self, c, experiment, run_next=False):
-        """ load experiment into queue
-
-        experiments are json object 
-        keys...
-            'name': some string. required.
-
-            'parameter_values': {name: value}. optional.
-            'append data': bool, save data to previous file? optional.
-            'loop': bool, inserts experiment back into begining of queue optional.
         """
+        queue_experiment(self, c, experiment, run_next=False)
+
+        Args:
+            c: LabRAD context
+            experiment (str): json-dumped string with keys 
+
+                * ``name``' (str): Some string. Required.
+                * ``parameter_values`` (Dict, optional): {name: value}.
+                * ``append data`` (bool, optional): Save data to previous file?
+                * ``loop`` (bool, optional): Inserts experiment back into begining of queue.
+            run_next (bool, optional): Add the experiment at the beginning of the queue. Defaults to False.
+
+        Returns:
+            int: Number of experiments in the queue
+        """        
         if run_next:
             self.experiment_queue.appendleft(json.loads(experiment))
         else:
@@ -371,6 +445,18 @@ class ConductorServer(LabradServer):
 
     @setting(9, experiment_queue='s', returns='i')
     def set_experiment_queue(self, c, experiment_queue=None):
+        """
+        set_experiment_queue(self, c, experiment_queue=None)
+
+        Loads the experiments in ``experiment_queue`` into the queue.
+
+        Args:
+            c: LabRAD context
+            experiment_queue (str, optional): json-dumped list of experiments. See :meth:`queue_experiment` for format of an experiment. Defaults to None.
+
+        Returns:
+            int: Number of experiments in the queue
+        """
         self.experiment_queue = deque([])
         if experiment_queue:
             experiment_queue = json.loads(experiment_queue)
@@ -380,14 +466,19 @@ class ConductorServer(LabradServer):
 
     @setting(10, returns='b')
     def stop_experiment(self, c):
-        # replace parameter value lists with single value.
-#        for device_name, device_parameters in self.parameters.items():
-#            for parameter_name, parameter in device_parameters.items():
-#                parameter.value = parameter.value
-#        self.data = {}
-#        self.data_path = None
-#        return True
+        """
+        stop_experiment(self, c)
 
+        Sets ``self.parameters`` to run the default sequence and sends the ``experiment_stopped`` signal.
+
+        Do not call this directly. Used internally in :meth:`abort_experiment`, which you should call.
+
+        Args:
+            c: LabRAD context
+
+        Returns:
+            bool: True
+        """
         # replace parameter value lists with single value.
         for device_name, device_parameters in self.parameters.items():
             for parameter_name, parameter in device_parameters.items():
@@ -403,9 +494,17 @@ class ConductorServer(LabradServer):
         return True
 
     # KM added 09/10/2017
-    # Abort the experiment immediately, then run defaults
+    # 
     @setting(17)
     def abort_experiment(self, c):
+        """
+        abort_experiment(self, c)
+
+        Abort the experiment immediately, then run defaults. Also cancels queued experiments.
+
+        Args:
+            c: LabRAD context
+        """        
         yield self._advance_logging(True)
         for ID, call in self.advance_dict.items():
             try:
@@ -420,10 +519,26 @@ class ConductorServer(LabradServer):
  
     @setting(13, returns='s')
     def get_data(self, c):
+        """
+        get_data(self, c)
+
+        Returns json-dumped dictionary of current parameter values.
+
+        Args:
+            c: LabRAD context
+
+        Returns:
+            str: json-dumped dictionary of current parameter values
+        """
         return json.dumps(self.data)
     
     @inlineCallbacks
     def advance_experiment(self):
+        """
+        advance_experiment(self)
+
+        Runs the next queued experiment. Advances logging.
+        """
         if len(self.experiment_queue):
             # send signal that experiment has stopped
             self.experiment_stopped(True)
@@ -479,7 +594,11 @@ class ConductorServer(LabradServer):
 
     @inlineCallbacks
     def advance_parameters(self):
-        """ get new parameter values then send to devices """
+        """
+        advance_parameters(self)
+        
+        Get new parameter values then send to devices. Calls :meth:`advance_experiment`.
+        """
         advanced = False
         # check if we need to load next experiment
         pts = remaining_points(self.parameters)
@@ -514,7 +633,14 @@ class ConductorServer(LabradServer):
 
     @inlineCallbacks
     def update_parameter(self, parameter):
-        """ have device update parameter value """
+        """
+        update_parameter(self, parameter)
+
+        Have device update parameter value. Prints a warning message and removes the parameter if the parameter can't be updated.
+
+        Args:
+            parameter (ConductorParameter): The parameter to update.
+        """        
         try:
             yield parameter.update()
         except Exception as e:
@@ -525,6 +651,11 @@ class ConductorServer(LabradServer):
             yield self.remove_parameter(parameter.device_name, parameter.name)
     
     def save_parameters(self):
+        """
+        save_parameters(self)
+
+        Save to disk a json-dumped dictionary of current parameter values ``self.data``. The file is saved in the folder on the dataserver determined by the logging server's current shot number.
+        """
         # save data to disk
         if self.data:
             try:
@@ -571,10 +702,13 @@ class ConductorServer(LabradServer):
                 except Exception as e:
                     print("Could not connect to data server: ", e)
 
-
-
     @inlineCallbacks
     def stopServer(self):
+        """
+        stopServer(self)
+
+        Called when the server is stopped. Saves the current parameters before closing.
+        """
         yield self._advance_logging(True)
 
         parameters_filename = self.parameters_directory + 'current_parameters.json'
@@ -599,37 +733,18 @@ class ConductorServer(LabradServer):
         with open(parameters_filename, 'w') as outfile:
             json.dump(parameters, outfile)
 
-#        for device_name, device_parameters in self.parameters.items():
-#            yield self.client.registry.cd(self.registry_directory)
-#            devices = yield self.client.registry.dir()
-#            if device_name not in devices:
-#                yield self.client.registry.mkdir(device_name)
-#            yield self.client.registry.cd(device_name)
-#            for parameter_name, parameter in device_parameters.items():
-#                value = parameter.value
-#                try:
-#                    yield self.client.registry.set(parameter_name, value)
-#                except:
-#                    pass
-#
-
     # KM edited 09/10/2017
     @setting(15)
     def advance(self, c, delay=0, **kwargs):
-#        # this was the original function
-#        if delay:
-#            callLater(delay, self.advance, c)
-#        else:
-#            ti = time()
-#            yield deferToThread(self.save_parameters)
-#            yield self.advance_parameters()
-#            tf = time()
-#            if self.do_print_delay:
-#                print('delay {}'.format(tf-ti))
+        """
+        advance(self, c, delay=0, **kwargs)
 
-        # KM added 09/10/2017
-        # keep track of pending callLaters in a dict
-        # and remove from the dict when the call is finished
+        Calls :meth:advance_parameters after a time of ``delay``. Keeps track of experiments that are queued in ``self.advance_dict`` so they can be cancelled.
+
+        Args:
+            c: LabRAD context
+            delay (int, optional): The delay in seconds before advancing the experiment. Defaults to 0.
+        """        
         if delay:
             self.advance_dict[str(self.advance_counter)] = callLater(delay, self.advance, c, ID=self.advance_counter)
             self.advance_counter=0
@@ -646,22 +761,32 @@ class ConductorServer(LabradServer):
             if self.do_print_delay:
                 print('delay: {}'.format(tf-ti))
 
-    """
-    Tells the logging server to begin logging for the next shot. Shot number is reset daily
-    """
     @setting(1700, end='b')
     def advance_logging(self, c, end = False):
+        """
+        advance_logging(self, c, end = False)
+
+        Tells the logging server to begin logging for the next shot. Shot number is reset daily.
+
+        Args:
+            c: LabRAD context
+            end (bool, optional): Stops logging the current shot if `True`. Defaults to False.
+        """        
         yield self._advance_logging(end)
 
     @inlineCallbacks
     def _advance_logging(self, end = False):
-        cur_time = datetime.now()
+        """
+        _advance_logging(self, end = False)
 
-        # if (not end) and len(self.experiment_queue):
-        #     print(self.experiment_queue)
-        #     end = False
-        # else:
-        #     end = True
+        Tells the logging server to begin logging for the next shot. Shot number is reset daily.
+
+        Do not use directly; called by :meth:`advance_logging`.
+
+        Args:
+            end (bool, optional): Stops logging the current shot if `True`. Defaults to False.
+        """
+        cur_time = datetime.now()
 
         try:
             logging = yield self.client.servers['imaging_logging']
@@ -690,13 +815,19 @@ class ConductorServer(LabradServer):
 
     @setting(16, do_print_delay='b', returns='b')
     def print_delay(self, c, do_print_delay=None):
+        """
+        print_delay(self, c, do_print_delay=None)
+
+        Args:
+            c: LabRAD context
+            do_print_delay (bool, optional): Sets whether the delay is printed by :meth:`advance`. Defaults to None.
+
+        Returns:
+            bool: do_print_delay
+        """
         if do_print_delay is not None:
             self.do_print_delay = do_print_delay
         return self.do_print_delay
-
-    @setting(25)
-    def test_logging(self, c):
-        yield self.client.servers['imaging_logging'].log("hi")
 
 if __name__ == "__main__":
     from labrad import util
