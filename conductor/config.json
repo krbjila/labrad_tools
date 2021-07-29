@@ -39,7 +39,7 @@
         "pulseShaperAWG": {
             "blackman": {
                 "default_period": 100E-6,
-                "default_amplitude": 1
+                "default_amplitude": 0.5
             }
         },
         "ad9910": {
