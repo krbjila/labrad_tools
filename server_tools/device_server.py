@@ -6,8 +6,10 @@ import os
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
 
-from decorators import quickSetting
-
+import sys
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from server_tools.decorators import quickSetting
 
 def underscore(name):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
