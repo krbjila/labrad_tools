@@ -8,14 +8,14 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('./forms/')
-from input_forms import InputForms
-from output_forms import OutputForms
-from gui_defaults_helpers import *
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.clients.lib.forms.input_forms import InputForms
+from electrode.clients.lib.forms.output_forms import OutputForms
+from electrode.clients.lib.forms.gui_defaults_helpers import *
 from optimize_dialog import OptimizationDialog
 
-sys.path.append('./../../')
-from calibrations import *
+from electrode.calibrations import *
 
 
 CS_GEOMETRY = {

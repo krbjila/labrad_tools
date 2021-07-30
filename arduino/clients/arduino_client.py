@@ -4,8 +4,6 @@ import numpy as np
 import os
 import sys
 
-sys.path.append('../../client_tools')
-
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks

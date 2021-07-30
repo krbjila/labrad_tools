@@ -9,8 +9,9 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 import json
 
-sys.path.append('./devices/sequencer/lib')
-from helpers import value_to_sequence, get_parameters, substitute_sequence_parameters
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from sequencer.lib.helpers import value_to_sequence, get_parameters, substitute_sequence_parameters
 
 
 PATH = "../magnetic_evaporation/evap.json"

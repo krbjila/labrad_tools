@@ -18,8 +18,6 @@ Provides access to Highfinesse WS-7 Wavemeter.
 """
 import sys
 from labrad.server import LabradServer, setting
-sys.path.append("../client_tools")
-# from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor

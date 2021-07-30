@@ -9,13 +9,13 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-sys.path.append('../../../client_tools')
-from connection import connection
-from widgets import SuperSpinBox
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from client_tools.connection import connection
+from client_tools.widgets import SuperSpinBox
 from helpers import merge_dicts, get_sequence_parameters, substitute_sequence_parameters
-sys.path.append('../')
 
-from devices.lib.ad5791_ramps import RampMaker
+from sequencer.devices.lib.ad5791_ramps import RampMaker
 
 from copy import deepcopy
 

@@ -19,9 +19,11 @@ Provides direct access to USB-enabled hardware.
     ### END NODE INFO
 """
 import sys
-import visa
+import pyvisa
 from labrad.server import LabradServer, setting
-sys.path.append('../')
+
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 
@@ -31,7 +33,7 @@ class USBServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         """ Fill self.interfaces with available connections using Python VISA """
-        rm = visa.ResourceManager()
+        rm = pyvisa.ResourceManager()
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)

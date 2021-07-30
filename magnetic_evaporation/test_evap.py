@@ -1,4 +1,4 @@
-import visa
+import pyvisa as visa
 from time import sleep, time
 from evaporate import evaporation
 

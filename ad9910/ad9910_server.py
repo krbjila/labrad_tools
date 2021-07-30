@@ -31,7 +31,9 @@ import json
 from datetime import datetime
 
 import helpers # helper functions for calculating bytes to transfer
-sys.path.append('..')
+
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.device_server import DeviceServer
 
 MAX_PROGRAM_LEN = 11

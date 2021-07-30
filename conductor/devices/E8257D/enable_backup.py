@@ -8,8 +8,9 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 
-sys.path.append('/home/bialkali/labrad_tools/magnetic_evaporation')
-from evaporate import evaporation
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from magnetic_evaporation.evaporate import evaporation
 import serial
 import serial.tools.list_ports
 

@@ -14,14 +14,12 @@ from twisted.internet.defer import inlineCallbacks
 
 from scipy.optimize import least_squares
 
-sys.path.append('../../')
-sys.path.append('../efield/')
 
-from calibrations import *
-from calculator import *
-
-sys.path.append('./forms/')
-from gui_defaults_helpers import *
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.calibrations import *
+from electrode.clients.lib.efield.calculator import *
+from electrode.clients.lib.forms.gui_defaults_helpers import *
 
 OPT_FIELDS = ['Bias', 'Angle', 'dEdx', 'dEdy', 'nux', 'nuy']
 OPT_LONG = ['Bias (V/cm)', 'Angle from vertical (deg)', 'd|E|/dx (V/cm^2)', 'd|E|/dy (V/cm^2)', 'nu_x (Hz)', 'nu_y (Hz)']

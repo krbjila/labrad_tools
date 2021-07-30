@@ -24,7 +24,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from serial import Serial
 import serial.tools.list_ports
 
-sys.path.append('../')
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 class ArduinoServer(HardwareInterfaceServer):

@@ -8,8 +8,9 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('../../')
-from calibrations import *
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.calibrations import *
 
 # Form fields (short names)
 FORM_FIELDS = {

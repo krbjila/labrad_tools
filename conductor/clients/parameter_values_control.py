@@ -9,9 +9,10 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('../../client_tools')
-from connection import connection
-from widgets import NeatSpinBox
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from client_tools.connection import connection
+from client_tools.widgets import NeatSpinBox
 
 class ParameterRow(QtGui.QWidget):
     def __init__(self, configuration):

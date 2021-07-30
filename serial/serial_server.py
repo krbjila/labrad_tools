@@ -23,7 +23,9 @@ MAKE SURE YOU CHECK THE WRITE TERMINATION... it is set to ``\r\n`` by default.
 import sys
 import pyvisa as visa
 from labrad.server import LabradServer, setting
-sys.path.append('../')
+
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 import json
 

@@ -10,11 +10,11 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('./displays/')
-from display_gui_elements import *
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.clients.lib.displays.display_gui_elements import *
 
-sys.path.append('../')
-from calibrations import *
+from electrode.calibrations import *
 
 SEP = os.path.sep
 

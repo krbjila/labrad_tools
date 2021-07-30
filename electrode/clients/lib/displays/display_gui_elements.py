@@ -15,8 +15,10 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib import cm, colors, patches, collections
 
-sys.path.append('./../../../')
-from calibrations import *
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.calibrations import *
+
 ROD_LIMIT = DAC_LIMIT * 2000.
 
 COLORMAP = 'RdBu'

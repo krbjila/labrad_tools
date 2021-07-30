@@ -6,13 +6,13 @@ import sys
 
 import client_config
 
-sys.path.append('../../client_tools')
-sys.path.append('../client_tools')
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from twisted.internet.defer import inlineCallbacks
-from connection import connection
+
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from client_tools.connection import connection
 
 SEP = os.path.sep
 

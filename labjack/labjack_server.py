@@ -19,8 +19,11 @@ Provides access to LabJack T7 DAQ.
 import sys
 from labrad.server import LabradServer, setting
 from labrad.util import getNodeName
-sys.path.append("../client_tools")
-from connection import connection
+
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from client_tools.connection import connection
+
 from twisted.internet.defer import inlineCallbacks, returnValue
 from threading import Thread
 from labjack import ljm
@@ -29,7 +32,6 @@ import numpy as np
 from datetime import datetime
 import json
 import os
-import struct
 
 class LabJackServer(LabradServer):
     """Provides access to LabJack T7 DAQ."""

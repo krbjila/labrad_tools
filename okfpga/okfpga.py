@@ -26,7 +26,8 @@ from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
-sys.path.append('../')
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 SEP = os.path.sep

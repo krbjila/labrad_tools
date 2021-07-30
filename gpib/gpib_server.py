@@ -20,14 +20,13 @@ Provides direct access to USB-enabled hardware.
 """
 import sys
 
-import visa
+import pyvisa as visa
 
 from labrad.server import LabradServer, setting
 
-sys.path.append('../')
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.hardware_interface_server import HardwareInterfaceServer
-
-
 class GPIBServer(HardwareInterfaceServer):
     """Provides direct access to GPIB-enabled hardware."""
     name = '%LABRADNODE%_gpib'

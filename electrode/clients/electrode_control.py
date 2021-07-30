@@ -8,23 +8,18 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('./lib/')
-sys.path.append('./lib/forms')
-sys.path.append('./lib/settings')
-sys.path.append('./lib/displays')
-sys.path.append('./lib/efield')
+from lib.form_widget import FormWidget
+from lib.setting_widget import SettingWidget
+from lib.display_widget import DisplayWidget 
+from lib.efield.calculator import ECalculator
+from lib.optimize_dialog import OptimizationDialog
 
-from form_widget import FormWidget
-from setting_widget import SettingWidget
-from display_widget import DisplayWidget 
-from calculator import ECalculator
-from optimize_dialog import OptimizationDialog
+from lib.helpers import json_loads_byteified
+from lib.forms.gui_defaults_helpers import DACsToVs, VsToDACs
 
-from helpers import json_loads_byteified
-from gui_defaults_helpers import DACsToVs, VsToDACs
-
-sys.path.append('../../client_tools')
-from connection import connection
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from client_tools.connection import connection
 SERVERNAME = "electrode"
 
 SEP = os.path.sep

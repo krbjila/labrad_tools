@@ -8,8 +8,9 @@ import sys
 
 from copy import deepcopy
 
-sys.path.append('./../')
-from helpers import json_load_byteified
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.clients.lib.helpers import json_load_byteified
 
 # This is a 4th order polynomial approximation
 # of the KRb dipole moment as a function of E (in kV/cm)

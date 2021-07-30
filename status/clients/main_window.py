@@ -6,20 +6,18 @@ import sys
 
 import client_config
 
-sys.path.append('../../client_tools')
-sys.path.append('../../arduino/clients')
-sys.path.append('../../conductor/clients')
-
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from twisted.internet.defer import inlineCallbacks
 
 SEP = os.path.sep
 
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from status_client import StatusClient
-from arduino_client import ArduinoClient
+from arduino.clients.arduino_client import ArduinoClient
 from abort_button import AbortButton
-from parameter_values_control import ParameterControl, ControlConfig
+from conductor.clients.parameter_values_control import ParameterControl, ControlConfig
 from refresh_button import RefreshButton
 
 # Runs the indicator button and communicates with Labrad servers

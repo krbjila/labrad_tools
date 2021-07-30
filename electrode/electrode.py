@@ -26,11 +26,11 @@ from copy import deepcopy
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-sys.path.append('../')
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
 from server_tools.device_server import DeviceServer
 
-sys.path.append('./clients/lib/')
-from helpers import json_load_byteified, json_loads_byteified
+from electrode.clients.lib.helpers import json_load_byteified, json_loads_byteified
 
 from calibrations import *
 

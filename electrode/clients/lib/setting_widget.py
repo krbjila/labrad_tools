@@ -10,8 +10,9 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 
-sys.path.append('./settings/')
-from setting_controls import SettingControl
+from pathlib import Path
+sys.path.append([str(i) for i in Path(__file__).parents if str(i).endswith("labrad_tools")][0])
+from electrode.clients.lib.settings.setting_controls import SettingControl
 from helpers import json_loads_byteified
 
 SEP = os.path.sep
