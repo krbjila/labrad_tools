@@ -1,7 +1,7 @@
 """
 Interface for talking to Arduino + AD9910 hardware.
 
-TODO: Add a link or something here to document the Arduino + AD9910 setup
+The hardware and Arduino software are described `here <https://1drv.ms/w/s!AqeccKQeGrL_wEZhytKyrRwIMO9D?e=nobSeE>`_. 
 
 ..
     ### BEGIN NODE INFO
