@@ -61,6 +61,7 @@ const short regDepths[23] {
 ///////////////////////////////////////
 // AD9910 Control Register Defaults ///
 ///////////////////////////////////////
+//Big endian
 byte cfr1_bytes[4] = {0x00, 0x20, 0x00, 0x00};
 byte cfr2_bytes[4] = {0x01, 0x40, 0x00, 0x20};
 byte cfr3_bytes[4] = {0x07, 0x00, 0x40, 0x00};
