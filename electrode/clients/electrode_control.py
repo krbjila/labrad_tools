@@ -21,7 +21,7 @@ from calculator import ECalculator
 from optimize_dialog import OptimizationDialog
 
 from helpers import json_loads_byteified
-from gui_defaults_helpers import DACsToVs, VsToDACs
+from gui_defaults_helpers import DACsToVs, VsToDACs, VsToNormalModes
 
 sys.path.append('../../client_tools')
 from connection import connection
@@ -58,7 +58,7 @@ class ElectrodeWindow(QtGui.QWidget):
 		self.scroll.setWidgetResizable(True)
 		self.scroll.setHorizontalScrollBarPolicy(2)
 		self.scroll.setVerticalScrollBarPolicy(2)
-                self.scroll.setFrameShape(0)
+		self.scroll.setFrameShape(0)
 
 		self.layout.addWidget(self.scroll)
 		self.setLayout(self.layout)
@@ -85,7 +85,7 @@ class ElectrodeControl(QtGui.QWidget):
 		self.layout = QtGui.QVBoxLayout()
 
 		self.settings = SettingWidget()
-                self.optimizeButton = QtGui.QPushButton('Parameter optimization')
+		self.optimizeButton = QtGui.QPushButton('Parameter optimization')
 		self.forms = FormWidget(self.calculator)
 		self.displays = DisplayWidget(self.calculator)
 
@@ -102,7 +102,7 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settings.refreshSignal.connect(self.refresh)
 
 		self.layout.addWidget(self.settings)
-                self.layout.addWidget(self.optimizeButton)
+		self.layout.addWidget(self.optimizeButton)
 		self.layout.addWidget(self.forms)
 		self.layout.addWidget(self.displays)
 
@@ -137,6 +137,8 @@ class ElectrodeControl(QtGui.QWidget):
 	def inputFormChanged(self):
 		(vals, comp_shim) = self.forms.getValues()
 		dac = VsToDACs(vals)
+		self.presets[self.settings.currentSetting]['normalModes'] = VsToNormalModes(vals, comp_shim)
+		self.presets[self.settings.currentSetting]['volts'] = vals
 		self.presets[self.settings.currentSetting]['values'] = dac
 		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
 		self.displays.setValues(vals, comp_shim)
@@ -160,17 +162,22 @@ class ElectrodeControl(QtGui.QWidget):
 		self.savedChanges()
 
 	def newSettingAdded(self):
-	# 	# Because of aliasing between self.presets and self.settings.presets, following (commented) line is not necessary
-	# 	self.presets.append(self.settings.presets[-1])
+		# Because of aliasing between self.presets and self.settings.presets, following (commented) line is not necessary
+		# self.presets.append(self.settings.presets[-1])
 		self.settingChanged()
 
 	def settingChanged(self):
-		vs = self.presets[self.settings.currentSetting]['values']
+		if 'volts' in self.presets[self.settings.currentSetting]:
+			vals = self.presets[self.settings.currentSetting]['volts']
+			vs = VsToDACs(vals)
+		else:
+			vs = self.presets[self.settings.currentSetting]['values']
+			vals = DACsToVs(vs)
+		
 		comp_shim = self.presets[self.settings.currentSetting]['compShim']
-		vals = DACsToVs(vs)
 		self.forms.setValues(vals, comp_shim)
 		self.displays.setValues(vals, comp_shim)
-                self.savedChanges()
+		self.savedChanges()
 
 	def settingDeleted(self, index):
 		self.presets.pop(index)
