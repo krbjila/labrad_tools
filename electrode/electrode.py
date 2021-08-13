@@ -25,6 +25,7 @@ from copy import deepcopy
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.task import LoopingCall
 
 sys.path.append('../')
 from server_tools.device_server import DeviceServer
@@ -52,6 +53,16 @@ class ElectrodeServer(LabradServer):
 		self.lookup = {}
 		self.load_config(config_path)
 		self._reload_presets()
+		self.time = None
+		
+		l = LoopingCall(self.daily_backup)
+        l.start(60)
+
+	def daily_backup():
+		if self.time is None or self.time.date() == datetime.today().date():
+			self.backup_presets()
+			self.time = datetime.now()
+
 
 	def load_config(self, path=None):
 		""" set instance attributes defined in json config """
