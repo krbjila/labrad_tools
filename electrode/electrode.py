@@ -1,19 +1,22 @@
 """
-### BEGIN NODE INFO
-[info]
-name = electrode
-version = 1.0
-description = 
-instancename = electrode
+Keeps track of electrode presets; communicates with control GUI and sequencer.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = electrode
+    version = 1.0
+    description = 
+    instancename = electrode
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import json
 import numpy as np
@@ -39,6 +42,47 @@ PRESETS_PATH = 'values.json'
 BACKUP_PATH = '/dataserver/data/'
 
 class ElectrodeServer(LabradServer):
+    """
+    Server for keeping track of electrode presets.
+    
+    Loads preset values from ``PRESETS_PATH`` (currently ``value.json``) when started and saves backup files to ``BACKUP_PATH`` (currently ``/dataserver/data/``).
+
+    Electrode presets are stored in JSON files, with a typical entry being of the form
+
+    .. code-block:: json
+    
+        {
+        "compShim": 0.0, 
+        "description": "Zero", 
+        "id": 0, 
+        "normalModes": {
+            "Bias": 0.0, 
+            "CompShim": 0.0, 
+            "EastWest": 0.0, 
+            "GlobalOffset": 0.0, 
+            "HGrad": 0.0, 
+            "RodOffset": 0.0, 
+            "RodScale": 0.0
+        }, 
+        "values": {
+            "LE": -0.00017701416113289064, 
+            "LP": -0.0002633327836823617, 
+            "LW": -0.00021936947516227844, 
+            "UE": -0.00018548979806110665, 
+            "UP": -0.00024036059085730274, 
+            "UW": -0.0002263664437981591
+        }, 
+        "volts": {
+            "LE": 0.0, 
+            "LP": 0.0, 
+            "LW": 0.0, 
+            "UE": 0.0, 
+            "UP": 0.0, 
+            "UW": 0.0
+        }
+
+    """
+    
     name = 'electrode'
     relative_presets_path = PRESETS_PATH
     relative_backup_path = BACKUP_PATH
@@ -59,13 +103,22 @@ class ElectrodeServer(LabradServer):
         l.start(60)
 
     def daily_backup(self):
+        """
+        daily_backup(self)
+
+        Called every minute. Checks whether presets have been backed up on the current datetime. If not, calls :meth:`backup_presets`.
+        """
         if self.time is None or self.time.date() != datetime.today().date():
             self.backup_presets()
             self.time = datetime.now()
 
 
     def load_config(self, path=None):
-        """ set instance attributes defined in json config """
+        """
+        load_config(self, path=None)
+        
+        Set instance attributes defined in ``config.json``.
+        """
         if path is not None:
             self.config_path = path
         with open(self.config_path, 'r') as infile:
@@ -75,12 +128,33 @@ class ElectrodeServer(LabradServer):
 
     @setting(1, returns='s')
     def get_presets(self, c):
+        """
+        get_presets(self, c)
+
+        Returns a JSON-dumped string of the presets dictionary.
+
+        Args:
+            c: LabRAD context
+
+        Returns:
+            str: A JSON-dumped string of the presets dictionary
+        """
         if len(self.presets) == 0:
             self._reload_presets()
         return json.dumps(self.presets)
 
     @setting(2, data='s')
     def update_presets(self, c, data):
+        """
+        update_presets(self, c, data)
+
+        Updates the presets dictionary with the values in the JSON-formatted string ``data``. If any of the presets have changed, save a backup file.
+
+        Args:
+            c: LabRAD context
+            data (str): A JSON-formatted string of the presets
+        """
+        
         # Make into dict
         d = json_loads_byteified(data)
         
@@ -107,6 +181,18 @@ class ElectrodeServer(LabradServer):
     # Only update keys that are currently in the presets dict
     @setting(5, data='s', returns='i')
     def soft_update(self, c, data):
+        """
+        soft_update(self, c, data)
+
+        Like :meth:`update_presets`, but only updates keys that are currently in the presets dictionary.
+
+        Args:
+            c: LabRAD context
+            data (str): A JSON-formatted string of the presets
+
+        Returns:
+            int: 0 if succesful, -1 if data couldn't be loaded
+        """
         # Make into dict
         try:
             d = json_loads_byteified(data)
@@ -136,6 +222,11 @@ class ElectrodeServer(LabradServer):
 
 
     def backup_presets(self):
+        """
+        backup_presets(self)
+
+        Save a JSON-formatted backup of the presets, to a file in the ``electrode`` folder of the current day's dataserver directory. The file name is the time, formatted as ``%H%M%S.json``.
+        """
         try:
             folder_s = datetime.now().strftime("%Y/%m/%Y%m%d/electrode/")
             file_s = datetime.now().strftime("%H%M%S.json")
@@ -155,6 +246,14 @@ class ElectrodeServer(LabradServer):
 
     @setting(3)
     def reload_presets(self, c):
+        """
+        reload_presets(self, c)
+
+        Reloads presets from ``PRESETS_PATH``. If the presets file is not found, create one, with only the zero field preset.
+
+        Args:
+            c: LabRAD context
+        """
         self._reload_presets()
     
         if self.verbose:
@@ -180,10 +279,29 @@ class ElectrodeServer(LabradServer):
 
     @setting(4, returns='s')
     def get_channels(self, c):
+        """
+        get_channels(self, c)
+
+        Args:
+            c: LabRAD context
+
+        Returns:
+            str: A JSON-formatted string of the channel locations, as set in ``config.json``.
+        """
         return json.dumps(self.channels)
 
     @setting(6, flag='b', returns='s')
     def set_verbose(self, c, flag):
+        """
+        set_verbose(self, c, flag)
+
+        Args:
+            c: LabRAD context
+            flag (bool): Whether to print verbose output.
+
+        Returns:
+            str: "Verbose setting on." or "Verbose setting off."
+        """
         if flag:
             self.verbose = True
             return "Verbose setting on."
