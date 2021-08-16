@@ -59,7 +59,7 @@ class ElectrodeServer(LabradServer):
         l.start(60)
 
     def daily_backup(self):
-        if self.time is None or self.time.date() == datetime.today().date():
+        if self.time is None or self.time.date() != datetime.today().date():
             self.backup_presets()
             self.time = datetime.now()
 
