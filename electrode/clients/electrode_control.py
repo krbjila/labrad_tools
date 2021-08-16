@@ -123,6 +123,12 @@ class ElectrodeControl(QtGui.QWidget):
 		yield self.server.signal__presets_changed(CXN_ID)
 		yield self.server.addListener(listener=self._refresh, source=None, ID=CXN_ID)
 		self.getPresets()
+		for p in self.presets:
+			if 'volts' not in p:
+				p['volts'] = DACsToVs(p['values'])
+			p['normalModes'] = VsToNormalModes(p['volts'], p['compShim'])
+			p['values'] = VsToDACs(p['volts'])
+		self.saveSetting()
 
 	@inlineCallbacks
 	def getPresets(self):
@@ -136,10 +142,9 @@ class ElectrodeControl(QtGui.QWidget):
 
 	def inputFormChanged(self):
 		(vals, comp_shim) = self.forms.getValues()
-		dac = VsToDACs(vals)
 		self.presets[self.settings.currentSetting]['normalModes'] = VsToNormalModes(vals, comp_shim)
 		self.presets[self.settings.currentSetting]['volts'] = vals
-		self.presets[self.settings.currentSetting]['values'] = dac
+		self.presets[self.settings.currentSetting]['values'] = VsToDACs(vals)
 		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
 		self.displays.setValues(vals, comp_shim)
 		self.unsavedChanges()
