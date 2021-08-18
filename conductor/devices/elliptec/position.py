@@ -11,6 +11,15 @@ from conductor_device.conductor_parameter import ConductorParameter
 from time import sleep
 
 class Position(ConductorParameter):
+    """
+    Position(ConductorParameter)
+
+    Conductor parameter for setting the position of a Thorlabs Elliptec stage.
+
+    Not currently used in the experiment.
+
+    TODO: Finish documenting this.
+    """
     priority = 1
 
     def __init__(self, config={}):

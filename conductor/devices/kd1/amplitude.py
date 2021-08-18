@@ -12,6 +12,13 @@ GPIB_ADDRESS = '1'
 GPIB_ADDRESS_STR = 'GPIB0::' + GPIB_ADDRESS + '::INSTR'
 
 class Amplitude(ConductorParameter):
+    """
+    Amplitude(ConductorParameter)
+
+    A conductor parameter to set the amplitude of the K D1 EOM RF.
+
+    TODO: Finish documenting this
+    """
     priority = 1
 
     def __init__(self, config={}):

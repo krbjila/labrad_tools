@@ -14,6 +14,13 @@ from time import sleep
 from conductor_device.conductor_parameter import ConductorParameter
 
 class Recordimage(ConductorParameter):
+    """
+    Recordimage(ConductorParameter)
+
+    Conductor parameter for recording an image on a pixelfly pco camera (the lowest indexed camera on the ``polarkrb`` computer). Allows configuration of exposure, binning, interframing, number of images, region of interest, along with enabling or disabling the camera.
+
+    TODO: Finish documenting this.
+    """
     priority = 1
 
     def __init__(self, config={}):

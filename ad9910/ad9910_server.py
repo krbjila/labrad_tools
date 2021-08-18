@@ -195,7 +195,9 @@ class AD9910Server(DeviceServer):
         """
         inspect_echo(self, c)
         
-        For debugging purposes... write me later!
+        For debugging purposes...
+        
+        TODO: write me later!
 
         Args:
             c: LabRAD context

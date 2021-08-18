@@ -1,38 +1,44 @@
 from twisted.internet.defer import inlineCallbacks
 
 class ConductorParameter(object):
-    """ Base class/template for conductor parameters
+    """
+    ConductorParameter(object)
+    
+    Base class/template for conductor parameters
 
-    ConductorParameters are meant to provide a nice way to iterate/monitor
-         settings/measurements each experimental cycle.
+    ConductorParameters are meant to provide a nice way to iterate/monitor settings/measurements each experimental cycle.
 
-    The methods and properties defined here are all used by the conductor.
-    It is therefore recommended that all conductor parameters inherit this class.
+    The methods and properties defined here are all used by the conductor. It is therefore recommended that all conductor parameters inherit this class.
 
-    the conductor calls parameters' update with higher priority first. 
-    if priority <= 0, update does not get called.
+    The conductor calls parameters' update with higher priority first. If ``priority <= 0``, update does not get called.
 
-    value_type is used to select preconfigured behaviors of 
-        ConductorParameter.{value, advance, remaining_points, ...}
+    ``value_type`` is used to select preconfigured behaviors of ``ConductorParameter.{value, advance, remaining_points, ...}``
         
-        value_type = 'single':
-            default. 
-            if _value is list, pops then returns first value in list
-            else returns _value.
+        * value_type = 'single':
+            Default. 
+
+            If ``_value`` is list, pops then returns first value in list
+
+            Else returns ``_value``.
         
-        value_type = 'list':
-            a single value is a list
-            if _value is list of lists, pops then returns first item
-            else returns _value.
+        * value_type = 'list':
+            A single value is a list.
 
-        value_type = 'once':
-            _value is anything. 
-            returns _value then sets _value to None
+            If ``_value`` is list of lists, pops then returns first item.
 
-        value_type = 'data':
-            _value is anything
-            remaining_points = None
-            returns _value
+            Else returns ``_value``.
+
+        * value_type = 'once':
+            ``_value`` is anything.
+
+            Returns ``_value`` then sets ``_value`` to ``None``.
+
+        * value_type = 'data':
+            ``_value`` is anything.
+
+            remaining_points = `None`
+
+            Returns ``_value``.
 
     """
     priority = 1
@@ -40,10 +46,14 @@ class ConductorParameter(object):
     critical = False
 
     def __init__(self, config):
-        """ handle config (dict)
+        """
+        __init__(self, config)
+
+        Handle config (dict)
         
-        upon creating a class instance, the conductor passes a config (dict).
-        default behavior is to set (key, value) -> (instance attribute, value)
+        Upon creating a class instance, the conductor passes a config (dict).
+
+        Default behavior is to set (key, value) -\> (instance attribute, value)
         """
         self._value = None
         for key, value in config.items():
@@ -51,34 +61,47 @@ class ConductorParameter(object):
 
     @inlineCallbacks
     def initialize(self):
-        """ called only once, upon loading parameter into conductor
+        """
+        initialize(self)
 
-        use to initialize labrad connection and configure device.
+        Called only once, upon loading parameter into conductor.
+
+        Use to initialize LabRAD connection and configure device.
         """
         yield None
     
     @inlineCallbacks
     def update(self):
-        """ called at begining of every experimental cycle.
+        """
+        update(self)
         
-        use to send value to hardware.
+        Called at begining of every experimental cycle.
+        
+        Use to send value to hardware.
         """
         yield None
 
     @inlineCallbacks
     def stop(self):
-        """ close connections if you must """
+        """
+        stop(self)
+        
+        Close connections if you must.
+        """
         yield None
 
     @property
     def value(self):
-        """ return value for current experimental run
+        """
+        value(self)
+        
+        Return value for current experimental run.
 
-        should return "something" representing parameter's current "value" (usually just a float)
-        each experimental cycle, conductor saves output of value to data 
+        Should return "something" representing parameter's current "value" (usually just a float)  each experimental cycle, conductor saves output of value to data.
 
-        _value possibly contains list of values to be iterated over.
-        value_type should dictate how _value is processed to get current value.
+        ``_value`` possibly contains list of values to be iterated over.
+
+        ``value_type`` should dictate how ``value`` is processed to get current value.
         """
         if self.value_type == 'single':
             if type(self._value).__name__ == 'list':
@@ -103,10 +126,14 @@ class ConductorParameter(object):
         self._value = value
     
     def advance(self):
-        """ change _value for next experimental run.
+        """
+        advance(self)
+        
+        Change ``_value`` for next experimental run.
 
-        if _value is list of values to be iterated over, remove previous value.
-        value_type should dictate if/how elements are removed from _value.
+        If ``_value`` is list of values to be iterated over, remove previous value.
+        
+        Value_type should dictate if/how elements are removed from ``_value``.
         """
         if self.value_type == 'single':
             if type(self._value).__name__ == 'list':
@@ -123,9 +150,12 @@ class ConductorParameter(object):
             self._value = None
 
     def remaining_values(self):
-        """ return how many values in _value queue.
+        """
+        remaining_values(self)
+        
+        Return how many values in ``_value`` queue.
 
-        this should depend on value_type.
+        this should depend on ``value_type``.
         """
         if self.priority:
             if self.value_type == 'single':

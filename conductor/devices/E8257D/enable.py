@@ -19,6 +19,13 @@ def sleep(secs):
     return d
 
 class Enable(ConductorParameter):
+    """
+    Enable(ConductorParameter)
+
+    Conductor parameter for controlling the Keysight/Agilent E8257D microwave synthesizer.
+
+    TODO: Finish documenting this.
+    """
     priority = 1
 
     def __init__(self, config={}):

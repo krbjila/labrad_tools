@@ -1,3 +1,9 @@
+"""
+Some fancy PyQt4 widgets for numeric entry
+
+TODO: Fully document this
+"""
+
 from PyQt4 import QtGui, QtCore, Qt
 import numpy as np
 

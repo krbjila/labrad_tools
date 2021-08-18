@@ -1,3 +1,11 @@
+"""
+Conductor parameter for setting the up leg double pass AOM frequency. 
+
+IMPORTANT: This parameter is no longer used, since the up leg frequency is controlled with a fiber EOM.
+
+TODO: Document this
+"""
+
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter

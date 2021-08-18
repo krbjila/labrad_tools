@@ -1,19 +1,24 @@
 """
-### BEGIN NODE INFO
-[info]
-name = arduino
-version = 1.1
-description = 
-instancename = %LABRADNODE%_arduino
+Provides access to Arduinos' serial interfaces.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+TODO: Write full docs for this module
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = arduino
+    version = 1.1
+    description = 
+    instancename = %LABRADNODE%_arduino
+
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 
@@ -28,7 +33,7 @@ sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 class ArduinoServer(HardwareInterfaceServer):
-    """Provides access to hardware's serial interface """
+    """Provides access to hardware's serial interface"""
     name = '%LABRADNODE%_arduino'
     advanceSignal = Signal(825700, 'signal: case', 's')
     killClientSignal = Signal(825701, 'signal: kill', 'b')

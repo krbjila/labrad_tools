@@ -1,7 +1,7 @@
 import sys
 import json
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
@@ -19,6 +19,15 @@ sys.path.append(LABRAD_FOLDER + 'electrode/clients/lib/forms/')
 from gui_defaults_helpers import *
 
 class Electrode(ConductorParameter):
+    """
+    Electrode(ConductorParameter)
+
+    Conductor parameter for updating electrode presets when the experiment is run.
+
+    This is not yet fully implemented, and not currently used in the experiment.
+
+    TODO: Finish documenting this. Also finish implementing it.
+    """
     priority = 20
     value_type = 'list'
     def __init__(self, config={}):
@@ -37,8 +46,8 @@ class Electrode(ConductorParameter):
         d = json_loads_byteified(s)
         for x in d:
             if x['id'] == '0':
-                return x['values']
-        return ZEROS
+                returnValue(x['values'])
+        returnValue(ZEROS)
 
     @inlineCallbacks
     def update(self):

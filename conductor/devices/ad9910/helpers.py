@@ -12,6 +12,8 @@ import json
 
 class AD9910Device(ConductorParameter):
     """
+    Conductor parameter for controlling AD9910 DDS. Individual DDSs should subclass this. The configuration for which hardware a conductor parameter communicates with is set in :mod:`conductor.conductor`'s `config.json <https://github.com/krbjila/labrad_tools/blob/master/conductor/config.json>`_.
+
     Data format:::
 
         value = {
@@ -19,7 +21,9 @@ class AD9910Device(ConductorParameter):
             'profiles': [...],
         }
 
-    See documentation for AD9910Server for the correct format for the ``program`` and ``profile`` lists.
+    See documentation for :mod:`ad9910.ad9910_server` for the correct format for the ``program`` and ``profile`` lists.
+
+    TODO: Finish documenting this.
     """
     priority = 1
 

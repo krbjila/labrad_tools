@@ -1,3 +1,11 @@
+"""
+Sets the down leg AOM frequency.
+
+IMPORTANT: This parameter is no longer used, since the down leg frequency is controlled with a fiber EOM.
+
+TODO: Document this
+"""
+
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter

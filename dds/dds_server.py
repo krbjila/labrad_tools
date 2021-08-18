@@ -1,19 +1,24 @@
 """
-### BEGIN NODE INFO
-[info]
-name = dds
-version = 1.1
-description = 
-instancename = %LABRADNODE%_dds
+Interface for talking to AD9959 DDS.
 
-[startup]
-cmdline = %PYTHON% %FILE%
-timeout = 20
+TODO: Fully document this.
 
-[shutdown]
-message = 987654321
-timeout = 20
-### END NODE INFO
+..
+    ### BEGIN NODE INFO
+    [info]
+    name = dds
+    version = 1.1
+    description = 
+    instancename = %LABRADNODE%_dds
+
+    [startup]
+    cmdline = %PYTHON% %FILE%
+    timeout = 20
+
+    [shutdown]
+    message = 987654321
+    timeout = 20
+    ### END NODE INFO
 """
 import sys
 
@@ -152,9 +157,11 @@ class ddsServer(DeviceServer):
         return self.last_update_time
 
 
-__server__ = ddsServer()
+try:
+    __server__ = ddsServer()
 
-if __name__ == '__main__':
-    from labrad import util
-    util.runServer(__server__)
-
+    if __name__ == '__main__':
+        from labrad import util
+        util.runServer(__server__)
+except Exception as e:
+    print("Could not start DDS server: {}".format(e))
