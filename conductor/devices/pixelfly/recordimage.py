@@ -17,9 +17,23 @@ class Recordimage(ConductorParameter):
     """
     Recordimage(ConductorParameter)
 
-    Conductor parameter for recording an image on a pixelfly pco camera (the lowest indexed camera on the ``polarkrb`` computer). Allows configuration of exposure, binning, interframing, number of images, region of interest, along with enabling or disabling the camera.
+    Conductor parameter for recording an image on a pixelfly pco camera (the lowest indexed camera on the ``polarkrb`` computer). Allows configuration of exposure (s), binning, interframing, number of images, region of interest, along with enabling or disabling the camera. Example config:
 
-    TODO: Finish documenting this.
+    .. code-block:: json
+
+        {
+            "pixelfly": {
+                "recordimage": {
+                    "enable": 1,
+                    "exposure": 1E-3,
+                    "interframing_enable": 1,
+                    "binning": [2,2],
+                    "n_images": 3,
+                    "roi": "None"
+                }
+            }
+        }
+        
     """
     priority = 1
 

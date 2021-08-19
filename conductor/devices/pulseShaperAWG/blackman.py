@@ -15,7 +15,18 @@ class Blackman(ConductorParameter):
 
     Conductor parameter that configures the function generator to output a `Blackman window <https://en.wikipedia.org/wiki/Window_function#Blackman_window>`_.
 
-    The duration and peak amplitude of the window function can be configured.
+    The duration (in s) and peak amplitude (in V) of the window function can be configured. Example config:
+
+    .. code-block:: json
+
+        {
+            "pulseShaperAWG": {
+                "blackman": {
+                    "period": 150E-6,
+                    "amplitude": 0.5
+                }
+            }
+        }
     """
     priority = 1
 

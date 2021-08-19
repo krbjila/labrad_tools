@@ -15,9 +15,16 @@ class Frequency(ConductorParameter):
     """
     Frequency(ConductorParameter)
 
-    A conductor parameter to set the frequency of the K D1 EOM RF.
+    A conductor parameter to set the frequency of the K D1 EOM RF (in MHz). Example config:
 
-    TODO: Finish documenting this
+    .. code-block:: json
+
+        {
+            "kd1": {
+                "frequency": 1286
+            }
+        }
+       
     """
     priority = 1
 

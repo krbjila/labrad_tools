@@ -22,9 +22,18 @@ class Enable(ConductorParameter):
     """
     Enable(ConductorParameter)
 
-    Conductor parameter for controlling the Keysight/Agilent E8257D microwave synthesizer.
+    Conductor parameter for controlling the Keysight/Agilent E8257D microwave synthesizer. The frequency is in MHz, and the amplitude is in dBm.
 
-    TODO: Finish documenting this.
+    Example config:
+
+    .. code-block:: json
+
+            {
+                "E8257D":{
+                    "frequency": 6834.5,
+                    "amplitude": -12
+                }
+            }
     """
     priority = 1
 

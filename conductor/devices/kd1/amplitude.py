@@ -15,9 +15,16 @@ class Amplitude(ConductorParameter):
     """
     Amplitude(ConductorParameter)
 
-    A conductor parameter to set the amplitude of the K D1 EOM RF.
+    A conductor parameter to set the amplitude of the K D1 EOM RF (in dBm). Example config:
 
-    TODO: Finish documenting this
+    .. code-block:: json
+
+        {
+            "kd1": {
+                "amplitude": -11
+            }
+        }
+        
     """
     priority = 1
 

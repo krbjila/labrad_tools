@@ -1,9 +1,15 @@
 """
-Conductor parameter for setting the up leg double pass AOM frequency. 
+Conductor parameter for setting the up leg double pass AOM frequency in MHz. Example config:
+
+    .. code-block:: json
+        
+        {
+            "3xAD9959_0": {
+                "uplegdp": [70.2]
+            },
+        }
 
 IMPORTANT: This parameter is no longer used, since the up leg frequency is controlled with a fiber EOM.
-
-TODO: Document this
 """
 
 import sys

@@ -9,9 +9,16 @@ class Duration(ConductorParameter):
     """
     Duration(ConductorParameter)
 
-    Conductor parameter to set the duration of the rubidium ARP.
+    Conductor parameter to set the duration of the rubidium ARP (in ms). Example config:
 
-    TODO: Finish documenting this.
+    .. code-block:: json
+
+        {
+            "highFieldRbARP": {
+                "duration": 2.5
+            }
+        }
+
     """
     priority = 1
 

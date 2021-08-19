@@ -25,8 +25,6 @@ class Time(ConductorParameter):
     Time(ConductorParameter)
 
     Conductor parameter to set the ``*MagEvapTime`` parameter.
-
-    TODO: Finish documenting this
     """
     priority = 99
 

@@ -1,11 +1,3 @@
-"""
-Sets the down leg AOM frequency.
-
-IMPORTANT: This parameter is no longer used, since the down leg frequency is controlled with a fiber EOM.
-
-TODO: Document this
-"""
-
 import sys
 sys.path.append('../')
 from generic_device.generic_parameter import GenericParameter
@@ -22,6 +14,21 @@ CHANNEL_NAME = "Down Leg Experiment"
 DEVICE = '3xAD9959_0'
 
 class Downlegexp(ConductorParameter):
+    """
+    Downlegexp(ConductorParameter)
+
+    Sets the down leg AOM frequency in MHz. Example config:
+
+    .. code-block:: json
+        
+        {
+            "3xAD9959_0": {
+                "downlegexp": [163.8]
+            },
+        }
+
+    IMPORTANT: This parameter is no longer used, since the down leg frequency is controlled with a fiber EOM.
+    """
     priority = 1
 
     def __init__(self, config={}):

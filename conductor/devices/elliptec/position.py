@@ -14,11 +14,18 @@ class Position(ConductorParameter):
     """
     Position(ConductorParameter)
 
-    Conductor parameter for setting the position of a Thorlabs Elliptec stage.
+    Conductor parameter for setting the position (in mm) of a Thorlabs Elliptec stage.
 
-    Not currently used in the experiment.
+    Not currently used in the experiment. Example config:
 
-    TODO: Finish documenting this.
+    .. code-block:: json
+
+        {
+            "elliptec": {
+                "position": 5.0
+            }
+        }
+
     """
     priority = 1
 

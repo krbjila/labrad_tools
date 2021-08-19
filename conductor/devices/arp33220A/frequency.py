@@ -12,9 +12,15 @@ class Frequency(ConductorParameter):
     """
     Frequency(ConductorParameter)
 
-    Conductor parameter for controlling the amplitude of a Keysight/Agilent 33220A AWG's sine output.
+    Conductor parameter for controlling the amplitude of a Keysight/Agilent 33220A AWG's sine output in Hz. Example config:
 
-    TODO: Finish documenting this.
+    .. code-block:: json
+
+            {
+                "arp33220A": {
+                    "frequency": 100,
+                }
+            }
     """
     priority = 1
 
