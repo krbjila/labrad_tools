@@ -592,7 +592,7 @@ class SequencerControl(QtGui.QWidget):
     def update_parameters(self, c, signal):
         try:
             changed_parameters = json.loads(signal)['sequencer']
-        except KeyError:
+        except KeyError or ValueError:
             changed_parameters = {}
 
         if len(changed_parameters):
