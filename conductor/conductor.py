@@ -62,10 +62,13 @@ class ConductorServer(LabradServer):
 
     name = 'conductor'
     parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
-    experiment_started = Signal(696969, 'signal: experiment started', 'b')
-    experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
-    parameter_removed = Signal(696971, 'signal: parameter removed', 's')
-    parameters_refreshed = Signal(696972, 'signal: parameters refreshed', 'b')
+
+    parameters_changed = Signal(698125, 'signal: parameters_changed', 's')
+
+    experiment_started = Signal(696970, 'signal: experiment started', 'b')
+    experiment_stopped = Signal(696971, 'signal: experiment stopped', 'b')
+    parameter_removed = Signal(696972, 'signal: parameter removed', 's')
+    parameters_refreshed = Signal(696973, 'signal: parameters refreshed', 'b')
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}
@@ -297,15 +300,31 @@ class ConductorServer(LabradServer):
         Yields:
             bool: True
         """                             
-        fire_signal = False
+        changed_parameters = {}
+        changed = False
+
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
+                try:
+                    changed = self.parameters[device_name][parameter_name] != parameter_value
+                except KeyError:
+                    changed = True
+                
                 yield self.set_parameter_value(device_name, parameter_name, 
                                                parameter_value, 
                                                generic_parameter, value_type)
-                fire_signal = True
-        if fire_signal: # Don't fire if no parameters were actually set
+                
+                if changed:
+                    # Do this to get the current value of parameter, not a list if there is a scan
+                    pv = yield self.get_parameter_value(device_name, parameter_name)
+                    try:
+                        changed_parameters[device_name].update({parameter_name: pv})
+                    except KeyError:
+                        changed_parameters[device_name] = {parameter_name: pv}
+
+        if len(changed_parameters): # Don't fire if no parameters were actually set
             yield self.parameters_updated(True)
+            yield self.parameters_changed(json.dumps(changed_parameters))
         returnValue(True)
 
     @inlineCallbacks
@@ -620,8 +639,22 @@ class ConductorServer(LabradServer):
 
         # advance parameter values if parameter has priority
         if not advanced:
+            changed_parameters = {}
+            changed = False
+
             for parameter in priority_parameters:
+                old_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
                 parameter.advance()
+                new_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
+                
+                if old_pv != new_pv:
+                    try:
+                        changed_parameters[parameter.device_name].update({parameter.name: new_pv})
+                    except KeyError:
+                        changed_parameters[parameter.device_name] = {parameter.name: new_pv}
+            
+            if len(changed_parameters):
+                self.parameter_changed(json.dumps(changed_parameters))
         
         # call parameter updates in order of priority. 
         # 1 is called last. 0 is never called.
