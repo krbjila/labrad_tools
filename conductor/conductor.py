@@ -654,7 +654,7 @@ class ConductorServer(LabradServer):
                         changed_parameters[parameter.device_name] = {parameter.name: new_pv}
             
             if len(changed_parameters):
-                self.parameter_changed(json.dumps(changed_parameters))
+                self.parameters_changed(json.dumps(changed_parameters))
         
         # call parameter updates in order of priority. 
         # 1 is called last. 0 is never called.
