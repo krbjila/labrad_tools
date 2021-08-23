@@ -35,7 +35,8 @@ class OKFPGAServer(HardwareInterfaceServer):
     name = '%LABRADNODE%_okfpga'
 
     def refresh_available_interfaces(self):
-        for device_id, device in self.interfaces.items():
+        items = self.interfaces.items()
+        for device_id, device in items:
             try: 
                 device.GetDeviceID()
             except:
@@ -43,14 +44,15 @@ class OKFPGAServer(HardwareInterfaceServer):
 
         fp = ok.FrontPanel()
         device_count = fp.GetDeviceCount()
-        for i in range(device_count):
-            serial = fp.GetDeviceListSerial(i)
-            tmp = ok.FrontPanel()
-            tmp.OpenBySerial(serial)
-            device_id = tmp.GetDeviceID()
-            print(device_id)
-            tmp.LoadDefaultPLLConfiguration()
-            self.interfaces[device_id] = tmp
+        if len(items) != device_count:
+            for i in range(device_count):
+                serial = fp.GetDeviceListSerial(i)
+                tmp = ok.FrontPanel()
+                tmp.OpenBySerial(serial)
+                device_id = tmp.GetDeviceID()
+                print(device_id)
+                tmp.LoadDefaultPLLConfiguration()
+                self.interfaces[device_id] = tmp
 
     @setting(3, filename='s')
     def program_bitfile(self, c, filename):
