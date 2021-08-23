@@ -51,11 +51,11 @@ class ConductorServer(LabradServer):
     
     Coordinate setting and saving experiment parameters.
     
-    Parameters are classes defined in ./devices/. TODO: fancy link
+    Parameters are classes defined in `./devices/ <https://github.com/krbjila/labrad_tools/tree/master/conductor/devices>`_.
 
         * parameters hold values representing real world attributes.
         * typically send/receive data to/from hardware.
-        * see ./devices/conductor_device/conductor_parameter.py for documentation TODO: fancy link
+        * see `./devices/conductor_device/conductor_parameter.py <https://github.com/krbjila/labrad_tools/blob/master/conductor/devices/conductor_device/conductor_parameter.py>`_ for documentation.
     
     Experiments specify parameter values to be iterated over and a filename for saving data.
     """

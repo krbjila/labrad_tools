@@ -117,7 +117,7 @@ class ag34410aServer(LabradServer):
         """
         log_multimeter(self)
         
-        Logs the current multimeter data using the #TODO: logging server link
+        Logs the current multimeter data using the :py:mod:`log.logging_server`
         """
         try:
             val = yield self._read()

@@ -1,10 +1,12 @@
+"""
+The shared connection object allows multiple asynchronous clients to share a single connection to the manager
+
+TODO: Write full docs for this
+"""
+
 import os
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-'''
-The shared connection object allows multiple asynchronous clients to share a single connection to the manager
-Version 1.0
-'''
 LABRADHOST = os.getenv('LABRADHOST')
 
 class connection(object):

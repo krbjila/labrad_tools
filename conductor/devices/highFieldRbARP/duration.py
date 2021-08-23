@@ -6,6 +6,20 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 from labrad.wrappers import connectAsync
 
 class Duration(ConductorParameter):
+    """
+    Duration(ConductorParameter)
+
+    Conductor parameter to set the duration of the rubidium ARP (in ms). Example config:
+
+    .. code-block:: json
+
+        {
+            "highFieldRbARP": {
+                "duration": 2.5
+            }
+        }
+
+    """
     priority = 1
 
     def __init__(self, config={}):

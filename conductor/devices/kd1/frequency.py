@@ -12,6 +12,20 @@ GPIB_ADDRESS = '1'
 GPIB_ADDRESS_STR = 'GPIB0::' + GPIB_ADDRESS + '::INSTR'
 
 class Frequency(ConductorParameter):
+    """
+    Frequency(ConductorParameter)
+
+    A conductor parameter to set the frequency of the K D1 EOM RF (in MHz). Example config:
+
+    .. code-block:: json
+
+        {
+            "kd1": {
+                "frequency": 1286
+            }
+        }
+       
+    """
     priority = 1
 
     def __init__(self, config={}):

@@ -21,6 +21,11 @@ class valuething(object):
         self.sequence_directory = "/home/bialkali/data/{}/sequences/"
 
 class Time(ConductorParameter):
+    """
+    Time(ConductorParameter)
+
+    Conductor parameter to set the ``*MagEvapTime`` parameter.
+    """
     priority = 99
 
     def __init__(self, config={}):
