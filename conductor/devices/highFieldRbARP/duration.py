@@ -16,7 +16,7 @@ class Duration(ConductorParameter):
     def initialize(self):
         self.cxn = yield connectAsync()
         self.server = self.cxn.krbjila_gpib
-	yield self.server.select_interface('GPIB0::10::INSTR')
+        yield self.server.select_interface('GPIB0::10::INSTR')
         yield self.server.write("FUNC RAMP")
         yield self.server.write("FUNC:RAMP:SYMM 0")
         yield self.server.write("BURS:NCYC 1")

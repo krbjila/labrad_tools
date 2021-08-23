@@ -46,7 +46,7 @@ node_dicts = [
         ],
         'node polarkrb': [
             # start multimeter monitoring
-            'ag34410a',
+            # 'ag34410a',
             'alerter'
         ]
     },
