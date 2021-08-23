@@ -342,6 +342,7 @@ class SequencerControl(QtGui.QWidget):
     def onDigitalVariableChange(self, nameloc, column):
         def odvc():
             variables = list(sorted(self.parameter_values.keys()))
+            variables = [v for v in variables if v[0:2] == '*?']
 
             (v, success) = QtGui.QInputDialog.getItem(
                 self,
