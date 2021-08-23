@@ -9,6 +9,13 @@ from lib.helpers import *
 from datetime import datetime
 
 class Sequence(ConductorParameter):
+    """
+    Sequence(ConductorParameter)
+
+    Conductor parameter for setting the sequence
+
+    TODO: Finish documenting this.
+    """
     priority = 10
     value_type = 'list'
     critical = True

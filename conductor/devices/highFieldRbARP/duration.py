@@ -6,6 +6,20 @@ from twisted.internet.defer import inlineCallbacks, Deferred
 from labrad.wrappers import connectAsync
 
 class Duration(ConductorParameter):
+    """
+    Duration(ConductorParameter)
+
+    Conductor parameter to set the duration of the rubidium ARP (in ms). Example config:
+
+    .. code-block:: json
+
+        {
+            "highFieldRbARP": {
+                "duration": 2.5
+            }
+        }
+
+    """
     priority = 1
 
     def __init__(self, config={}):
@@ -16,7 +30,7 @@ class Duration(ConductorParameter):
     def initialize(self):
         self.cxn = yield connectAsync()
         self.server = self.cxn.krbjila_gpib
-	yield self.server.select_interface('GPIB0::10::INSTR')
+        yield self.server.select_interface('GPIB0::10::INSTR')
         yield self.server.write("FUNC RAMP")
         yield self.server.write("FUNC:RAMP:SYMM 0")
         yield self.server.write("BURS:NCYC 1")

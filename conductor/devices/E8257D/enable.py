@@ -19,6 +19,22 @@ def sleep(secs):
     return d
 
 class Enable(ConductorParameter):
+    """
+    Enable(ConductorParameter)
+
+    Conductor parameter for controlling the Keysight/Agilent E8257D microwave synthesizer. The frequency is in MHz, and the amplitude is in dBm.
+
+    Example config:
+
+    .. code-block:: json
+
+            {
+                "E8257D":{
+                    "frequency": 6834.5,
+                    "amplitude": -12
+                }
+            }
+    """
     priority = 1
 
     def __init__(self, config={}):

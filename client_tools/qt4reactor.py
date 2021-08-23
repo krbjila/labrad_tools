@@ -6,14 +6,15 @@
 This module provides support for Twisted to be driven by the Qt mainloop.
 
 In order to use this support, simply do the following::
-    |  app = QApplication(sys.argv) # your code to init Qt
-    |  import qt4reactor
-    |  qt4reactor.install()
-    
-alternatively:
 
-    |  from twisted.application import reactors
-    |  reactors.installReactor('qt4')
+    app = QApplication(sys.argv) # your code to init Qt
+    import qt4reactor
+    qt4reactor.install()
+    
+alternatively::
+
+    from twisted.application import reactors
+    reactors.installReactor('qt4')
 
 Then use twisted.internet APIs as usual.  The other methods here are not
 intended to be called directly.
@@ -29,10 +30,12 @@ leave your Qt application running
 
 API Stability: stable
 
-Maintainer: U{Glenn H Tarbox, PhD<mailto:glenn@tarbox.org>}
+Maintainer: `Glenn H Tarbox, PhD <mailto:glenn@tarbox.org>`_
 
-Previous maintainer: U{Itamar Shtull-Trauring<mailto:twisted@itamarst.org>}
-Original port to QT4: U{Gabe Rudy<mailto:rudy@goldenhelix.com>}
+Previous maintainer: `Itamar Shtull-Trauring <mailto:twisted@itamarst.org>`_
+
+Original port to QT4: `Gabe Rudy <mailto:rudy@goldenhelix.com>`_
+
 Subsequent port by therve
 """
 

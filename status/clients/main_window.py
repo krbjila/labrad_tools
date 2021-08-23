@@ -64,7 +64,7 @@ class MainClient(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.parameter_widget)
 
         self.arduino_widget.setMaximumHeight(client_config.arduino['y'])
-        self.setFixedSize(client_config.main['x'], client_config.main['y'])
+        #self.setFixedSize(client_config.main['x'], client_config.main['y'])
 
     def closeEvent(self, x):
         #stop the reactor when closing the widget

@@ -9,6 +9,34 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 
 class Sin(ConductorParameter):
+    """
+    Sin(ConductorParameter)
+
+    Conductor parameter for controlling the frequency, amplitude (Vpp), offset (V), phase (deg), and enable and gating status of each of the Rigol DG800's channels. Example config:
+
+    .. code-block:: json
+
+            {
+                "dg800": {
+                    "sin": [{
+                        "freq1": 100,
+                        "amplitude1": 0.20,
+                        "phase1": 0,
+                        "offset1": 0,
+                        "output1": 1,
+                        "gated1": 1,
+                        "ncycles1": 5,
+                        "freq2": 100,
+                        "amplitude2": 0.31,
+                        "phase2": 0,
+                        "offset2": 0,
+                        "output2": 0,
+                        "gated2": 1,
+                        "ncycles2": 5,
+                    }]
+                }
+            }
+    """
     priority = 1
 
     def __init__(self, config={}):
