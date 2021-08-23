@@ -91,9 +91,10 @@ class SequencerControl(QtGui.QWidget):
             self.populate()
         except Exception as e:
             print(e)
-        self.parameter_values = yield self.getParameters()
 
         self.displaySequence(self.default_sequence)
+        
+        self.parameter_values = yield self.getParameters()
         yield self.connectSignals()
         yield self.update_sequencer(None, True)
 
