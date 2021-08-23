@@ -67,7 +67,7 @@ class SequencerControl(QtGui.QWidget):
 
         self.metadata = {}
 
-        self.parameters = []
+        self.parameter_values = {}
 
         self.connect()
 
@@ -91,7 +91,9 @@ class SequencerControl(QtGui.QWidget):
             self.populate()
         except Exception as e:
             print(e)
-        yield self.displaySequence(self.default_sequence)
+        self.parameter_values = yield self.getParameters()
+
+        self.displaySequence(self.default_sequence)
         yield self.connectSignals()
         yield self.update_sequencer(None, True)
 
@@ -124,7 +126,7 @@ class SequencerControl(QtGui.QWidget):
         yield sequencer.addListener(listener=self.update_sequencer, source=None,
                                     ID=self.sequencer_update_id)
         conductor = yield self.cxn.get_server(self.conductor_servername)
-        yield conductor.signal__parameters_updated(self.config.conductor_update_id)
+        yield conductor.signal__parameters_changed(self.config.conductor_update_id)
         yield conductor.addListener(listener=self.update_parameters, 
                                     source=None, ID=self.conductor_update_id)
 
@@ -338,7 +340,7 @@ class SequencerControl(QtGui.QWidget):
 
     def onDigitalVariableChange(self, nameloc, column):
         def odvc():
-            variables = list(sorted(self.parameters))
+            variables = list(sorted(self.parameter_values.keys()))
 
             (v, success) = QtGui.QInputDialog.getItem(
                 self,
@@ -560,7 +562,6 @@ class SequencerControl(QtGui.QWidget):
 
         self.setWindowTitle('sequencer control')
 
-    @inlineCallbacks
     def displaySequence(self, sequence):
         self.sequence = sequence
         self.durationRow.displaySequence(sequence)
@@ -568,38 +569,32 @@ class SequencerControl(QtGui.QWidget):
         self.analogControl.displaySequence(sequence)
         self.electrodeControl.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
-        yield self.updateParameters()
     
-    @inlineCallbacks
-    def updateParameters(self):
-        parameters = {'sequencer': get_sequence_parameters(self.sequence)}
-        parameter_values = yield self.getParameters()
-        self.durationRow.updateParameters(parameter_values)
-        self.digitalControl.updateParameters(parameter_values)
-        self.analogControl.updateParameters(parameter_values)
-        self.electrodeControl.updateParameters(parameter_values)
-        self.addDltRow.updateParameters(parameter_values)
-        self.setSizes()
+    def updateParameters(self, changed_parameters):
+        if len(changed_parameters):
+            self.parameter_values.update(changed_parameters)
+            self.durationRow.updateParameters(self.parameter_values)
+            self.digitalControl.updateParameters(self.parameter_values)
+            self.analogControl.updateParameters(self.parameter_values)
+            self.electrodeControl.updateParameters(self.parameter_values)
+            self.addDltRow.updateParameters(self.parameter_values)
+            self.setSizes()
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
         conductor = yield self.cxn.get_server(self.conductor_servername)
-        
-        if parameters:
-            parameters_json = json.dumps(parameters)
-            pv_json = yield conductor.get_parameter_values(parameters_json, True)
-        else:
-            pv_json = yield conductor.get_parameter_values()
-        
+        pv_json = yield conductor.get_parameter_values()        
         pv = json.loads(pv_json)['sequencer']
-        self.parameters = pv.keys()
         returnValue(pv)
 
-
-    @inlineCallbacks
     def update_parameters(self, c, signal):
-        if signal:
-            yield self.updateParameters()
+        try:
+            changed_parameters = json.loads(signal)['sequencer']
+        except KeyError:
+            changed_parameters = {}
+
+        if len(changed_parameters):
+            self.updateParameters(changed_parameters)
 
     @inlineCallbacks
     def update_sequencer(self, c, signal):
