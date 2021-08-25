@@ -52,12 +52,14 @@ def calcD(v):
 class AD5791Channel(object):
     """ wrapper for single analog channel on yesr dacbord 
 
-    example_config = {
-        'loc': 0, # in range(8)
-        'name': 'DACA0', # unique string 
-        'mode': 'auto', # 'auto' or 'manual'
-        'manual_output': 0, # default manual voltage. between -10, 10.
-    }
+    .. code-block:: python
+    
+        example_config = {
+            'loc': 0, # in range(8)
+            'name': 'DACA0', # unique string 
+            'mode': 'auto', # 'auto' or 'manual'
+            'manual_output': 0, # default manual voltage. between -10, 10.
+        }
     """
     def __init__(self, config):
         """ defaults """
