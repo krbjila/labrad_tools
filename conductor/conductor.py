@@ -1,6 +1,52 @@
 """
 Coordinate setting and saving experiment parameters.
 
+Experiment parameters are pretty much anything that could be changed from shot-to-shot of the experiment. Examples:
+
+    - molecule RF frequency
+    - function generator amplitude
+    - the sequence of modules (``'highFieldRampRecompress'``, etc.)
+    - analog/digital sequence variables, etc.
+
+The primary abstraction over experiment parameters is the :mod:`conductor.devices.conductor_device.conductor_parameter.ConductorParameter`, which forms the base class for all custom parameters.
+
+``ConductorParameter`` 's are organized by the physical or abstracted ``device`` they are associated with. For example, the :class:`kd1` device controls the RF synthesizer that drives the K D1 EOM. It has two parameters, :class:`Frequency` and :class:`Amplitude`.
+
+:class:`ConductorParameter` provides two key methods:
+
+    - :meth:`ConductorParameter.update`: Called to update the hardware with the current value of the parameter.
+    - :meth:`ConductorParameter.advance`: Supports iteration over an iterable parameter value. For example, a list of dictionaries that define the DDS configuration over several shots.
+
+New parameters can be added to the Conductor by subclassing :class:`ConductorParameter` and overriding the :meth:`ConductorParameter.update` method.
+
+Parameters can be registered on-the-fly, but we typically enable them by including them in the ``config.json`` file. Here's an example:::
+
+    {
+        # ... setting conductor directories, etc.
+
+        # Here is where we define Conductor's default parameters.
+        "default_parameters": {
+            # ... other parameters
+
+            # The kd1 EOM RF synthesizer
+            "kd1": {
+                # Tell conductor to use the Frequency parameter
+                "frequency": {
+                    # This value will be loaded as a class variable (self.default)
+                    "default": 1286
+                },
+
+                # Tell conductor to use the Amplitude parameter
+                "amplitude": {
+                    # This value will be loaded as a class variable (self.default)
+                    "default": -11
+                }
+            },
+        }
+    }
+
+(Note: the snippet above is commented for clarity, but we can't actually put comments in json :/)
+
 ..
     ### BEGIN NODE INFO
     [info]
@@ -62,10 +108,65 @@ class ConductorServer(LabradServer):
 
     name = 'conductor'
     parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
+    """
+        signal__parameters_updated
+        
+        Emitted when parameters are updated in ``self.set_parameters`` and ``self.advance_parameters``.
+
+        .. note::
+            Payload (bool): always ``True``.
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
     experiment_started = Signal(696969, 'signal: experiment started', 'b')
+    """
+        signal__experiment_started
+        
+        Emitted in ``self.advance_experiment`` when a new experiment is started.
+
+        .. note::
+            Payload (bool): always ``True``.
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
     experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
+    """
+        signal__experiment_stopped
+        
+        Emitted in ``self.advance_experiment`` when an experiment is stopped.
+
+        .. note::
+            Payload (bool): always ``True``.
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
     parameter_removed = Signal(696971, 'signal: parameter removed', 's')
+    """
+        signal__parameter_removed
+        
+        Emitted in ``self.remove_parameters`` when a parameter is removed.
+        
+        .. note::
+            Payload (str): ``device_name + " " + parameter_name``.
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
     parameters_refreshed = Signal(696972, 'signal: parameters refreshed', 'b')
+    """
+        signal__parameters_refreshed
+        
+        Emitted in ``self.refresh_default_parameters``.
+
+        .. note::
+            Payload (bool): always ``True``.
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}

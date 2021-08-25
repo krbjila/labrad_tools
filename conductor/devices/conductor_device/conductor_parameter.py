@@ -77,7 +77,7 @@ class ConductorParameter(object):
         
         Called at begining of every experimental cycle.
         
-        Use to send value to hardware.
+        New conductor parameters should override this method to communicate with hardware.
         """
         yield None
 
