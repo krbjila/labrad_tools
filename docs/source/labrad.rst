@@ -212,7 +212,7 @@ Working with Labrad Signals
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The typical Labrad client-server interaction is driven by the client (by calling the server's ``settings``).
 
-Labrad ``Signals`` provide a way to reverse this control flow, by letting the server send messages to the client. See the `Labrad signals source code <https://github.com/labrad/pylabrad/blob/master/labrad/server.py>`__ for more details.
+Labrad ``Signals`` provide a way to reverse this control flow, by letting the server send data to the client (and trigger callbacks that use said data). See the `Labrad signals source code <https://github.com/labrad/pylabrad/blob/master/labrad/server.py>`__ for more details.
 
 Here is an example of how to declare a signal (from :mod:`conductor.conductor.ConductorServer`):
 
