@@ -203,3 +203,58 @@ You can do ``r.get('directories')`` to check that this worked.
     cxn.servers['node\_' + 'NAME_OF_YOUR_NODE'].available_servers()
 
 You should see a list of all the available servers in your ``labrad_tools/`` folder on the new node.
+
+.. _labrad-tips-tricks-label:
+
+Labrad Tips & Tricks
+----------------------------------------------------------
+Working with Labrad Signals
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The typical Labrad client-server interaction is driven by the client (by calling the server's ``settings``).
+
+Labrad ``Signals`` provide a way to reverse this control flow, by letting the server send messages to the client. See the `Labrad signals source code <https://github.com/labrad/pylabrad/blob/master/labrad/server.py>`__ for more details.
+
+Here is an example of how to declare a signal (from :mod:`conductor.conductor.ConductorServer`):
+
+.. code-block:: python
+
+    class ConductorServer(LabradServer):
+        # ... snip ...
+ 
+        # Declare the signal as a class variable
+        # The constructor takes:
+        #  - int: the id of the signal
+        #  - str: the name of the signal, which determines the signal's name in the server's public API
+        #  - str: type tag that describes the signal's payload (here a boolean)
+        parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
+
+To fire the signal, we need to call the class parameter and pass the payload:
+
+.. code-block:: python
+
+     # Somewhere in ConductorServer...
+     # Fire the signal
+     self.parameters_updated(True)
+
+To receive the signal as a client, we need to subscribe to it:
+
+.. code-block:: python
+
+    # some_client.py
+
+    # ... snip ...
+
+    # self.cxn is a async Labrad connection
+    conductor = yield self.cxn.get_server('conductor')
+
+    # Subscribe to the signal
+    # Note that the name we subscribe to is the name of the signal (str given in the Signal constructor),
+    # with special characters replaced by underscores,
+    # as opposed to the name of the class parameter.
+    # my_id is the client ID: you can pick any positive int (?)
+    yield conductor.signal__parameters_updated(my_id)
+
+    # Here my_callback(context, value) is called when the signal is fired
+    #  - context is the Labrad client context
+    #  - value is the payload of the signal
+    yield conductor.addListener(listener=my_callback, source=None, ID=my_id)
