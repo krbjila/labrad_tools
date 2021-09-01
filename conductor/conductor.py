@@ -120,7 +120,7 @@ class ConductorServer(LabradServer):
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
     parameters_changed = Signal(698125, 'signal: parameters_changed', 's')
-        """
+    """
         signal__parameters_changed
         
         Emitted when parameters are updated in ``self.set_parameters`` and ``self.advance_parameters``.
