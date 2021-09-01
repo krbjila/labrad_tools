@@ -128,9 +128,13 @@ class SequencerControl(QtGui.QWidget):
         yield sequencer.addListener(listener=self.update_sequencer, source=None,
                                     ID=self.sequencer_update_id)
         conductor = yield self.cxn.get_server(self.conductor_servername)
-        yield conductor.signal__parameters_changed(self.config.conductor_update_id)
+        # Handle parameters changed while the editor dialogs are open
+        # TODO: refactor this to use the old one?? if perf sucks
+        yield conductor.signal__parameters_updated(self.config.conductor_update_id)
+        # Handle parameters changed in all other cases
+        yield conductor.signal__parameters_changed(self.config.conductor_parameter_changed_id)
         yield conductor.addListener(listener=self.update_parameters, 
-                                    source=None, ID=self.conductor_update_id)
+                                    source=None, ID=self.conductor_parameter_changed_id)
 
     def populate(self):
         self.loadSaveRun = LoadSaveRun()

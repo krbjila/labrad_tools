@@ -8,6 +8,7 @@
     "sequencer_update_id": 689223,
     "conductor_update_id": 689222,
     "electrode_update_id": 689221,
+    "conductor_parameter_changed_id": 689220,
     "spacer_width": 65,
     "spacer_height": 15,
     "namecolumn_width": 250,
