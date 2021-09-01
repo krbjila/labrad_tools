@@ -86,15 +86,16 @@ class SequencerControl(QtGui.QWidget):
             self.cxn = connection()  
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
+        
         yield self.getChannels()
+        self.parameter_values = yield self.getParameters()
+        
         try:
             self.populate()
         except Exception as e:
             print(e)
 
-        self.displaySequence(self.default_sequence)
-        
-        self.parameter_values = yield self.getParameters()
+        self.displaySequence(self.default_sequence)   
         yield self.connectSignals()
         yield self.update_sequencer(None, True)
 
@@ -566,14 +567,22 @@ class SequencerControl(QtGui.QWidget):
 
     def displaySequence(self, sequence):
         self.sequence = sequence
+
+        # Note that "displaySequence" method doesn't actually update the GUI for widgets that use variables
         self.durationRow.displaySequence(sequence)
         self.digitalControl.displaySequence(sequence)
         self.analogControl.displaySequence(sequence)
         self.electrodeControl.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
+
+        # It's the updateParameters method that actually updates the GUI; fire that here
+        self.force_replot()
     
-    def updateParameters(self, changed_parameters):
-        if len(changed_parameters):
+    def force_replot(self):
+        self.updateParameters({}, True)
+
+    def updateParameters(self, changed_parameters, force=False):
+        if len(changed_parameters) or force:
             self.parameter_values.update(changed_parameters)
             self.durationRow.updateParameters(self.parameter_values)
             self.digitalControl.updateParameters(self.parameter_values)
