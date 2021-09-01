@@ -127,7 +127,7 @@ class ddsServer(DeviceServer):
         for key, value in fixed_sequence.items():
             if key in self.devices and len(value) > 0:
                 dev = self.devices[key]
-                dev.program_frequencies(value)
+                yield dev.program_frequencies(value)
                 flag = 1
 
         # If an update occurred, need to update the backup
