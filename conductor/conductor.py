@@ -119,7 +119,21 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    experiment_started = Signal(696969, 'signal: experiment started', 'b')
+    parameters_changed = Signal(698125, 'signal: parameters_changed', 's')
+        """
+        signal__parameters_changed
+        
+        Emitted when parameters are updated in ``self.set_parameters`` and ``self.advance_parameters``.
+
+        This is very similar to ``signal__parameters_updated``, but its payload has the actual parameters changed and their new values.
+
+        .. note::
+            Payload (str): ``json.dumps`` string containing changed parameter values. Same format as returned by ``self.get_parameter_values()``
+
+        .. seealso::
+            For help with Signals, see :ref:`labrad-tips-tricks-label`.
+    """
+    experiment_started = Signal(696970, 'signal: experiment started', 'b')
     """
         signal__experiment_started
         
@@ -131,7 +145,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    experiment_stopped = Signal(696970, 'signal: experiment stopped', 'b')
+    experiment_stopped = Signal(696971, 'signal: experiment stopped', 'b')
     """
         signal__experiment_stopped
         
@@ -143,7 +157,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    parameter_removed = Signal(696971, 'signal: parameter removed', 's')
+    parameter_removed = Signal(696972, 'signal: parameter removed', 's')
     """
         signal__parameter_removed
         
@@ -155,7 +169,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    parameters_refreshed = Signal(696972, 'signal: parameters refreshed', 'b')
+    parameters_refreshed = Signal(696973, 'signal: parameters refreshed', 'b')
     """
         signal__parameters_refreshed
         
@@ -167,6 +181,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
+
 
     def __init__(self, config_path='./config.json'):
         self.parameters = {}
@@ -398,15 +413,31 @@ class ConductorServer(LabradServer):
         Yields:
             bool: True
         """                             
-        fire_signal = False
+        changed_parameters = {}
+        changed = False
+
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
+                try:
+                    changed = self.parameters[device_name][parameter_name] != parameter_value
+                except KeyError:
+                    changed = True
+                
                 yield self.set_parameter_value(device_name, parameter_name, 
                                                parameter_value, 
                                                generic_parameter, value_type)
-                fire_signal = True
-        if fire_signal: # Don't fire if no parameters were actually set
+                
+                if changed:
+                    # Do this to get the current value of parameter, not a list if there is a scan
+                    pv = yield self.get_parameter_value(device_name, parameter_name)
+                    try:
+                        changed_parameters[device_name].update({parameter_name: pv})
+                    except KeyError:
+                        changed_parameters[device_name] = {parameter_name: pv}
+
+        if len(changed_parameters): # Don't fire if no parameters were actually set
             yield self.parameters_updated(True)
+            yield self.parameters_changed(json.dumps(changed_parameters))
         returnValue(True)
 
     @inlineCallbacks
@@ -721,8 +752,22 @@ class ConductorServer(LabradServer):
 
         # advance parameter values if parameter has priority
         if not advanced:
+            changed_parameters = {}
+            changed = False
+
             for parameter in priority_parameters:
+                old_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
                 parameter.advance()
+                new_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
+                
+                if old_pv != new_pv:
+                    try:
+                        changed_parameters[parameter.device_name].update({parameter.name: new_pv})
+                    except KeyError:
+                        changed_parameters[parameter.device_name] = {parameter.name: new_pv}
+            
+            if len(changed_parameters):
+                self.parameters_changed(json.dumps(changed_parameters))
         
         # call parameter updates in order of priority. 
         # 1 is called last. 0 is never called.

@@ -67,7 +67,7 @@ class SequencerControl(QtGui.QWidget):
 
         self.metadata = {}
 
-        self.parameters = []
+        self.parameter_values = {}
 
         self.connect()
 
@@ -86,12 +86,16 @@ class SequencerControl(QtGui.QWidget):
             self.cxn = connection()  
             yield self.cxn.connect()
         self.context = yield self.cxn.context()
+        
         yield self.getChannels()
+        self.parameter_values = yield self.getParameters()
+        
         try:
             self.populate()
         except Exception as e:
             print(e)
-        yield self.displaySequence(self.default_sequence)
+
+        self.displaySequence(self.default_sequence)   
         yield self.connectSignals()
         yield self.update_sequencer(None, True)
 
@@ -124,9 +128,13 @@ class SequencerControl(QtGui.QWidget):
         yield sequencer.addListener(listener=self.update_sequencer, source=None,
                                     ID=self.sequencer_update_id)
         conductor = yield self.cxn.get_server(self.conductor_servername)
+        # Handle parameters changed while the editor dialogs are open
+        # TODO: refactor this to use the old one?? if perf sucks
         yield conductor.signal__parameters_updated(self.config.conductor_update_id)
+        # Handle parameters changed in all other cases
+        yield conductor.signal__parameters_changed(self.config.conductor_parameter_changed_id)
         yield conductor.addListener(listener=self.update_parameters, 
-                                    source=None, ID=self.conductor_update_id)
+                                    source=None, ID=self.conductor_parameter_changed_id)
 
     def populate(self):
         self.loadSaveRun = LoadSaveRun()
@@ -338,7 +346,8 @@ class SequencerControl(QtGui.QWidget):
 
     def onDigitalVariableChange(self, nameloc, column):
         def odvc():
-            variables = list(sorted(self.parameters))
+            variables = list(sorted(self.parameter_values.keys()))
+            variables = [v for v in variables if v[0:2] == '*?']
 
             (v, success) = QtGui.QInputDialog.getItem(
                 self,
@@ -560,46 +569,47 @@ class SequencerControl(QtGui.QWidget):
 
         self.setWindowTitle('sequencer control')
 
-    @inlineCallbacks
     def displaySequence(self, sequence):
         self.sequence = sequence
+
+        # Note that "displaySequence" method doesn't actually update the GUI for widgets that use variables
         self.durationRow.displaySequence(sequence)
         self.digitalControl.displaySequence(sequence)
         self.analogControl.displaySequence(sequence)
         self.electrodeControl.displaySequence(sequence)
         self.addDltRow.displaySequence(sequence)
-        yield self.updateParameters()
+
+        # It's the updateParameters method that actually updates the GUI; fire that here
+        self.force_replot()
     
-    @inlineCallbacks
-    def updateParameters(self):
-        parameters = {'sequencer': get_sequence_parameters(self.sequence)}
-        parameter_values = yield self.getParameters()
-        self.durationRow.updateParameters(parameter_values)
-        self.digitalControl.updateParameters(parameter_values)
-        self.analogControl.updateParameters(parameter_values)
-        self.electrodeControl.updateParameters(parameter_values)
-        self.addDltRow.updateParameters(parameter_values)
-        self.setSizes()
+    def force_replot(self):
+        self.updateParameters({}, True)
+
+    def updateParameters(self, changed_parameters, force=False):
+        if len(changed_parameters) or force:
+            self.parameter_values.update(changed_parameters)
+            self.durationRow.updateParameters(self.parameter_values)
+            self.digitalControl.updateParameters(self.parameter_values)
+            self.analogControl.updateParameters(self.parameter_values)
+            self.electrodeControl.updateParameters(self.parameter_values)
+            self.addDltRow.updateParameters(self.parameter_values)
+            self.setSizes()
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
         conductor = yield self.cxn.get_server(self.conductor_servername)
-        
-        if parameters:
-            parameters_json = json.dumps(parameters)
-            pv_json = yield conductor.get_parameter_values(parameters_json, True)
-        else:
-            pv_json = yield conductor.get_parameter_values()
-        
+        pv_json = yield conductor.get_parameter_values()        
         pv = json.loads(pv_json)['sequencer']
-        self.parameters = pv.keys()
         returnValue(pv)
 
-
-    @inlineCallbacks
     def update_parameters(self, c, signal):
-        if signal:
-            yield self.updateParameters()
+        try:
+            changed_parameters = json.loads(signal)['sequencer']
+        except KeyError or ValueError:
+            changed_parameters = {}
+
+        if len(changed_parameters):
+            self.updateParameters(changed_parameters)
 
     @inlineCallbacks
     def update_sequencer(self, c, signal):
