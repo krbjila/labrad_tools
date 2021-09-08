@@ -1,3 +1,4 @@
+from electrode.clients.lib.forms.gui_defaults_helpers import FORM_FIELDS
 import sys
 import json
 
@@ -24,9 +25,25 @@ class Electrode(ConductorParameter):
 
     Conductor parameter for updating electrode presets when the experiment is run.
 
-    This is not yet fully implemented, and not currently used in the experiment.
+    Only supports setting existing presets by normal modes, but normal modes can be calculated from other values using the functions in `gui_defaults_helpers.py <https://github.com/krbjila/labrad_tools/blob/master/electrode/clients/lib/forms/gui_defaults_helpers.py>`_. The field is not updated and an error message is shown if the normal modes are out of range or aren't defined correctly.
 
-    TODO: Finish documenting this. Also finish implementing it.
+    Example config:
+
+    .. code-block:: json
+
+            {
+                "99": {
+                    "normalModes": {
+                        "HGrad": -0.0,
+                        "GlobalOffset": -0.0,
+                        "RodOffset": 0.0,
+                        "Bias": 1012.5,
+                        "EastWest": -0.0,
+                        "RodScale": 0.4225,
+                        "CompShim": 0.0
+                    }
+                }
+            }
     """
     priority = 20
     value_type = 'list'
@@ -46,7 +63,7 @@ class Electrode(ConductorParameter):
         d = json_loads_byteified(s)
         for x in d:
             if x['id'] == '0':
-                returnValue(x['values'])
+                returnValue(x)
         returnValue(ZEROS)
 
     @inlineCallbacks
@@ -56,7 +73,17 @@ class Electrode(ConductorParameter):
             Vs = deepcopy(self.value)
             for k,v in self.value.items():
                 try:
-                    Vs[k]['values'] = NormalModesToVs(v['values'])
-                except:
-                    Vs[k]['values'] = self.zeros
+                    for (i,n) in enumerate(FORM_FIELDS['n']):
+                        min_val = FIELD_MIN['n'][i]
+                        max_val = FIELD_MAX['n'][i]
+                        if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
+                            raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
+                    Vs[k]['volts'] = NormalModesToVs(v['normalModes'])
+                    Vs[k]['values'] = VsToDACs(Vs[k]['volts'])
+                    Vs[k]['normalModes'] = VsToNormalModes(Vs[k]['volts'])
+                except Exception as e:
+                    print("Could not set electrode preset {} to {}: {}".format(k, v, e))
+                    # Vs[k]['values'] = self.zeros['values']
+                    # Vs[k]['volts'] = self.zeros['volts']
+                    # Vs[k]['normalModes'] = self.zeros['normalModes']
             yield self.server.soft_update(Vs)
