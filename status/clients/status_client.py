@@ -3,6 +3,7 @@ import time
 import numpy as np
 import os
 import sys
+from PyQt4 import QtGui, QtSvg
 
 import client_config
 
@@ -33,6 +34,7 @@ class Indicator(QWidget):
         self.coords = [1.5*self.RAD, 1.5*self.RAD]        
         self.color = QColor(client_config.widget['colorIdle'])
         self.warning_flag = 0
+        self.eye = QtSvg.QSvgRenderer('eye.svg')
 
     # Resize when stretched
     def resizeEvent(self, event):
@@ -61,7 +63,12 @@ class Indicator(QWidget):
         brush = QBrush(gradient)
         painter.setBrush(brush)
         # Draw the button
-        painter.drawEllipse(QPoint(self.coords[0], self.coords[1]), rad, rad)
+        if self.color != QColor(client_config.widget['colorOn']):
+            painter.drawEllipse(QPoint(self.coords[0], self.coords[1]), rad, rad)
+        else:
+            top_left = QPoint(self.coords[0]-rad, self.coords[1]-rad)
+            bottom_right = QPoint(self.coords[0]+rad, self.coords[1]+rad)
+            self.eye.render(painter, QRectF(top_left, bottom_right))
         painter.end()
 
     def exptStarted(self):
