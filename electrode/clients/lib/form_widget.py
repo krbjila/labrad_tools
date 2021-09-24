@@ -55,4 +55,3 @@ class FormWidget(QtGui.QWidget):
 
 	def setCompShim(self, comp_shim):
 		self.inputForms.setCompShim(comp_shim)
-	
