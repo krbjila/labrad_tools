@@ -78,6 +78,7 @@ variables_dict = [
     ['*X', 0.005],
     ['*Tau', -3],
     ['*FillTime', 5.0],
+    ['*TOF', 1e-3],
     # Digital variables
     ['*?HOT', 1],
     ['*?MARIA', 1],
@@ -92,6 +93,8 @@ variables_dict = [
     ['*?Pulse3', 0],
     ['*?Sandwich', 0],
     ['*?BigFlip',0],
+    ['*?Axial', 0],
+    ['*?Side', 1],
     # Utility variables
     ['*poo', 0],
     ['*LowerPlateZero', 0],
