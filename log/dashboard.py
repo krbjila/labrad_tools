@@ -6,6 +6,7 @@ from io import BytesIO
 from functools import partial
 import pyttsx3
 import random
+from time import time
 
 # TODO: Fix Sphinx autodoc reporting the superclass as sphinx.ext.autodoc.importer._MockObject
 class laser_dashboard_gui(QtWidgets.QMainWindow):
@@ -33,6 +34,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.buttons = []
         self.labels = []
         self.broken = []
+        self.t_good = []
         i = 0
         self.lasers = config['wavemeter']['channels']
         for laser in self.lasers:
@@ -52,6 +54,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
             self.buttons.append(button)
             self.labels.append(label)
             self.broken.append(False)
+            self.t_good.append(time())
             i += 1
         
         mainWidget = QtWidgets.QWidget()
@@ -83,6 +86,12 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                     label = "%.2f MHz" % (wl)
                 self.labels[i].setText(label)
 
+                if (wl >= l['min_freq'] and wl <= l['max_freq']):
+                    if self.t_good[i] == 0:
+                        self.t_good[i] = time()
+                else:
+                    self.t_good[i] = 0
+
                 if (wl < l['min_freq'] or wl > l['max_freq']) and ((100 < wl and 800 > wl) or l['i'] >= 8) and not self.broken[i]:
                     print(l, wl)
                     self.broken[i] = True
@@ -90,6 +99,9 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                     self.buttons[i].setStyleSheet('background-color: red')
                     self.buttons[i].repaint()
                     names.append(l['label'])
+
+                if self.broken[i] and time() - self.t_good[i] > 10 and self.t_good[i] != 0:
+                    self.pressed(self.buttons[i], i)
             if play:
                 # sound = vlc.MediaPlayer('unlocked.mp3')
                 # sound.play()
