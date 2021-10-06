@@ -1,5 +1,5 @@
 """
-Server for communicating with the MongoDB database
+Server for communicating with MongoDB databases
 
 ..
     ### BEGIN NODE INFO
@@ -21,39 +21,187 @@ Server for communicating with the MongoDB database
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
-from pymongo import MongoClient
-import json
+from pymongo import MongoClient, errors
+from bson.json_util import loads, dumps
 
 class DatabaseServer(LabradServer):
     """
-    Server for communicating with the MongoDB database
+    Server for communicating with MongoDB databases.
+
+    Currently includes methods for inserting, modifying, and deleting data, but does not yet include query methods.
+
+    #TODO: Add query methods!
+
+    Uses :py:mod:`bson.json_util` for serializing and deserializing `BSON <https://bsonspec.org/>`__ data.
     """
     name = '%LABRADNODE%_database'
 
+    def expireContext(self, c):
+        """
+        expireContext(self, c)
+
+        Called when the context expires, typically by the client disconnecting.
+
+        Calls :meth:`close`.
+
+        Args:
+            c: LabRAD context
+        """
+
+        self.close(c)
+
+    @staticmethod
+    def InsertOneResultToDict(res):
+        """
+        InsertOneResultToDict(res)
+
+        Converts a PyMongo :py:class:`pymongo.results.InsertOneResult` to a dictionary.
+
+        Args:
+            res (:py:class:`pymongo.results.InsertOneResult`): The result to convert to a dictionary
+
+        Returns:
+            dict: A dictionary containing the result's fields
+        """
+
+        return_dict = {"acknowledged": result.acknowledged}
+        if return_dict["acknowledged"]:
+            return_dict["inserted_id"] = result.inserted_id
+        return return_dict
+
+    @staticmethod
+    def InsertManyResultToDict(res):
+        """
+        InsertManyResultToDict(res)
+
+        Converts a :py:class:`pymongo.results.InsertManyResult` to a dictionary.
+
+        Args:
+            res (:py:class:`pymongo.results.InsertManyResult`): The result to convert to a dictionary
+
+        Returns:
+            dict: A dictionary containing the result's fields
+        """
+
+        return_dict = {"acknowledged": result.acknowledged}
+        if return_dict["acknowledged"]:
+            return_dict["inserted_ids"] = result.inserted_ids
+        return return_dict
+
+    @staticmethod
+    def UpdateResultToDict(res):
+        """
+        UpdateResultToDict(res)
+
+        Converts a PyMongo :py:class:`pymongo.results.UpdateResult` to a dictionary.
+
+        Args:
+            res (:py:class:`pymongo.results.UpdateResult`): The result to convert to a dictionary
+
+        Returns:
+            dict: A dictionary containing the result's fields
+        """
+
+        return_dict = {"acknowledged": result.acknowledged}
+        if return_dict["acknowledged"]:
+            return_dict["upserted_id"] = result.upserted_id
+            return_dict["matched_count"] = result.matched_count
+            return_dict["modified_count"] = result.modified_count
+            return_dict["raw_result"] = result.raw_result
+        return return_dict
+
+    @staticmethod
+    def DeleteResultToDict(res):
+        """
+        DeleteResultToDict(res)
+
+        Converts a PyMongo :py:class:`pymongo.results.DeleteResult` to a dictionary.
+
+        Args:
+            res (:py:class:`pymongo.results.DeleteResult`): The result to convert to a dictionary
+
+        Returns:
+            dict: A dictionary containing the result's fields
+        """
+
+        return_dict = {"acknowledged": result.acknowledged}
+        if return_dict["acknowledged"]:
+            return_dict["deleted_count"] = result.deleted_count
+            return_dict["raw_result"] = result.raw_result
+        return return_dict
+
+    @inlineCallbacks
     @setting(9, server='s', port='s', user='s', password='s', database='s', collection='s', timeout='i', returns='s')
     def connect(self, c, server=None, port=None, user=None, password=None, database=None, collection=None, timeout=2000):
         """
         connect(self, c, server=None, port=None, user=None, password=None, database=None, collection=None)
 
+        Connect to a MongoDB database. Connections are maintained per LabRAD context.
 
         Args:
             c: LabRAD context
             server (str, optional): The server to connect to. Defaults to ``None``, in which case the server is loaded from ``mongodb.json`` if the file exists.
-            port (str, optional): The port to connect to. Defaults to ``None``, in which case the port is loaded from ``mongodb.json`` if the file exists.
+            port (str, optional): The port to connect to. Defaults to ``None``, in which case the port is loaded from ``mongodb.json`` if the file exists. If the port is not specified in the file, the default port is ``27017``.
             user (str, optional): The user to connect as. Defaults to ``None``, in which case the user is loaded from ``mongodb.json`` if the file exists.
             password (str, optional): The user's password. Defaults to ``None``, in which case the password is loaded from ``mongodb.json`` if the file exists.
             database (str, optional): The database to select. Defaults to ``None``, in which case :meth:set_database must be run to set the client's context's database.
             collection (str, optional): The database's collection to select. Defaults to ``None``, in which case :meth:set_collection must be run to set the client's context's database's collection.
-            timeout (int, optional): The timeout for connecting to the database (``connectTimeoutMS`` in the `PyMongo docs <https://pymongo.readthedocs.io/en/stable/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient>`__). Defaults to 2000.
+            timeout (int, optional): The timeout in ms for connecting to the database (``connectTimeoutMS`` in :py:class:`pymongo.mongo_client.MongoClient`). Defaults to 2000.
 
         Returns:
-            str: A JSON-dumped string of the result of `server_info() <https://pymongo.readthedocs.io/en/stable/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient.server_info>`__ if the connection was successful and the string "{}" otherwise.
+            str: A BSON-dumped string of the result of :py:meth:`pymongo.mongo_client.MongoClient.server_info` if the connection was successful and the string ``{}`` otherwise.
         """
-        client = MongoClient()
+
+        c.c = None
+        c.database = None
+        c.collection = None
+
         try:
-            return json.dumps(client.server_info())
+            with open('mongodb.json', 'r') as f:
+                config = loads(f.read())
         except Exception as e:
-            return "{}"
+            print("Could not load MongoDB config: {}".format(e))
+            config = {}
+
+        if server is None:
+            if "server" in config:
+                server = config["server"]
+            else:
+                print("Could not connect to MongoDB database. No server specified.")
+                returnValue("{}")
+        if port is None:
+            if "port" in config:
+                port = config["port"]
+            else:
+                port = 27017
+        if user is None:
+            if "user" in config:
+                user = config["user"]
+            else:
+                print("Could not connect to MongoDB database. No user specified.")
+                returnValue("{}")
+        if password is None:
+            if "password" in config:
+                password = config["password"]
+            else:
+                print("Could not connect to MongoDB database. No password specified.")
+                returnValue("{}")
+
+        url = "mongodb://{}:{}@{}:{}/authSource=admin".format(user, password, address, port)
+        c.c = yield MongoClient(url)
+        try:
+            server_info = yield c.c.server_info()
+            server_info_str = bson.dumps(server_info)
+            
+            if database is not None:
+                yield self.set_database(c, database)
+                if collection is not None:
+                    yield self.set_collection(c, collection)
+
+            returnValue(server_info_str)
+        except Exception as e:
+            print("Could not connect to MongoDB database: {}".format(e))
+            returnValue("{}")
         
 
     @setting(10)
@@ -66,8 +214,15 @@ class DatabaseServer(LabradServer):
         Args:
             c: LabRAD context
         """
-        pass
 
+        if c.c is not None:
+            try:
+                c.c.close()
+            except Exception as e:
+                print("Could not close MongoDB connection: {}".format(e))
+        c.c = None
+
+    @inlineCallbacks
     @setting(11, database='s', returns='b')
     def set_database(self, c, database):
         """
@@ -83,7 +238,16 @@ class DatabaseServer(LabradServer):
             bool: ``True`` if the database exists, ``False`` otherwise
         """
         
-        pass
+        try:
+            yield c.c[database]
+            c.database = database
+            returnValue(True)
+        except errors.InvalidName:
+            c.database = database
+            returnValue(False)
+        except Exception as e:
+            print("Could not set database: {}".format(e))
+            returnValue(False)
 
     @setting(12, collection='s', returns='b')
     def set_collection(self, c, collection):
@@ -99,8 +263,18 @@ class DatabaseServer(LabradServer):
         Returns:
             bool: ``True`` if the collection exists in the current database, ``False`` otherwise
         """
-        pass
+        try:
+            yield c.c[c.database][collection]
+            c.collection = collection
+            returnValue(True)
+        except errors.InvalidName:
+            c.collection = collection
+            returnValue(False)
+        except Exception as e:
+            print("Could not set database {}'s collection to {}: {}".format(c.database, collection, e))
+            returnValue(False)
 
+    @inlineCallbacks
     @setting(13, document='s', returns=str)
     def insert_one(self, c, document):
         """
@@ -108,16 +282,23 @@ class DatabaseServer(LabradServer):
 
         Insert a single document.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.insert_one>`__.
+        See :py:meth:`pymongo.collection.Collection.insert_one`.
 
         Args:
             c: LabRAD context
-            document (str): JSON-dumped string of the document
+            document (str): BSON-dumped string of the document
 
         Returns:
-            str: A JSON-dumped string of the `InsertOneResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.InsertOneResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.InsertOneResult` if the operation was successful and the string ``{}`` otherwise.
         """
-        pass
+        document = loads(document)
+        try:
+            result = yield c.c[c.database][c.collection].insert_one(document)
+            
+            returnValue(dumps(return_dict))
+        except Exception as e:
+            print("Could not insert document into collection {} of database {}: {}".format(c.collection, c.database, e))
+            returnValue("{}")
 
     @setting(14, documents='*s', ordered='b', returns=str)
     def insert_many(self, c, documents, ordered=True):
@@ -126,113 +307,152 @@ class DatabaseServer(LabradServer):
 
         Inserts a list of documents.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.insert_many>`__.
+        See :py:meth:`pymongo.collection.Collection.insert_many`.
 
         Args:
             c: LabRAD context
-            documents (list of str): list of JSON-dumped strings of the documents to insert
+            documents (list of str): list of BSON-dumped strings of the documents to insert
             ordered (bool, optional): If ``True`` (the default) documents will be inserted on the server serially, in the order provided. If an error occurs all remaining inserts are aborted. If ``False``, documents will be inserted on the server in arbitrary order, possibly in parallel, and all document inserts will be attempted.
 
         Returns:
-            str: A JSON-dumped string of the `InsertManyResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.InsertManyResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.InsertManyResult` if the operation was successful and the string ``{}`` otherwise.
         """
-        pass
+        documents = [loads(document) for document in documents]
+        try:
+            result = yield c.c[c.database][c.collection].insert_many(document, ordered=ordered)
+            returnValue(dumps(DatabaseServer.InsertManyResultToDict(result)))
+        except Exception as e:
+            print("Could not insert documents into collection {} of database {}: {}".format(c.collection, c.database, e))
+            returnValue("{}")
 
-    @setting(15, filter='s', update='s', upsert='b', returns=str)
-    def replace_one(self, c, filter, update, upsert=False):
+    @setting(15, db_filter='s', replacement='s', upsert='b', returns=str)
+    def replace_one(self, c, db_filter, replacement, upsert=False):
         """
-        replace_one(self, c, filter, update, upsert=False)
+        replace_one(self, c, db_filter, replacement, upsert=False)
 
-        Replace a single document matching ``filter`` with ``update``.
+        Replace a single document matching ``db_filter`` with ``replacement``.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.update_one>`__ for information on how ``filter`` and ``update`` work.
+        See :py:meth:`pymongo.collection.Collection.replace_one` for information on how ``db_filter`` (called ``filter`` in the documentation) and ``replacement`` work.
 
         Args:
             c: LabRAD context
-            filter (str): JSON-dumped string of the filter
-            update (str): JSON-dumped string of update
+            db_filter (str): BSON-dumped string of the filter
+            replacement (str): BSON-dumped string of update
             upsert (bool, optional): Whether to create a document if none exists. Defaults to ``False``.
 
         Returns:
-            str: A JSON-dumped string of the `UpdateResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.UpdateResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.UpdateResult`
         """
-        pass
+        replacement = loads(replacement)
+        db_filter = loads(db_filter)
+        try:
+            result = yield c.c[c.database][c.collection].replace_one(db_filter, replacement, upsert=upsert)
+            returnValue(dumps(DatabaseServer.UpdateResultToDict(result)))
+        except Exception as e:
+            print("Could not replace document matching filter {} in collection {} of database {}: {}".format(db_filter, c.collection, c.database, e))
+            returnValue("{}")
 
-    @setting(16, filter='s', update='s', upsert='b', returns=str)
-    def update_one(self, c, filter, update, upsert=False):
+    @setting(16, db_filter='s', update='s', upsert='b', returns=str)
+    def update_one(self, c, db_filter, update, upsert=False):
         """
-        update_one(self, c, filter, update, upsert=False)
+        update_one(self, c, db_filter, update, upsert=False)
 
-        Update a single document matching ``filter`` with ``update``.
+        Update a single document matching ``db_filter`` with ``update``.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.update_one>`__ for information on how ``filter`` and ``update`` work.
+        See :py:meth:`pymongo.collection.Collection.update_one` for information on how ``db_filter`` (called ``filter`` in the documentation) and ``update`` work.
 
         Args:
             c: LabRAD context
-            filter (str): JSON-dumped string of the filter
-            update (str): JSON-dumped string of update
+            db_filter (str): BSON-dumped string of the filter
+            update (str): BSON-dumped string of update
             upsert (bool, optional): Whether to create a document if none exists. Defaults to ``False``.
 
         Returns:
-            str: A JSON-dumped string of the `UpdateResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.UpdateResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.UpdateResult`
         """
-        pass
+        update = loads(update)
+        db_filter = loads(db_filter)
+        try:
+            result = yield c.c[c.database][c.collection].update_one(db_filter, update, upsert=upsert)
+            returnValue(dumps(DatabaseServer.UpdateResultToDict(result)))
+        except Exception as e:
+            print("Could not update document matching filter {} in collection {} of database {}: {}".format(db_filter, c.collection, c.database, e))
+            returnValue("{}")
 
-    @setting(17, filter='s', update='s', upsert='b')
-    def update_many(self, c, filter, update, upsert=False):
+    @setting(17, db_filter='s', update='s', upsert='b')
+    def update_many(self, c, db_filter, update, upsert=False):
         """
-        update_many(self, c, filter, update, upsert=False)
+        update_many(self, c, db_filter, update, upsert=False)
 
-        Update one or more documents matching ``filter`` with ``update``.
+        Update one or more documents matching ``db_filter`` with ``update``.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.update_many>`__ for information on how ``filter`` and ``update`` work.
+        See :py:meth:pymongo.collection.Collection.update_many for information on how ``db_filter`` (called ``filter`` in the documentation) and ``update`` work.
 
         Args:
             c: LabRAD context
-            filter (str): JSON-dumped string of the filter
-            update (str): JSON-dumped string of update
+            db_filter (str): BSON-dumped string of the filter
+            update (str): BSON-dumped string of update
             upsert (bool, optional): Whether to create a document if none exists. Defaults to ``False``.
 
         Returns:
-            str: A JSON-dumped string of the `UpdateResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.UpdateResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.UpdateResult`
         """
-        pass
+        update = loads(update)
+        db_filter = loads(db_filter)
+        try:
+            result = yield c.c[c.database][c.collection].update_many(db_filter, update, upsert=upsert)
+            returnValue(dumps(DatabaseServer.UpdateResultToDict(result)))
+        except Exception as e:
+            print("Could not update documents matching filter {} in collection {} of database {}: {}".format(db_filter, c.collection, c.database, e))
+            returnValue("{}")
 
-    @setting(18, filter='s', returns='s')
-    def delete_one(self, c, filter):
+    @setting(18, db_filter='s', returns='s')
+    def delete_one(self, c, db_filter):
         """
-        delete_one(self, c, filter, update, upsert=False)
+        delete_one(self, c, db_filter, update, upsert=False)
 
-        Delete a single document matching ``filter``.
+        Delete a single document matching ``db_filter``.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.delete_one>`__ for information on how ``filter`` works.
+        See :py:meth:`pymongo.collection.Collection.delete_one` for information on how ``db_filter`` (called ``filter`` in the documentation) works.
 
         Args:
             c: LabRAD context
-            filter (str): JSON-dumped string of the filter
+            db_filter (str): BSON-dumped string of the filter
 
         Returns:
-            str: A JSON-dumped string of the `DeleteResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.DeleteResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.DeleteResult`
         """
-        pass
+        update = loads(update)
+        try:
+            result = yield c.c[c.database][c.collection].delete_one(db_filter)
+            returnValue(dumps(DatabaseServer.DeleteResultToDict(result)))
+        except Exception as e:
+            print("Could not delete document matching filter {} in collection {} of database {}: {}".format(db_filter, c.collection, c.database, e))
+            returnValue("{}")
 
-    @setting(19, filter='s', returns='s')
-    def delete_many(self, c, filter, update, upsert=False):
+    @setting(19, db_filter='s', returns='s')
+    def delete_many(self, c, db_filter):
         """
-        delete_many(self, c, filter, update, upsert=False)
+        delete_many(self, c, db_filter)
 
-        Delete one or more documents matching ``filter``.
+        Delete one or more documents matching ``db_filter``.
         
-        See `the PyMongo documentation <https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.delete_many>`__ for information on how ``filter`` works.
+        See the PyMongo documentation :py:meth:`pymongo.collection.Collection.delete_many` for information on how ``filter`` (called ``filter`` in the documentation) works.
 
         Args:
             c: LabRAD context
-            filter (str): JSON-dumped string of the filter
+            db_filter (str): BSON-dumped string of the filter
 
         Returns:
-            str: A JSON-dumped string of the `DeleteResult <https://pymongo.readthedocs.io/en/stable/api/pymongo/results.html#pymongo.results.DeleteResult>`__
+            str: A BSON-dumped string of the :py:class:`pymongo.results.DeleteResult`
         """
-        pass
+        update = loads(update)
+        try:
+            result = yield c.c[c.database][c.collection].delete_many(db_filter)
+            returnValue(dumps(DatabaseServer.DeleteResultToDict(result)))
+        except Exception as e:
+            print("Could not delete documents matching filter {} in collection {} of database {}: {}".format(db_filter, c.collection, c.database, e))
+            returnValue("{}")
 
 if __name__ == '__main__':
     from labrad import util
