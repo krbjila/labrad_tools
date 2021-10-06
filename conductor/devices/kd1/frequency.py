@@ -35,7 +35,7 @@ class Frequency(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-	yield self.cxn.krbjila_gpib.select_interface(GPIB_ADDRESS_STR)
+        yield self.cxn.krbjila_gpib.select_interface(GPIB_ADDRESS_STR)
 
     @inlineCallbacks
     def update(self):
