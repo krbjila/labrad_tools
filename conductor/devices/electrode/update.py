@@ -1,6 +1,6 @@
-from electrode.clients.lib.forms.gui_defaults_helpers import FORM_FIELDS
 import sys
 import json
+from copy import deepcopy
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
@@ -13,15 +13,12 @@ LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
 sys.path.append(LABRAD_FOLDER + 'electrode/')
 from calibrations import ZEROS
 
-sys.path.append(LABRAD_FOLDER + 'electrode/clients/lib/')
-from helpers import json_loads_byteified
-
 sys.path.append(LABRAD_FOLDER + 'electrode/clients/lib/forms/')
 from gui_defaults_helpers import *
 
-class Electrode(ConductorParameter):
+class Update(ConductorParameter):
     """
-    Electrode(ConductorParameter)
+    Update(ConductorParameter)
 
     Conductor parameter for updating electrode presets when the experiment is run.
 
@@ -32,7 +29,7 @@ class Electrode(ConductorParameter):
     .. code-block:: json
 
             {
-                "99": {
+                "80": {
                     "normalModes": {
                         "HGrad": -0.0,
                         "GlobalOffset": -0.0,
@@ -46,15 +43,16 @@ class Electrode(ConductorParameter):
             }
     """
     priority = 20
-    value_type = 'list'
+    # value_type = 'list'
+
     def __init__(self, config={}):
-        super(Electrode, self).__init__(config)
-        self.value = [self.default_sequence]
+        super(Update, self).__init__(config)
+        self.value = self.default
 
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        self.server = yield self.cxn.get_server('electrode')
+        self.server = yield self.cxn.electrode
         self.zeros = yield self.get_zeros()
 
     @inlineCallbacks
@@ -70,7 +68,6 @@ class Electrode(ConductorParameter):
     def update(self):
         """ value is a dict of presets to update """
         if self.value:
-            Vs = deepcopy(self.value)
             for k,v in self.value.items():
                 try:
                     for (i,n) in enumerate(FORM_FIELDS['n']):
@@ -78,12 +75,9 @@ class Electrode(ConductorParameter):
                         max_val = FIELD_MAX['n'][i]
                         if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
                             raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
-                    Vs[k]['volts'] = NormalModesToVs(v['normalModes'])
-                    Vs[k]['values'] = VsToDACs(Vs[k]['volts'])
-                    Vs[k]['normalModes'] = VsToNormalModes(Vs[k]['volts'])
+                    v['volts'] = NormalModesToVs(v['normalModes'])
+                    v['values'] = VsToDACs(v['volts'])
                 except Exception as e:
                     print("Could not set electrode preset {} to {}: {}".format(k, v, e))
-                    # Vs[k]['values'] = self.zeros['values']
-                    # Vs[k]['volts'] = self.zeros['volts']
-                    # Vs[k]['normalModes'] = self.zeros['normalModes']
-            yield self.server.soft_update(Vs)
+            poo = yield self.server.soft_update(json.dumps(self.value))
+            print("soft_update for {} complete: result {}".format(k, poo))

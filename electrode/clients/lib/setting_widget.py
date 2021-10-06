@@ -62,8 +62,12 @@ class SettingWidget(QtGui.QWidget):
 
 	def setPresets(self, presets):
 		self.presets = presets
+		current_setting = self.settingControl.getCurrentItem()
+		
 		self.settingControl.setSettings(self.presets)
-		self.settingChanged(0)
+
+		current_index = self.settingControl.setCurrentItem(current_setting)
+		self.settingChanged(current_index)
 
 	def connectSignals(self):
 		self.settingControl.activated.connect(self.comboBoxChanged)
@@ -86,7 +90,6 @@ class SettingWidget(QtGui.QWidget):
 		self.currentSetting = index
 		self.descriptionEdit.setText(self.presets[index]['description'])
 		self.settingChangedSignal.emit()
-
 
 	def newSetting(self, index):
 		# Open a dialog for new setting ID

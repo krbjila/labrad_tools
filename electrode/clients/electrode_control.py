@@ -203,7 +203,6 @@ class ElectrodeControl(QtGui.QWidget):
 		yield self.server.reload_presets()
 		self.getPresets()
 
-
 	def optimize(self):
 		(vals, comp_shim) = self.forms.getValues()
 
