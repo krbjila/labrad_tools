@@ -8,7 +8,8 @@ node_dicts = [
                 # start hardware interfaces first
                 'usb', 
                 # 'labjack',
-                # 'pco'
+                # 'pco',
+                'database',
             ]
     },
     {
