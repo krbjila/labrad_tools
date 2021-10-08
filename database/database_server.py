@@ -129,7 +129,7 @@ class DatabaseServer(LabradServer):
         return return_dict
 
     @inlineCallbacks
-    @setting(9, address='s', port='s', user='s', password='s', database='s', collection='s', timeout='i', returns='s')
+    @setting(9, address='s', port='i', user='s', password='s', database='s', collection='s', timeout='i', returns='s')
     def connect(self, c, address=None, port=None, user=None, password=None, database=None, collection=None, timeout=2000):
         """
         connect(self, c, address=None, port=None, user=None, password=None, database=None, collection=None)
@@ -150,6 +150,8 @@ class DatabaseServer(LabradServer):
             str: A BSON-dumped string of the result of :py:meth:`pymongo.mongo_client.MongoClient.server_info` if the connection was successful and the string ``{}`` otherwise.
         """
 
+        if hasattr(c, 'c') and c.c is not None:
+            self.close(c)
         c.c = None
         c.database = None
         c.collection = None
@@ -198,6 +200,7 @@ class DatabaseServer(LabradServer):
 
             returnValue(server_info_str)
         except Exception as e:
+            c.c = None
             print("Could not connect to MongoDB database: {}".format(e))
             returnValue("{}")
         
