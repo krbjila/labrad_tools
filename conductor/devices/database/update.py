@@ -21,7 +21,7 @@ class Update(ConductorParameter):
     def initialize(self):
         self.cxn = yield connectAsync()
         try:
-            self.database = yield self.cxn.polarkrb_database
+            self.database = yield self.cxn.database
             self.conductor = yield self.cxn.conductor
             self.logging = yield self.cxn.imaging_logging
             yield self.database.connect(database="data", collection="shots")

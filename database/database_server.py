@@ -7,7 +7,7 @@ Server for communicating with MongoDB databases
     name = database
     version = 1.0
     description = 
-    instancename = %LABRADNODE%_database
+    instancename = database
 
     [startup]
     cmdline = %PYTHON3% %FILE%
@@ -32,7 +32,7 @@ class DatabaseServer(LabradServer):
 
     Uses :py:mod:`bson.json_util` for serializing and deserializing `BSON <https://bsonspec.org/>`__ data.
     """
-    name = '%LABRADNODE%_database'
+    name = 'database'
 
     def expireContext(self, c):
         """
