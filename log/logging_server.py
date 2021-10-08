@@ -39,7 +39,7 @@ class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
     name = '%LABRADNODE%_logging'
 
-    shot_updated = Signal(314159, "signal: shot_updated", "d")
+    shot_updated = Signal(314159, "signal: shot_updated", "i")
 
     def __init__(self):
         self.name = '{}_logging'.format(getNodeName())
