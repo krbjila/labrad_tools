@@ -44,7 +44,7 @@ class Update(ConductorParameter):
                     "time": now
                 }
             }
-            self.database.update_one({'_id': id}, update, upsert=True)
+            self.database.update_one({'_id': shot_id}, update, upsert=True)
         except Exception as e:
             print("Could not save parameters to database: {}".format(e))
 
