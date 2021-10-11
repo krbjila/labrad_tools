@@ -95,17 +95,6 @@
         "electrode" : {
             "update": {
                 "default": {
-                    "80": {
-                        "normalModes": {
-                            "HGrad": -0.0,
-                            "GlobalOffset": -0.0,
-                            "RodOffset": 0.0,
-                            "Bias": 1012.5,
-                            "EastWest": -0.0,
-                            "RodScale": 0.4225,
-                            "CompShim": 0.0
-                        }
-                    }
                 }
             }
         }

@@ -6,8 +6,8 @@ variables_dict = [
     ['*RbProbeI', -4.4],
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
-    ['*KMOT', 6.0], # was 5.1
-    ['*RbMOT', 5.1], # was 3.5
+    ['*KMOT', 5.5], # was 5.1
+    ['*RbMOT', 4.0], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
     ['*NWhigh', 4.4],
@@ -42,6 +42,7 @@ variables_dict = [
     ['*RFpulse', 0.001],
     ['*RFpulse2', 0.001],
     ['*RFpulse20', 0.001],
+    ['*RecoveryPulse', 0.001],
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
@@ -78,6 +79,7 @@ variables_dict = [
     ['*X', 0.005],
     ['*Tau', -3],
     ['*FillTime', 5.0],
+    ['*BlastTime', 20e-6],
     # Digital variables
     ['*?HOT', 1],
     ['*?MARIA', 1],
@@ -92,6 +94,14 @@ variables_dict = [
     ['*?Pulse3', 0],
     ['*?Sandwich', 0],
     ['*?BigFlip',0],
+    ['*?BigARP',0],
+    ['*?Side', 0],
+    ['*?Axial', 0],
+    ['*?Image00', 1],
+    ['*?poo', 0],
+    ['*?!poo', 1],
+    ['*?20Pulse', 0],
+    ['*?!20Pulse', 1],
     # Utility variables
     ['*poo', 0],
     ['*LowerPlateZero', 0],
