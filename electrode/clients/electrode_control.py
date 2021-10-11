@@ -7,6 +7,7 @@ import sys
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
+from electrode.clients.lib.forms.gui_defaults_helpers import NormalModesToVs
 
 sys.path.append('./lib/')
 sys.path.append('./lib/forms')
@@ -172,7 +173,10 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settingChanged()
 
 	def settingChanged(self):
-		if 'volts' in self.presets[self.settings.currentSetting]:
+		if 'normalModes' in self.presets[self.settings.currentSetting]:
+			vals = NormalModesToVs(self.presets[self.settings.currentSetting]['normalModes'])
+			vs = VsToDACs(vals)
+		elif 'volts' in self.presets[self.settings.currentSetting]:
 			vals = self.presets[self.settings.currentSetting]['volts']
 			vs = VsToDACs(vals)
 		else:
