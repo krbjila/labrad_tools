@@ -7,7 +7,6 @@ import sys
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
-from electrode.clients.lib.forms.gui_defaults_helpers import NormalModesToVs
 
 sys.path.append('./lib/')
 sys.path.append('./lib/forms')
@@ -15,11 +14,13 @@ sys.path.append('./lib/settings')
 sys.path.append('./lib/displays')
 sys.path.append('./lib/efield')
 
-from form_widget import FormWidget
-from setting_widget import SettingWidget
-from display_widget import DisplayWidget 
-from calculator import ECalculator
-from optimize_dialog import OptimizationDialog
+from lib.form_widget import FormWidget
+from lib.setting_widget import SettingWidget
+from lib.display_widget import DisplayWidget 
+from lib.efield.calculator import ECalculator
+from lib.optimize_dialog import OptimizationDialog
+from lib.forms.gui_defaults_helpers import NormalModesToVs
+
 
 from helpers import json_loads_byteified
 from gui_defaults_helpers import DACsToVs, VsToDACs, VsToNormalModes
