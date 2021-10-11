@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 
@@ -24,7 +24,9 @@ class Update(ConductorParameter):
             self.database = yield self.cxn.database
             self.conductor = yield self.cxn.conductor
             self.logging = yield self.cxn.imaging_logging
-            yield self.database.connect(database="data", collection="shots")
+            yield self.database.connect()
+            yield self.database.set_database("data")
+            yield self.database.set_collection("shots")
         except Exception as e:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
@@ -34,17 +36,18 @@ class Update(ConductorParameter):
     @inlineCallbacks
     def update(self):
         try:
-            parameters = loads(self.conductor.get_parameter_values())
-            shot = self.logging.get_shot()
-            now = datetime.now()
-            shot_id = now.strftime("%Y_%m_%d_{}").format(shot)
-            update = {
-                "$set": {
-                    "parameters": parameters,
-                    "time": now
+            parameters = yield self.conductor.get_parameter_values()
+            shot = yield self.logging.get_shot()
+            if shot != None and shot != -1:
+                now = datetime.now()
+                shot_id = now.strftime("%Y_%m_%d_{}").format(shot)
+                update = {
+                    "$set": {
+                        "parameters": loads(parameters),
+                        "time": now
+                    }
                 }
-            }
-            self.database.update_one({'_id': shot_id}, update, upsert=True)
+                yield self.database.update_one(dumps({'_id': shot_id}), dumps(update))
         except Exception as e:
             print("Could not save parameters to database: {}".format(e))
 
