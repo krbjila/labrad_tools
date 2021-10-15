@@ -60,7 +60,7 @@ class MainClient(QMainWindow):
 
         self.setCentralWidget(self.status_widget)
 
-        self.addDockWidget(Qt.RightDockWidgetArea, self.arduino_widget)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.arduino_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.parameter_widget)
 
         self.arduino_widget.setMaximumHeight(client_config.arduino['y'])
