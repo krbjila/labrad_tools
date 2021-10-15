@@ -89,9 +89,14 @@ class ParameterControl(QtGui.QGroupBox):
         # Gets variables which have been added to conductor but aren't stored in default_variables
         try:
             parameters = yield self.server.get_parameter_values()
-            default_variables_dict = json.loads(parameters)["sequencer"]
-            new_variables = [[k, v] for k,v in default_variables_dict.items() if len(k) > 0 and k[0] == '*' and [k, v] not in default_variables]
+            conductor_var_dict = json.loads(parameters)["sequencer"]
+            new_variables = [[k, v] for k,v in conductor_var_dict.items() if len(k) > 0 and k[0] == '*' and [k, v] not in default_variables]
             default_variables += new_variables
+
+            for v in default_variables:
+                if v[0] in conductor_var_dict and conductor_var_dict[v[0]] != v[1]:
+                    v[1] = conductor_var_dict[v[0]]
+
 
             self.numRows = len(default_variables) + 1
 
