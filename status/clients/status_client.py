@@ -135,8 +135,6 @@ class StatusClient(QWidget):
     def connect(self): 
         try:
             if not self.connected:
-                self.textedit.setTextColor(QColor(client_config.widget['colorWarning']))
-                self.textedit.append("Trying to connect to LabRAD...")
                 self.cxn = connection()
                 yield self.cxn.connect()
                 server = yield self.cxn.get_server('conductor')
