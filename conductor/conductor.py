@@ -225,10 +225,10 @@ class ConductorServer(LabradServer):
 
         Loads sequencer variables from ``clients/variables_config.py``.
         """
-        variables = {}
+        self.variables = {}
         for v in variables_config.variables_dict:
-            variables[v[0]] = float(v[1])
-        update = json.dumps({"sequencer": variables})
+            self.variables[v[0]] = float(v[1])
+        update = json.dumps({"sequencer": self.variables})
         self.set_parameter_values(None, update)
 
     def initServer(self):
@@ -248,7 +248,9 @@ class ConductorServer(LabradServer):
         """
         refresh_default_parameters(self, c)
 
-        Tries to register all default parameters defined in the ``config.json`` file
+        Tries to register all default parameters defined in the ``config.json`` file.
+        
+        Also checks that all sequencer variables are defined.
 
         Args:
             c: LabRAD context
@@ -274,6 +276,10 @@ class ConductorServer(LabradServer):
                     if not param in self.parameters[device]:
                         param_dict = {param: self.default_parameters[device][param]}
                         yield self.register_parameters(c, json.dumps({device: param_dict}))
+
+        for k, v in self.variables.items():
+            if not k in self.parameters["sequencer"]:
+                self.set_parameter_values(c, json.dumps({"sequencer": {k: float(v)}}))
 
 
     @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
