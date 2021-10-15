@@ -65,7 +65,6 @@ class ParameterControl(QtGui.QGroupBox):
             self.populateGUI()
             yield self.connectSignals()
         except Exception as e:
-            print(e)
             self.setDisabled(True)
 
     @inlineCallbacks
@@ -171,7 +170,7 @@ class ParameterControl(QtGui.QGroupBox):
         parameterRow.valueBox.display(value)
 
     @inlineCallbacks	
-    def reinit(self): 
+    def reinit(self):
         self.setDisabled(False)
         server = yield self.cxn.get_server(self.servername)
         yield server.signal__parameters_updated(self.update_id, context=self.context)

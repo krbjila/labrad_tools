@@ -11,7 +11,8 @@ sys.path.append('../client_tools')
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.task import LoopingCall
 from connection import connection
 
 SEP = os.path.sep
@@ -34,23 +35,34 @@ class RefreshButton(QWidget):
         # start connections with LABRAD
         self.initialize()
     
-    @inlineCallbacks
     def initialize(self):
-        try:
-            self.cxn = connection()
-            yield self.cxn.connect()
-            self.server = yield self.cxn.get_server('conductor')
-        except:
-            self.button.setEnabled(False)
-        self.button.clicked.connect(self.refresh_parameters)
+        self.connected = False
+        self.reconnect = LoopingCall(self.connect)
+        self.reconnect.start(1.0)
+
+    @inlineCallbacks
+    def connect(self):
+        if not self.connected:
+            try:
+                self.cxn = connection()
+                yield self.cxn.connect()
+                self.server = yield self.cxn.get_server('conductor')
+                self.button.clicked.connect(self.refresh_parameters)
+
+                self.connected = True
+            except:
+                self.button.setEnabled(False)
 
 
     # Tell conductor to refresh parameters
     @inlineCallbacks
     def refresh_parameters(self, c):
         self.button.setEnabled(False)
-        yield self.server.refresh_default_parameters()
-        self.button.setEnabled(True)
+        try:
+            yield self.server.refresh_default_parameters()
+            self.button.setEnabled(True)
+        except Exception as e:
+            self.connected = False
 
 
     # Lays out the widget

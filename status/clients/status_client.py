@@ -128,7 +128,7 @@ class StatusClient(QWidget):
     def initialize(self):
         self.connected = False
         self.reconnect = LoopingCall(self.connect)
-        self.reconnect.start(3.0)
+        self.reconnect.start(1.0)
 
 
     @inlineCallbacks
@@ -164,7 +164,6 @@ class StatusClient(QWidget):
                 self.textedit.setTextColor(QColor(client_config.widget['colorOff']))
                 self.textedit.append("Connected to LabRAD!")
 
-                self.refresh_button.button.setEnabled(True)
                 yield self.refresh_button.refresh_parameters(None)
 
                 self.connected = True
