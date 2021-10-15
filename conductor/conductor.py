@@ -89,6 +89,8 @@ from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 from lib.exceptions import ParameterNotInitialized
 
+from clients import variables_config
+
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
@@ -207,7 +209,7 @@ class ConductorServer(LabradServer):
         Set instance attributes defined in json config.
 
         Args:
-            path (str, optional): [description]. Defaults to None, in which case the object's ``self.config_path`` is loaded.
+            path (str, optional): Location of the JSON config. Defaults to None, in which case the object's ``self.config_path`` is loaded.
         """        
         if path is not None:
             self.config_path = path
@@ -217,13 +219,26 @@ class ConductorServer(LabradServer):
                 setattr(self, key, value)
         # TODO: RUN conductor/clients/variables_config.py and setattr from those also. Refer to conductor/clients/forceWriteValue in parameter_values_control.py
 
+    def load_variables(self):
+        """
+        load_variables(self)
+
+        Loads sequencer variables from ``clients/variables_config.py``.
+        """
+        variables = {}
+        for v in variables_config.variables_dict:
+            variables[v[0]] = float(v[1])
+        update = json.dumps({"sequencer": variables})
+        self.set_parameter_values(None, update)
+
     def initServer(self):
         """
         initServer(self)
 
-        Registers default parameters after connected to labrad
+        Registers default parameters and loads sequencer variables after connected to LabRAD
         """
         callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
+        callLater(0.1, self.load_variables)
 
 
     # Re-initialize parameters
@@ -441,8 +456,7 @@ class ConductorServer(LabradServer):
         returnValue(True)
 
     @inlineCallbacks
-    def set_parameter_value(self, device_name, parameter_name, parameter_value,
-                            generic_parameter=False, value_type=None):
+    def set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None):
         """
         set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None)
 

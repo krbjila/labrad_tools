@@ -75,6 +75,8 @@ class ParameterControl(QtGui.QGroupBox):
     def populateGUI(self):
         # added KM 08/28/17
         # initialize default variables and values from variables_config.py
+        self.setDisabled(True)
+        
         default_variables = variables_config.variables_dict
         self.numRows = len(default_variables) + 1
 
@@ -91,12 +93,15 @@ class ParameterControl(QtGui.QGroupBox):
         for i in range(len(default_variables)):
             self.parameterRows[i].nameBox.setText(default_variables[i][0])
             self.parameterRows[i].valueBox.display(default_variables[i][1])
-            # write the parameters to conductor
-            self.forceWriteValue(self.parameterRows[i])
             i += 1
+        
+        # Read in parameter values from LabRAD
+        self.do_update()
 
         self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
         self.setLayout(self.layout)
+
+        self.setDisabled(False)
 
     @inlineCallbacks
     def connectSignals(self):
@@ -114,7 +119,6 @@ class ParameterControl(QtGui.QGroupBox):
             pr.nameBox.returnPressed.connect(self.appendToRows)
             pr.valueBox.returnPressed.connect(self.appendToRows)
 
-    # 
     def appendToRows(self):
         arr = self.parameterRows
         if arr[-1].nameBox.text() != "" or arr[-1].valueBox.text() != "":
@@ -175,7 +179,6 @@ class ParameterControl(QtGui.QGroupBox):
                                  ID=self.update_id, context=self.context)
 
     def disable(self):
-        print('oh no!')
         self.setDisabled(True)
 
 
