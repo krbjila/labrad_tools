@@ -158,12 +158,17 @@ class StatusClient(QWidget):
 
                 yield self.cxn.add_on_disconnect('conductor', self.server_stopped)
 
-                self.connected = True
+                self.color = QColor(client_config.widget['colorOff'])
+                self.update()
+
                 self.textedit.setTextColor(QColor(client_config.widget['colorOff']))
                 self.textedit.append("Connected to LabRAD!")
 
-                self.color = QColor(client_config.widget['colorOff'])
-                self.update()
+                self.refresh_button.button.setEnabled(True)
+                yield self.refresh_button.refresh_parameters(None)
+
+                self.connected = True
+
         except Exception as e:
             self.connected = False
             self.server_stopped("conductor not running")
@@ -232,6 +237,7 @@ class StatusClient(QWidget):
         else:
             self.textedit.append("conductor stopped " + timestr)
             self.connected = False
+            self.refresh_button.button.setEnabled(False)
         self.labradServerError.emit()
 
     # Lays out the widget
