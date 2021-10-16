@@ -90,6 +90,8 @@ class ParameterControl(QtGui.QGroupBox):
         try:
             parameters = yield self.server.get_parameter_values()
             conductor_var_dict = json.loads(parameters)["sequencer"]
+            if "sequence" in conductor_var_dict:
+                del conductor_var_dict["sequence"]
             new_variables = [[k, v] for k,v in conductor_var_dict.items() if len(k) > 0 and k[0] == '*' and [k, v] not in default_variables]
             default_variables += new_variables
 
