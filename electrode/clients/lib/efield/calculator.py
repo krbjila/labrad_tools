@@ -182,7 +182,7 @@ class ECalculator(object):
 			return 0
 		else:
 			res = (first + second) / self._E(ea)(0,0)
-			print("d2|E|/dx2 = {}", res)
+			# print("d2|E|/dx2 = {}".format(res[0]))
 			return res
 	
 	# Taylor expand around (0,0)
@@ -201,7 +201,7 @@ class ECalculator(object):
 			return 0
 		else:
 			res = (first + second) / self._E(ea)(0,0)
-			print("d2|E|/dy2 = {}", res)
+			# print("d2|E|/dy2 = {}".format(res[0]))
 			return res
 
 	############################################
