@@ -169,6 +169,7 @@ class StatusClient(QWidget):
         except Exception as e:
             self.connected = False
             self.server_stopped("conductor not running")
+            print("Conductor not running: {}".format(e))
         returnValue(self.connected)
 
     # Sets variables, writes a timestamp to the widget
