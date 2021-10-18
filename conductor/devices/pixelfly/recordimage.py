@@ -39,7 +39,11 @@ class Recordimage(ConductorParameter):
 
     def __init__(self, config={}):
         super(Recordimage, self).__init__(config)
-        self.value = [self.default_recordimage]
+        try:
+            self.value = [self.default_recordimage]
+        except Exception as e:
+            print("Could not set default PixelFly value, assuming None")
+            self.value = None
 
     @inlineCallbacks
     def initialize(self):
@@ -52,7 +56,7 @@ class Recordimage(ConductorParameter):
             print("Pixelfly server not connected: {}".format(e))
 
     @inlineCallbacks
-    def update  (self):
+    def update(self):
         if self.value:
             try:
                 if self.value["enable"]:
@@ -68,6 +72,7 @@ class Recordimage(ConductorParameter):
                         yield self.server.record_and_save(path, self.value["n_images"])
                     else:
                         yield self.server.record_and_save(path, self.value["n_images"], roi=self.value["roi"])
+                    print("Saving Pixelfly image to {}".format(path))
                 else:
                     if self.server.is_running():
                         self.server.stop_record()
