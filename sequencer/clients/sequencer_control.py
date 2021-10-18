@@ -5,8 +5,10 @@ import os
 import sys
 
 from PyQt4 import QtGui, QtCore, Qt
-from PyQt4.QtCore import pyqtSignal 
+from PyQt4.QtCore import pyqtSignal
+from twisted import internet
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.task import LoopingCall
 
 sys.path.append('../../client_tools')
 from connection import connection
@@ -14,9 +16,6 @@ from widgets import SuperSpinBox
 from lib.duration_widgets import DurationRow
 from lib.digital_widgets import DigitalControl, DigitalVariableSelector
 from lib.analog_widgets import AnalogControl
-
-# from lib.ad5791_widgets import AD5791Control
-# from lib.ad5791_editor import AD5791VoltageEditor
 
 from lib.electrode_widgets import ElectrodeControl
 from lib.electrode_editor import ElectrodeEditor, zero_sequence
@@ -69,7 +68,10 @@ class SequencerControl(QtGui.QWidget):
 
         self.parameter_values = {}
 
-        self.connect()
+        self.connected = False
+        self.GUI_initialized = False
+        self.reconnect = LoopingCall(self.connect)
+        self.reconnect.start(1.0)
 
     def load_config(self, path=None):
         if path is not None:
@@ -82,27 +84,58 @@ class SequencerControl(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
-        if self.cxn is None:
-            self.cxn = connection()  
-            yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        
-        yield self.getChannels()
-        self.parameter_values = yield self.getParameters()
-        
-        try:
-            self.populate()
-        except Exception as e:
-            print(e)
+        if not self.connected:
+            try:
+                print("Trying to connect to LabRAD")
+                self.cxn = connection()  
+                yield self.cxn.connect()
+                self.context = yield self.cxn.context()
+                self.sequencer = yield self.cxn.get_server(self.sequencer_servername)
+                self.conductor = yield self.cxn.get_server(self.conductor_servername)
+                self.electrode = yield self.cxn.get_server(self.electrode_servername)
 
-        self.displaySequence(self.default_sequence)   
-        yield self.connectSignals()
-        yield self.update_sequencer(None, True)
+                self.cxn.add_on_disconnect("conductor", self.onDisconnect)
+                self.cxn.add_on_disconnect("sequencer", self.onDisconnect)
+                self.cxn.add_on_disconnect("electrode", self.onDisconnect)
+
+                yield self.getChannels()
+                self.parameter_values = yield self.getParameters()
+                
+                if not self.GUI_initialized:
+                    try:
+                        self.populate()
+                    except Exception as e:
+                        print(e)
+                    self.displaySequence(self.default_sequence)   
+                    self.GUI_initialized = True
+                else:
+                    self.displaySequence(self.getSequence())
+                yield self.connectSignals()
+                yield self.update_sequencer(None, True)
+
+                if '*' in str(self.windowTitle):
+                    self.setWindowTitle("sequencer control*")
+                else:
+                    self.setWindowTitle("sequencer control")
+
+                self.connected = True
+                print("Connected to LabRAD!")
+            except Exception as e:
+                self.onDisconnect("Could not connect to LabRAD: {}".format(e))
+
+    def onDisconnect(self, message=None):
+        if message is not None:
+            print(message)
+        self.connected = False
+        if '*' in str(self.windowTitle):
+            self.setWindowTitle("sequencer control* DISCONNECTED")
+        else:
+            self.setWindowTitle("sequencer control DISCONNECTED")
+
 
     @inlineCallbacks
     def getChannels(self):
-        sequencer = yield self.cxn.get_server(self.sequencer_servername)
-        channels = yield sequencer.get_channels()
+        channels = yield self.sequencer.get_channels()
         self.channels = json.loads(channels)
         
         self.analog_channels = {k: c for k, c in self.channels.items() 
@@ -111,7 +144,6 @@ class SequencerControl(QtGui.QWidget):
                                      if c['channel_type'] == 'digital'}
         self.electrode_channels = {k: c for k, c in self.channels.items()
                                      if c['channel_type'] == 'ad5791'}
-
 
         self.default_sequence = dict(
             [(nameloc, [{'type': 'lin', 'vf': 0, 'dt': 1}]) 
@@ -123,18 +155,14 @@ class SequencerControl(QtGui.QWidget):
 
     @inlineCallbacks
     def connectSignals(self):
-        sequencer = yield self.cxn.get_server(self.sequencer_servername)
-        yield sequencer.signal__update(self.config.sequencer_update_id)
-        yield sequencer.addListener(listener=self.update_sequencer, source=None,
-                                    ID=self.sequencer_update_id)
-        conductor = yield self.cxn.get_server(self.conductor_servername)
+        yield self.sequencer.signal__update(self.config.sequencer_update_id)
+        yield self.sequencer.addListener(listener=self.update_sequencer, source=None, ID=self.sequencer_update_id)
         # Handle parameters changed while the editor dialogs are open
         # TODO: refactor this to use the old one?? if perf sucks
-        yield conductor.signal__parameters_updated(self.config.conductor_update_id)
+        yield self.conductor.signal__parameters_updated(self.config.conductor_update_id)
         # Handle parameters changed in all other cases
-        yield conductor.signal__parameters_changed(self.config.conductor_parameter_changed_id)
-        yield conductor.addListener(listener=self.update_parameters, 
-                                    source=None, ID=self.conductor_parameter_changed_id)
+        yield self.conductor.signal__parameters_changed(self.config.conductor_parameter_changed_id)
+        yield self.conductor.addListener(listener=self.update_parameters, source=None, ID=self.conductor_parameter_changed_id)
 
     def populate(self):
         self.loadSaveRun = LoadSaveRun()
@@ -368,20 +396,13 @@ class SequencerControl(QtGui.QWidget):
         @inlineCallbacks
         def odnc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
-
                 pass
-#                # removed KM 03/18/18
-#                # we don't use the manual mode, and it's dangerous to be able to enable it
-#                server = yield self.cxn.get_server(self.sequencer_servername)
-#                mode = yield server.channel_mode(channel_name)
-#                if mode == 'manual':
-#                    yield server.channel_mode(channel_name, 'auto')
-#                else:
-#                    yield server.channel_mode(channel_name, 'manual')
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
-                server = yield self.cxn.get_server(self.sequencer_servername)
-                state = yield server.channel_manual_output(channel_name)
-                yield server.channel_manual_output(channel_name, not state)
+                try:
+                    state = yield self.sequencer.channel_manual_output(channel_name)
+                    yield self.sequencer.channel_manual_output(channel_name, not state)
+                except Exception as e:
+                    self.onDisconnect("Could not process digital name click: {}".format(e))
         return odnc
 
     def onAnalogNameClick(self, channel_name):
@@ -390,50 +411,21 @@ class SequencerControl(QtGui.QWidget):
         def oanc():
             if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
                 pass
-
-#                # removed KM 03/18/18
-#                # we don't use the manual mode, and it's dangerous to be able to enable it
-#                conf = AnalogControlConfig()
-#                conf.name = channel_name.split('@')[0]
-#                widget = AnalogVoltageManualControl(conf, self.reactor)
-#                dialog = QtGui.QDialog()
-#                dialog.ui = widget
-#                dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-#                widget.show()
             elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
-                ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
-                ave = AnalogVoltageEditor(*ave_args)
-                if ave.exec_():
-                    sequence = ave.getEditedSequence().copy()
-                    self.displaySequence(sequence)
+                try:
+                    ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
+                    ave = AnalogVoltageEditor(*ave_args)
+                    if ave.exec_():
+                        sequence = ave.getEditedSequence().copy()
+                        self.displaySequence(sequence)
 
-                    # added KM 05/07/2018
-                    # star on the title bar for unsaved
-                    self.sequenceChanged()
-                conductor = yield self.cxn.get_server(self.conductor_servername)
-                yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
+                        # added KM 05/07/2018
+                        # star on the title bar for unsaved
+                        self.sequenceChanged()
+                    yield self.conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
+                except Exception as e:
+                    self.onDisconnect("Could not process analog name click: {}".format(e))
         return oanc
-
-
-    # def onStableNameClick(self, channel_name):
-    #     channel_name = str(channel_name)
-    #     @inlineCallbacks
-    #     def osnc():
-    #         if QtGui.qApp.mouseButtons() & QtCore.Qt.RightButton:
-    #             pass
-    #         elif QtGui.qApp.mouseButtons() & QtCore.Qt.LeftButton:
-    #             ave_args = (channel_name, self.getSequence(), self.config, self.reactor, self.cxn)
-    #             ave = ElectrodeEditor(*ave_args)
-    #             if ave.exec_():
-    #                 sequence = ave.getEditedSequence().copy()
-    #                 self.displaySequence(sequence)
-
-    #                 # added KM 05/07/2018
-    #                 # star on the title bar for unsaved
-    #                 self.sequenceChanged()
-    #             conductor = yield self.cxn.get_server(self.conductor_servername)
-    #             yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
-    #     return osnc
 
     def onElectrodeNameClick(self, channel_name):
         channel_name = str(channel_name)
@@ -446,21 +438,22 @@ class SequencerControl(QtGui.QWidget):
                     v = self.metadata['electrodes']
                 except:
                     v = []
-                ave_args = (self.electrode_channels, self.getSequence(), v, self.config, self.reactor, self.cxn)
-                ave = ElectrodeEditor(*ave_args)
-                if ave.exec_():
-                    sequence = ave.getEditedSequence()
+                try:
+                    ave_args = (self.electrode_channels, self.getSequence(), v, self.config, self.reactor, self.cxn)
+                    ave = ElectrodeEditor(*ave_args)
+                    if ave.exec_():
+                        sequence = ave.getEditedSequence()
 
-                    self.metadata['electrodes'] = deepcopy(ave.getElectrodeSequence())
-                    self.displaySequence(sequence)
+                        self.metadata['electrodes'] = deepcopy(ave.getElectrodeSequence())
+                        self.displaySequence(sequence)
 
-                    # added KM 05/07/2018
-                    # star on the title bar for unsaved
-                    self.sequenceChanged()
-                conductor = yield self.cxn.get_server(self.conductor_servername)
-                yield conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
-                electrode = yield self.cxn.get_server(self.electrode_servername)
-                yield electrode.removeListener(listener=ave._update_presets, ID=ave.config.electrode_update_id)
+                        # added KM 05/07/2018
+                        # star on the title bar for unsaved
+                        self.sequenceChanged()
+                    yield self.conductor.removeListener(listener=ave.receive_parameters, ID=ave.config.conductor_update_id)
+                    yield self.electrode.removeListener(listener=ave._update_presets, ID=ave.config.electrode_update_id)
+                except Exception as e:
+                    self.onDisconnect("Could not process electrode name click: {}".format(e))
         return oenc
 
 
@@ -529,9 +522,11 @@ class SequencerControl(QtGui.QWidget):
 
         # if the sequence is longer than MIN_SEQ_TIME, run the sequence
         if seq_time >= MIN_SEQ_TIME:
-            conductor = yield self.cxn.get_server(self.conductor_servername)
             sequence_json = json.dumps({'sequencer': {'sequence': [sequence]}})
-            yield conductor.set_parameter_values(sequence_json)
+            try:
+                yield self.conductor.set_parameter_values(sequence_json)
+            except Exception as e:
+                self.onDisconnect("Could not run sequence: {}".format(e))
         # otherwise, throw up a message box and don't run
         else:
             msg = QtGui.QMessageBox()
@@ -561,13 +556,15 @@ class SequencerControl(QtGui.QWidget):
             self.metadata['electrodes'] = [zero_sequence(x['dt']) for x in v]
 
         self.updateDescriptionTooltips()
+        
+        try:
+            sequence = yield self.sequencer.fix_sequence_keys(json.dumps(sequence))
+            self.displaySequence(json.loads(sequence))
+            self.loadSaveRun.locationBox.setText(filepath)
 
-        sequencer = yield self.cxn.get_server(self.sequencer_servername)
-        sequence = yield sequencer.fix_sequence_keys(json.dumps(sequence))
-        self.displaySequence(json.loads(sequence))
-        self.loadSaveRun.locationBox.setText(filepath)
-
-        self.setWindowTitle('sequencer control')
+            self.setWindowTitle('sequencer control')
+        except Exception as e:
+            self.onDisconnect("Could not load sequence: {}".format(e))
 
     def displaySequence(self, sequence):
         self.sequence = sequence
@@ -597,10 +594,13 @@ class SequencerControl(QtGui.QWidget):
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
-        conductor = yield self.cxn.get_server(self.conductor_servername)
-        pv_json = yield conductor.get_parameter_values()        
-        pv = json.loads(pv_json)['sequencer']
-        returnValue(pv)
+        try:
+            pv_json = yield self.conductor.get_parameter_values()
+            pv = json.loads(pv_json)['sequencer']
+            returnValue(pv)
+        except Exception as e:
+            self.onDisconnect("Could not get parameters")
+            raise(Exception("Could not get parameters: {}".format(e)))    
 
     def update_parameters(self, c, signal):
         try:
@@ -614,8 +614,7 @@ class SequencerControl(QtGui.QWidget):
     @inlineCallbacks
     def update_sequencer(self, c, signal):
         if signal:
-            sequencer = yield self.cxn.get_server(self.sequencer_servername)
-            channels = yield sequencer.get_channels()
+            channels = yield self.sequencer.get_channels()
             for l in self.digitalControl.nameColumn.labels.values():
                 l.displayModeState(json.loads(channels)[l.nameloc])
     
