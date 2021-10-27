@@ -9,9 +9,8 @@ Adapted with permission from the PYthon Microscopy Environment project. Original
 https://github.com/python-microscopy/python-microscopy/blob/master/PYME/Acquire/Hardware/pco/pco_sdk_cam.py
 """
 
-from PYME.Acquire.Hardware.Camera import Camera
-from PYME.Acquire.Hardware.pco import pco_sdk
-from PYME.Acquire import eventLog
+import pco_sdk
+from PYMECamera import Camera
 
 import numpy as np
 import logging
@@ -73,7 +72,6 @@ MAX_QUEUED_BUFFERS = 16  # pco. has a hard limit on attaching no
 
 class PcoSdkCam(Camera):
     def __init__(self, camNum, debuglevel='off'):
-        Camera.__init__(self)
         self._initalized = False
         self.noiseProps = None
 
@@ -416,7 +414,6 @@ class PcoSdkCam(Camera):
         if self._recording == False:
             self._init_buffers()
 
-        eventLog.logEvent('StartAq', '')
         self._recording = True
 
         if (self._mode == self.MODE_SINGLE_SHOT) or (self._mode == self.MODE_SOFTWARE_TRIGGER):
