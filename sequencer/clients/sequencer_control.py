@@ -69,6 +69,8 @@ class SequencerControl(QtGui.QWidget):
 
         self.parameter_values = {}
 
+        self.last_update = {}
+
         self.connect()
 
     def load_config(self, path=None):
@@ -581,6 +583,7 @@ class SequencerControl(QtGui.QWidget):
 
         # It's the updateParameters method that actually updates the GUI; fire that here
         self.force_replot()
+        self.setSizes()
     
     def force_replot(self):
         self.updateParameters({}, True)
@@ -593,7 +596,6 @@ class SequencerControl(QtGui.QWidget):
             self.analogControl.updateParameters(self.parameter_values)
             self.electrodeControl.updateParameters(self.parameter_values)
             self.addDltRow.updateParameters(self.parameter_values)
-            self.setSizes()
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
@@ -608,8 +610,10 @@ class SequencerControl(QtGui.QWidget):
         except KeyError or ValueError:
             changed_parameters = {}
 
-        if len(changed_parameters):
-            self.updateParameters(changed_parameters)
+        # Excessive CPU use caused by next block when sequence is not running
+        if len(changed_parameters) and changed_parameters != self.last_update:
+            self.last_update = changed_parameters
+            self.updateParameters(self.last_update)
 
     @inlineCallbacks
     def update_sequencer(self, c, signal):

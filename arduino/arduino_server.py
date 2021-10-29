@@ -146,7 +146,7 @@ class ArduinoServer(HardwareInterfaceServer):
         return ans.strip()
 
     @setting(14, n_bytes='w', returns='*s')
-    def read_lines(self, c, n_bytes=1000L):
+    def read_lines(self, c, n_bytes=1000):
         ans = self.call_if_available('readlines', c, n_bytes)
         return [a.strip() for a in ans]
 

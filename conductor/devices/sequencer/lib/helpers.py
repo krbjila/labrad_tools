@@ -8,6 +8,7 @@ from copy import deepcopy
 
 SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 TIMING_CHANNEL = 'Trigger@D15'
+YEARS = 2
 
 def zero_sequence(dt):
     return {'dt': dt, 'type': 's', 'vf': 0}
@@ -114,7 +115,7 @@ def read_sequence_file(sequence_directory, filename):
         else:
             return (filename, [])
     if not os.path.exists(filename):
-        for i in range(365):
+        for i in range(365 * YEARS):
             day = date.today() - timedelta(i)
             path = sequence_directory.format(day.strftime('%Y%m%d')) + filename
             if os.path.exists(path):

@@ -19,3 +19,4 @@ magnetic_evaporation/evap.json
 docs/_build
 docs/_static
 dds/backup
+database/mongodb.json

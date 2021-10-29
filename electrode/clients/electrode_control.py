@@ -14,11 +14,13 @@ sys.path.append('./lib/settings')
 sys.path.append('./lib/displays')
 sys.path.append('./lib/efield')
 
-from form_widget import FormWidget
-from setting_widget import SettingWidget
-from display_widget import DisplayWidget 
-from calculator import ECalculator
-from optimize_dialog import OptimizationDialog
+from lib.form_widget import FormWidget
+from lib.setting_widget import SettingWidget
+from lib.display_widget import DisplayWidget 
+from lib.efield.calculator import ECalculator
+from lib.optimize_dialog import OptimizationDialog
+from lib.forms.gui_defaults_helpers import NormalModesToVs
+
 
 from helpers import json_loads_byteified
 from gui_defaults_helpers import DACsToVs, VsToDACs, VsToNormalModes
@@ -172,7 +174,10 @@ class ElectrodeControl(QtGui.QWidget):
 		self.settingChanged()
 
 	def settingChanged(self):
-		if 'volts' in self.presets[self.settings.currentSetting]:
+		if 'normalModes' in self.presets[self.settings.currentSetting]:
+			vals = NormalModesToVs(self.presets[self.settings.currentSetting]['normalModes'])
+			vs = VsToDACs(vals)
+		elif 'volts' in self.presets[self.settings.currentSetting]:
 			vals = self.presets[self.settings.currentSetting]['volts']
 			vs = VsToDACs(vals)
 		else:
@@ -202,7 +207,6 @@ class ElectrodeControl(QtGui.QWidget):
 	def refresh(self):
 		yield self.server.reload_presets()
 		self.getPresets()
-
 
 	def optimize(self):
 		(vals, comp_shim) = self.forms.getValues()

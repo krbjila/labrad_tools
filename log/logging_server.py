@@ -17,7 +17,7 @@ Logs messages received from other LabRAD nodes. Also the wavemeter, for some rea
     ### END NODE INFO
 """
 import sys
-from labrad.server import LabradServer, setting
+from labrad.server import LabradServer, setting, Signal
 from labrad.util import getNodeName
 import labrad
 sys.path.append("../client_tools")
@@ -38,6 +38,8 @@ PATHBASE = 'K:/data/'
 class LoggingServer(LabradServer):
     """Logs messages received from other LabRAD nodes"""
     name = '%LABRADNODE%_logging'
+
+    shot_updated = Signal(314159, "signal: shot_updated", "i")
 
     def __init__(self):
         self.name = '{}_logging'.format(getNodeName())
@@ -97,6 +99,7 @@ class LoggingServer(LabradServer):
             shot (int, optional): The number of the shot to record. Defaults to None, which sets the program to log the idle experiment.
         """
         self.shot = shot
+        self.shot_updated(shot if shot is not None else -1)
         self.set_save_location()
         try:
             self.labjack.set_shot(self.ljpath, self.shot == None)

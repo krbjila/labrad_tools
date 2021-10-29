@@ -91,6 +91,17 @@
         },
         "magevaptimer": {
             "time": {}
+        },
+        "electrode" : {
+            "update": {
+                "default": {
+                }
+            }
+        },
+        "database": {
+            "update": {
+                
+            }
         }
     }
 }
