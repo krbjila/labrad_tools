@@ -44,7 +44,7 @@ class Time(ConductorParameter):
             try:
                 param_values = yield self.cxn.conductor.get_parameter_values()
                 param_values = json.loads(param_values)['sequencer']
-                parameterized_sequence = value_to_sequence(valuething())[0]
+                parameterized_sequence = value_to_sequence(valuething(), self.cxn)[0]
                 parameters = get_parameters(parameterized_sequence)
                 for i in parameters:
                     if i not in param_values:

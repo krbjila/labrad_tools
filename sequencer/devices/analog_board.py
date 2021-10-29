@@ -143,15 +143,6 @@ class AnalogBoard(DeviceWrapper):
         take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
         """
 
-        # If channel name is different between config and sequence, change the sequence to use the config's name for the channel at the config's location.
-        seq_keys = list(sequence.keys())
-        seq_locs = [s.split("@")[-1] for s in seq_keys]
-        for c in self.channels:
-            if c.key not in seq_keys:
-                seq_key = seq_keys[seq_locs.index(c.loc)]
-                sequence[c.key] = sequence[seq_key]
-                del sequence[seq_key]
-        
         # ramp to zero at end
         for c in self.channels:
             sequence[c.key].append({'dt': 10e-3, 'type': 'lin', 'vf': 0})
