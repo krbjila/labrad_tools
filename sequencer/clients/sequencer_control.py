@@ -587,12 +587,19 @@ class SequencerControl(QtGui.QWidget):
 
     def updateParameters(self, changed_parameters, force=False):
         if len(changed_parameters) or force:
+            # Next 2 lines: negligible CPU usage while expt idling (?)
             self.parameter_values.update(changed_parameters)
             self.durationRow.updateParameters(self.parameter_values)
+
+            # Next 2 lines: 30% CPU usage while expt idling
             self.digitalControl.updateParameters(self.parameter_values)
             self.analogControl.updateParameters(self.parameter_values)
+
+            # Next 2 lines: ~20% CPU usage while expt idling
             self.electrodeControl.updateParameters(self.parameter_values)
             self.addDltRow.updateParameters(self.parameter_values)
+
+            # This line uses 15-20% CPU while expt idling
             self.setSizes()
 
     @inlineCallbacks
@@ -608,6 +615,7 @@ class SequencerControl(QtGui.QWidget):
         except KeyError or ValueError:
             changed_parameters = {}
 
+        # Excessive CPU use caused by next block when sequence is not running
         if len(changed_parameters):
             self.updateParameters(changed_parameters)
 
