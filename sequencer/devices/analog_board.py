@@ -83,8 +83,6 @@ class AnalogBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-#        self.bitfile = 'analog_sequencer.bit'
-#        self.bitfile = 'dac.bit'
         self.bitfile = 'analog_lower_drive.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
@@ -94,11 +92,10 @@ class AnalogBoard(DeviceWrapper):
                                      0x05, 0x06, 0x07, 0x08]
 
         self.clk =  48e6 / (8.*2. + 2.)
-#        self.clk = 12e6 / (8.*4. + 2.)
+        # self.clk = 12e6 / (8.*4. + 2.)
         self.mode = 'idle'
 
-        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name})
-                            for i in range(8)]
+        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name}) for i in range(8)]
 
         """ non-defaults"""
         for key, value in config.items():
@@ -145,6 +142,15 @@ class AnalogBoard(DeviceWrapper):
         """ 
         take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
         """
+
+        # If channel name is different between config and sequence, change the sequence to use the config's name for the channel at the config's location.
+        seq_keys = list(sequence.keys())
+        seq_locs = [s.split("@")[-1] for s in seq_keys]
+        for c in self.channels:
+            if c.key not in seq_keys:
+                seq_key = seq_keys[seq_locs.index(c.loc)]
+                sequence[c.key] = sequence[seq_key]
+                del sequence[seq_key]
         
         # ramp to zero at end
         for c in self.channels:

@@ -135,6 +135,15 @@ class DigitalBoard(DeviceWrapper):
         # allow for analog's ramp to zero, last item will not be written
         sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
 
+        # If channel name is different between config and sequence, change the sequence to use the config's name for the channel at the config's location.
+        seq_keys = list(sequence.keys())
+        seq_locs = [s.split("@")[-1] for s in seq_keys]
+        for c in self.channels:
+            if c.key not in seq_keys:
+                seq_key = seq_keys[seq_locs.index(c.loc)]
+                sequence[c.key] = sequence[seq_key]
+                del sequence[seq_key]
+
         for c in self.channels:
             total_ticks = 0
             for s in sequence[c.key]:
