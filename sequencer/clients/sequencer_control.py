@@ -581,6 +581,8 @@ class SequencerControl(QtGui.QWidget):
 
         # It's the updateParameters method that actually updates the GUI; fire that here
         self.force_replot()
+
+        self.setSizes()
     
     def force_replot(self):
         self.updateParameters({}, True)
@@ -597,10 +599,12 @@ class SequencerControl(QtGui.QWidget):
 
             # Next 2 lines: ~20% CPU usage while expt idling
             self.electrodeControl.updateParameters(self.parameter_values)
+
+            # This is fine
             self.addDltRow.updateParameters(self.parameter_values)
 
             # This line uses 15-20% CPU while expt idling
-            self.setSizes()
+            # self.setSizes()
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
