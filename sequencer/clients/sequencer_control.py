@@ -69,6 +69,8 @@ class SequencerControl(QtGui.QWidget):
 
         self.parameter_values = {}
 
+        self.last_update = {}
+
         self.connect()
 
     def load_config(self, path=None):
@@ -581,7 +583,6 @@ class SequencerControl(QtGui.QWidget):
 
         # It's the updateParameters method that actually updates the GUI; fire that here
         self.force_replot()
-
         self.setSizes()
     
     def force_replot(self):
@@ -589,22 +590,12 @@ class SequencerControl(QtGui.QWidget):
 
     def updateParameters(self, changed_parameters, force=False):
         if len(changed_parameters) or force:
-            # Next 2 lines: negligible CPU usage while expt idling (?)
             self.parameter_values.update(changed_parameters)
             self.durationRow.updateParameters(self.parameter_values)
-
-            # Next 2 lines: 30% CPU usage while expt idling
             self.digitalControl.updateParameters(self.parameter_values)
             self.analogControl.updateParameters(self.parameter_values)
-
-            # Next 2 lines: ~20% CPU usage while expt idling
             self.electrodeControl.updateParameters(self.parameter_values)
-
-            # This is fine
             self.addDltRow.updateParameters(self.parameter_values)
-
-            # This line uses 15-20% CPU while expt idling
-            # self.setSizes()
 
     @inlineCallbacks
     def getParameters(self, parameters=None):
@@ -620,8 +611,9 @@ class SequencerControl(QtGui.QWidget):
             changed_parameters = {}
 
         # Excessive CPU use caused by next block when sequence is not running
-        if len(changed_parameters):
-            self.updateParameters(changed_parameters)
+        if len(changed_parameters) and changed_parameters != self.last_update:
+            self.last_update = changed_parameters
+            self.updateParameters(self.last_update)
 
     @inlineCallbacks
     def update_sequencer(self, c, signal):
