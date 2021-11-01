@@ -1,18 +1,18 @@
 {
     "devices": {
-        "N=1": {
+        "test1": {
             "device_type": "Arduino",
             "connection_type": "Serial",
-            "servername": "imaging_serial",
-            "address": "ASRL4::INSTR",
+            "servername": "krbg2_serial",
+            "address": "ASRL6::INSTR",
             "baud": 2400,
             "timeout": 100
         },
-        "N=2": {
+        "test2": {
             "device_type": "Arduino",
             "connection_type": "Serial",
-            "servername": "imaging_serial",
-            "address": "ASRL5::INSTR",
+            "servername": "krbg2_serial",
+            "address": "ASRL12::INSTR",
             "baud": 2400,
             "timeout": 100
         }
