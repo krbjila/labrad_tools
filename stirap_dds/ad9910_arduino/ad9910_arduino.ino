@@ -46,15 +46,21 @@ void loop() {
     case DATA_INVALID:
       delay(100);
       break;
+
     case CXN:
+    // connect
       {
         zeroProfiles();
         disableLines();
       }
       break;
+
     case DATA_LOAD:
+    // keep reading
       break;
+
     case ECHO:
+    // read all lines
       {
         int last = findEnabledLines();
         currPos = 0;
@@ -63,7 +69,9 @@ void loop() {
         state = PROFILES_LOAD;
       }
       break;
+
     case PROFILES_LOAD:
+    // load profiles onto dds
       {
         ddsCFRInit();
         for (int i = 0; i < NUM_PROFILES; i++) {
@@ -73,58 +81,47 @@ void loop() {
           byte* data = profiles[i]->dataArray;
           writeRegister(0x0E + i, data, 8);
         }
-        ioUpdate();
+        // ioUpdate();
         state = SETUP_NEXT;
       }
       break;
 
-   case SETUP_NEXT:{
-     masterReset();
-     ddsCFRInit();
+   case SETUP_NEXT:
+    // Set frequency outputs and sweeps up
+    {
+    if (current->mode == 1) {
+      // set dds to sweep mode drg enable
+      // set drLimits, drStepSize, drRate
+      writeRegister(DRL, current->drLimits, 8);
+      writeRegister(DRSS, current->drStepSize, 8);
+      writeRegister(DRR, current->drRate, 4);
 
-     for (int i = 0; i < NUM_PROFILES; i++) {
-        // Write data to profile registers
-        // If there was no data from Python for a given register,
-        // it should write all zeros (the array is initialized to all zeros)
-        byte* data = profiles[i]->dataArray;
-        writeRegister(0x0E + i, data, 8);
-      }
-    
-      ioUpdate();
-    
-      // Set everything up
-      if (current->mode == 1) {
-        // set dds to sweep mode drg enable
-        // set drLimits, drStepSize, drRate
-       
-        writeRegister(DRL, current->drLimits, 8);
-        writeRegister(DRSS, current->drStepSize, 8);
-        writeRegister(DRR, current->drRate, 4);
+      drgEnable(true);
 
-        drgEnable(true);
-
-        if (current->sweepInvert) {
-          // if inverted, need to let dds sweep up to upper limit
-          digitalWrite(DRCTL, HIGH);
-          // digitalWrite(DRHOLD, LOW);
-        }
-        else {
-          digitalWrite(DRCTL, LOW);
-          // digitalWrite(DRHOLD, LOW);
-        }
+      if (current->sweepInvert) {
+        // if inverted, need to let dds sweep up to upper limit
+        digitalWrite(DRCTL, HIGH);
       }
       else {
-        // set dds to normal mode
-        // set profile0 register
-        drgEnable(false);
-        writeRegister(P0, current->single, 8);
+        digitalWrite(DRCTL, LOW);
       }
-
-      ioUpdate();
-      state = WAIT_FOR_TRIGGER;
+    }
+    else {
+      // single frequenct output line
+      // set dds to normal mode
+      // set profile0 register
+      drgEnable(false);
+      writeRegister(P0, current->single, 8);
+    }
+    // update dds
+    ioUpdate(); 
+    // move to next state
+    state = WAIT_FOR_TRIGGER;
     }
     break;
-  case WAIT_FOR_TRIGGER:{
+
+  case WAIT_FOR_TRIGGER:
+    {
       // Upon receiving trigger:
     if (digitalRead(TRIG) == HIGH) {
       // If in sweep mode, need to do something fancy
@@ -143,11 +140,14 @@ void loop() {
       state = TRIGGERED;
       }
     else {
+      // if no trigger yet, keep waiting
       state = WAIT_FOR_TRIGGER;
       }
     }
     break;
-  case TRIGGERED:{
+
+  case TRIGGERED:
+  {
     // if still triggered, stay at current line
     if (digitalRead(TRIG) == HIGH) {
       state = TRIGGERED;
@@ -167,33 +167,4 @@ void loop() {
     break;
   }
 
-  
-  
-//  while (flag == 0) {
-//    // put your main code here, to run repeatedly:
-//    int res = readLineFromSerial(false);
-//    if (res == -1) {
-//      digitalWrite(13, LOW);
-//      flag = 1;
-//    }
-//  }
-//  while (flag == 1) {
-//    int read_status = readLineFromSerial(true);
-//    if (read_status >= 0) {
-//      byte* arr;
-//      arr = bytesFromPython[read_status];
-//
-//      for (int i=0; i < TX_LENGTH; i++) {
-//        Serial.print(arr[i]);
-//        Serial.print(',');
-//      }
-//      Serial.print('\n');
-//    }
-//    else if (read_status == -2) {
-//      Serial.print("Done\n");
-//      digitalWrite(13, HIGH);
-//      delay(1000);
-//      flag = 0;
-//    }
-//  }
 }
