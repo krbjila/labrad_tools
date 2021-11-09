@@ -1,19 +1,19 @@
 {
     "devices": {
-        "stirap_ch1": {
+        "up": {
             "device_type": "Arduino",
-            "connection_type": "Serial",
-            "servername": "krbg2_serial",
-            "address": "ASRL6::INSTR",
+            "connection_type": "AD9910",
+            "servername": "krbg2_ad9910",
+            "address": "up",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true
         },
-        "stirap_ch2": {
+        "down": {
             "device_type": "Arduino",
-            "connection_type": "Serial",
-            "servername": "krbg2_serial",
-            "address": "ASRL11::INSTR",
+            "connection_type": "AD9910",
+            "servername": "krbg2_ad9910",
+            "address": "down",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true

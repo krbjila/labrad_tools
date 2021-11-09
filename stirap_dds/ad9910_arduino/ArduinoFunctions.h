@@ -98,6 +98,9 @@ int readLineFromSerial(void) {
     else if (str.equals("Done")) {
         return -2;
     }
+    else if (str.equals("trigger")) {
+        return -4;
+    }
     else {
       // Convert String to char*
       // because String is an Arduino object that doesn't work with strtol 

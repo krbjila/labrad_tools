@@ -4,13 +4,13 @@
 #include "SPI.h"
 
 int flag = 0;
-enum fsm{DATA_INVALID, CXN, DATA_LOAD, ECHO, PROFILES_LOAD, PROGRAM_RUN, SETUP_NEXT, WAIT_FOR_TRIGGER, TRIGGERED};
+enum fsm{DATA_INVALID, CXN, DATA_LOAD, ECHO, FORCE_TRIGGERED, PROFILES_LOAD, PROGRAM_RUN, SETUP_NEXT, WAIT_FOR_TRIGGER, TRIGGERED};
 enum fsm state = CXN;
 
 int numLines = 0; // Length of the program in modules
 int currPos = 0; // Current position in the program
+bool forceTriggered = false; // Holds if the program has been force triggered
 
-int dummy = 0; // GET RID OF ME!
 
 void setup() {
   // Initialize and start serial
@@ -31,6 +31,9 @@ void loop() {
     }
     else if (res == -2) {
       state = ECHO;
+    }
+    else if (res == -4) {
+      state = FORCE_TRIGGERED;
     }
     else if (res >= 0) {
       state = DATA_LOAD;
@@ -67,6 +70,13 @@ void loop() {
         numLines = last + 1;
         echoData(last);
         state = PROFILES_LOAD;
+      }
+      break;
+
+    case FORCE_TRIGGERED: 
+      {
+        forceTriggered = true;
+        state =  SETUP_NEXT;
       }
       break;
 
@@ -123,7 +133,7 @@ void loop() {
   case WAIT_FOR_TRIGGER:
     {
       // Upon receiving trigger:
-    if (digitalRead(TRIG) == HIGH) {
+    if (digitalRead(TRIG) == HIGH || forceTriggered) {
       // If in sweep mode, need to do something fancy
       if (current->mode == 1) {
         // If sweep is inverted,
@@ -150,6 +160,11 @@ void loop() {
   {
     // if still triggered, stay at current line
     if (digitalRead(TRIG) == HIGH) {
+      state = TRIGGERED;
+    }
+    else if (forceTriggered) {
+      forceTriggered = false;
+      delay(1000); // pause program for 5 ms to allow sweep to finish progressing
       state = TRIGGERED;
     }
     else {

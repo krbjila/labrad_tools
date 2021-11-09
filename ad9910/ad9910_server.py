@@ -212,6 +212,26 @@ class AD9910Server(DeviceServer):
         dev = self.devices[name]
         return dev.get_echo()
 
+    @setting(12, "Force trigger")
+    def force_trigger(self, c):
+        """
+        force_trigger(self, c)
+    
+        Issue trigger to device over serial (instead of external trigger)
+
+        Args:
+            c: LabRAD context
+        Returns:
+
+        """
+        try:
+            name = c['name']
+        except KeyError:
+            raise Exception('Please select a device first; devices: {}'.format(self.devices.keys()))
+
+        dev = self.devices[name]
+        return dev.force_trigger()
+
 if __name__ == '__main__':
     from labrad import util
     util.runServer(AD9910Server())
