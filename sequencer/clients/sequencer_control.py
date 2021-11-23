@@ -651,6 +651,7 @@ class SequencerControl(QtGui.QWidget):
         def ac():
             sequence = self.getSequence()
             for c in self.channels:
+                # TODO: Insert continues when possible
                 sequence[c].insert(i, sequence[c][i])
             self.displaySequence(sequence)
 

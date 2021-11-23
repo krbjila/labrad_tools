@@ -454,8 +454,9 @@ class ElectrodeEditor(QtGui.QDialog):
             s = []
             for step in electrode_sequence:
                 seq = deepcopy(step)
-                vf = self.presets[int(step['vf'])]['values'][x]
-                seq['vf'] = vf
+                if seq['type'] != 'cont':
+                    vf = self.presets[int(step['vf'])]['values'][x]
+                    seq['vf'] = vf
                 if step.has_key('vi'):
                     vi = self.presets[int(step['vi'])]['values'][x]
                     seq['vi'] = vi

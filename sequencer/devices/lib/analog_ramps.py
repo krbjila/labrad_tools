@@ -122,6 +122,23 @@ class LinRamp(object):
         p = self.p
         return [{'dt': p['dt'], 'dv': p['vf']-p['_vi']}]
 
+class ContRamp(object):
+    required_parameters = [
+        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ]
+    default_values = {}
+    def __init__(self, p=None):
+        self.p = p
+        if p is not None:
+            self.v = lin_ramp(p)
+
+    def to_lin(self):
+        """
+        to list of linear ramps [{dt, dv}]
+        """
+        p = self.p
+        return [{'dt': p['dt'], 'dv': 0}]
+
 class SLinRamp(object):
     required_parameters = [
         ('vi', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
@@ -227,6 +244,7 @@ class RampMaker(object):
         's': SRamp,
         'lin': LinRamp,
         'slin': SLinRamp,
+        'cont': ContRamp,
         'exp': ExpRamp,
         'sexp': SExpRamp,
         'scurve': SCurveRamp
@@ -241,8 +259,11 @@ class RampMaker(object):
                     j += 1
         
         sequence[0]['_vi'] = 0
-        for i in range(len(sequence)-1):
-            sequence[i+1]['_vi'] = sequence[i]['vf']
+        for i in range(len(sequence)):
+            if sequence[i]['type'] == 'cont':
+                sequence[i]['vf'] = sequence[i]['_vi']
+            if i < len(sequence)-1:
+                sequence[i+1]['_vi'] = sequence[i]['vf']
         for i in range(len(sequence)):
             if not sequence[i].has_key('vi'):
                 sequence[i]['vi'] = sequence[i]['_vi']
