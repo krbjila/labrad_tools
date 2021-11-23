@@ -14,37 +14,20 @@ def zero_sequence(dt):
     return {'dt': dt, 'type': 's', 'vf': 0}
 
 
-def value_to_sequence(sequence):
+def value_to_sequence(sequence, cxn):
     if type(sequence.value).__name__ == 'list':
-
-#        # removed KM 3/18/18
-#        # the try-except block is nice for error handling but
-#        # we'd rather just break conductor if an
-#        # incorrect sequence is put in 
-#        try: 
-#            return combine_sequences([
-#                read_sequence_file(sequence.sequence_directory, v) 
-#                for v in sequence.value
-#            ])
-#        except Exception as e:
-#            print(e)
-#            return read_sequence_file(sequence.sequence_directory, 'all_off')
-
         
         seqs = []
         e_seqs = []
 
         for x in sequence.value:
             out = read_sequence_file(sequence.sequence_directory, x)
-            seqs.append(out[0])
+            seq_fixed = json.loads(cxn.sequencer.fix_sequence_keys(json.dumps(out[0])))
+            seqs.append(seq_fixed)
             e_seqs += out[1]
 
         return (combine_sequences(seqs), e_seqs)
-
-        # return combine_sequences([
-        #     read_sequence_file(sequence.sequence_directory, v) 
-        #     for v in sequence.value
-        # ])
+        
     else:
         return "Error: Sequence parameter expects list as input"
 
