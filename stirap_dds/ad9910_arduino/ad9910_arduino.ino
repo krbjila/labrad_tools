@@ -44,27 +44,27 @@ void loop() {
   }
   
   line* current = program[currPos];
-  // State machine
   
+  // State machine
   switch (state) {
     case DATA_INVALID:
       delay(100);
       break;
 
-    case CXN:
     // connect
+    case CXN:
       {
         zeroProfiles();
         disableLines();
       }
       break;
 
-    case DATA_LOAD:
     // keep reading
+    case DATA_LOAD:
       break;
 
-    case ECHO:
     // read all lines
+    case ECHO:
       {
         int last = findEnabledLines();
         currPos = 0;
@@ -80,9 +80,9 @@ void loop() {
         state =  SETUP_NEXT;
       }
       break;
-
-    case PROFILES_LOAD:
+    
     // load profiles onto dds
+    case PROFILES_LOAD:
       {
         ddsCFRInit();
         for (int i = 0; i < NUM_PROFILES; i++) {
@@ -97,62 +97,62 @@ void loop() {
       }
       break;
 
-   case SETUP_NEXT:
     // Set frequency outputs and sweeps up
-    {
-      if (current->mode == 1) {
-        // set dds to sweep mode drg enable
-        // set drLimits, drStepSize, drRate
-        writeRegister(DRL, current->drLimits, 8);
-        writeRegister(DRSS, current->drStepSize, 8);
-        writeRegister(DRR, current->drRate, 4);
+    case SETUP_NEXT:
+      {
+        if (current->mode == 1) {
+          // set dds to sweep mode drg enable
+          // set drLimits, drStepSize, drRate
+          writeRegister(DRL, current->drLimits, 8);
+          writeRegister(DRSS, current->drStepSize, 8);
+          writeRegister(DRR, current->drRate, 4);
 
-        drgEnable(true);
+          drgEnable(true);
 
-        if (current->sweepInvert) {
-          // if inverted, need to let dds sweep up to upper limit
-          digitalWrite(DRCTL, HIGH);
+          if (current->sweepInvert) {
+            // if inverted, need to let dds sweep up to upper limit
+            digitalWrite(DRCTL, HIGH);
+          }
+          else {
+            digitalWrite(DRCTL, LOW);
+          }
         }
         else {
-          digitalWrite(DRCTL, LOW);
+          // single frequenct output line
+          // set dds to normal mode
+          // set profile0 register
+          drgEnable(false);
+          writeRegister(P0, current->single, 8);
         }
+        // update dds
+        ioUpdate(); 
+        // move to next state
+        state = WAIT_FOR_TRIGGER;
       }
-      else {
-        // single frequenct output line
-        // set dds to normal mode
-        // set profile0 register
-        drgEnable(false);
-        writeRegister(P0, current->single, 8);
-      }
-      // update dds
-      ioUpdate(); 
-      // move to next state
-      state = WAIT_FOR_TRIGGER;
-  }
-    break;
+      break;
 
   case WAIT_FOR_TRIGGER:
     {
       // Upon receiving trigger:
-    if (digitalRead(TRIG) == HIGH || forceTriggered) {
-      // If in sweep mode, need to do something fancy
-      if (current->mode == 1) {
-        // If sweep is inverted,
-        // Just need to change sign of DRCTL
-        if (current->sweepInvert) {
-          // Pull DRCTL low to execute negative sweep
-          digitalWrite(DRCTL, LOW);
-        }
-        else {
-          // Pull DRCTL high to start sweep
-          digitalWrite(DRCTL, HIGH);
+      if (digitalRead(TRIG) == HIGH || forceTriggered) {
+        // If in sweep mode, need to do something fancy
+        if (current->mode == 1) {
+          // If sweep is inverted,
+          // Just need to change sign of DRCTL
+          if (current->sweepInvert) {
+            // Pull DRCTL low to execute negative sweep
+            digitalWrite(DRCTL, LOW);
+          }
+          else {
+            // Pull DRCTL high to start sweep
+            digitalWrite(DRCTL, HIGH);
           }
         }
-      state = TRIGGERED;
+        state = TRIGGERED;
       }
-    else {
-      // if no trigger yet, keep waiting
-      state = WAIT_FOR_TRIGGER;
+      else {
+        // if no trigger yet, keep waiting
+        state = WAIT_FOR_TRIGGER;
       }
     }
     break;
