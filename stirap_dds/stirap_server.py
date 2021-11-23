@@ -22,7 +22,6 @@ TODO:
 
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks
-
 import json
 
 
@@ -83,9 +82,9 @@ class StirapServer(LabradServer):
         try:
             program = self._program_from_freqs(channel,freqs)
             self.channels[channel]['last_freq'] = freqs[-1]
-            self.server.select_device(self.channels[channel]['channel'])
-            self.server.write_data(program, self.profiles)
-            self.server.force_trigger()
+            yield self.server.select_device(self.channels[channel]['channel'])
+            yield self.server.write_data(program, self.profiles)
+            yield self.server.force_trigger()
 
         except KeyError:
             print('Please select a valid device: {}\n'.format(self.channels.keys()))

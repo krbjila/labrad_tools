@@ -10,6 +10,7 @@ enum fsm state = CXN;
 int numLines = 0; // Length of the program in modules
 int currPos = 0; // Current position in the program
 bool forceTriggered = false; // Holds if the program has been force triggered
+const long sweepTime = 2000; // length of force triggered sweep
 
 
 void setup() {
@@ -99,35 +100,35 @@ void loop() {
    case SETUP_NEXT:
     // Set frequency outputs and sweeps up
     {
-    if (current->mode == 1) {
-      // set dds to sweep mode drg enable
-      // set drLimits, drStepSize, drRate
-      writeRegister(DRL, current->drLimits, 8);
-      writeRegister(DRSS, current->drStepSize, 8);
-      writeRegister(DRR, current->drRate, 4);
+      if (current->mode == 1) {
+        // set dds to sweep mode drg enable
+        // set drLimits, drStepSize, drRate
+        writeRegister(DRL, current->drLimits, 8);
+        writeRegister(DRSS, current->drStepSize, 8);
+        writeRegister(DRR, current->drRate, 4);
 
-      drgEnable(true);
+        drgEnable(true);
 
-      if (current->sweepInvert) {
-        // if inverted, need to let dds sweep up to upper limit
-        digitalWrite(DRCTL, HIGH);
+        if (current->sweepInvert) {
+          // if inverted, need to let dds sweep up to upper limit
+          digitalWrite(DRCTL, HIGH);
+        }
+        else {
+          digitalWrite(DRCTL, LOW);
+        }
       }
       else {
-        digitalWrite(DRCTL, LOW);
+        // single frequenct output line
+        // set dds to normal mode
+        // set profile0 register
+        drgEnable(false);
+        writeRegister(P0, current->single, 8);
       }
-    }
-    else {
-      // single frequenct output line
-      // set dds to normal mode
-      // set profile0 register
-      drgEnable(false);
-      writeRegister(P0, current->single, 8);
-    }
-    // update dds
-    ioUpdate(); 
-    // move to next state
-    state = WAIT_FOR_TRIGGER;
-    }
+      // update dds
+      ioUpdate(); 
+      // move to next state
+      state = WAIT_FOR_TRIGGER;
+  }
     break;
 
   case WAIT_FOR_TRIGGER:
@@ -157,29 +158,28 @@ void loop() {
     break;
 
   case TRIGGERED:
-  {
-    // if still triggered, stay at current line
-    if (digitalRead(TRIG) == HIGH) {
-      state = TRIGGERED;
-    }
-    else if (forceTriggered) {
-      forceTriggered = false;
-      delay(1000); // pause program for 5 ms to allow sweep to finish progressing
-      state = TRIGGERED;
-    }
-    else {
-      // if last line, go to start
-      if (currPos == numLines - 1) {
-      currPos = 0;
+    {
+      // if still triggered, stay at current line
+      if (digitalRead(TRIG) == HIGH) {
+        state = TRIGGERED;
       }
-      // else, advance to next line
+      else if (forceTriggered) {
+        delay(sweepTime);
+        forceTriggered = false;
+        state = TRIGGERED;
+      }
       else {
-        currPos++;
+        // if last line, go to start
+        if (currPos == numLines - 1) {
+        currPos = 0;
         }
-      state = SETUP_NEXT;
+        // else, advance to next line
+        else {
+          currPos++;
+          }
+        state = SETUP_NEXT;
       }
-    }
+    }  
     break;
   }
-
 }

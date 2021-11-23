@@ -246,6 +246,8 @@ class Arduino(DeviceWrapper):
         yield self.connection.flush_output()
 
         self.echo = yield self.read_echo(self.program)
+        yield self.connection.flush_input()
+        yield self.connection.flush_output()
 
     def get_echo(self):
         return self.echo
