@@ -40,8 +40,18 @@ class ArduinoClient(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
+        try:
+            reply = yield self.server.echo("foo")
+            if reply != "foo":
+                self.connected = False
+        except Exception as e:
+            self.connected = False
         if not self.connected:
             try:
+                try:
+                    self.cxn.disconnect()
+                except Exception as e:
+                    pass
                 # connect to LABRAD
                 # needs Arduino server and Conductor running
                 from labrad.wrappers import connectAsync
@@ -80,8 +90,10 @@ class ArduinoClient(QtGui.QWidget):
                 yield self.server.addListener(listener = self.onKillSignal, source = None, ID = self.ID_kill)
                 
                 self.connected = True
+                self.textedit.append("Connected to Arduino server")
             except Exception as e:
                 print("Could not connect Arduino server: {}".format(e))
+                self.textedit.append("Could not connect Arduino server: {}".format(e))
                 self.connected = False
 
     def onKillSignal(self, cntx, signal):
