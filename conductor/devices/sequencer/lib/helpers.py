@@ -6,6 +6,8 @@ from itertools import chain
 from time import strftime
 from copy import deepcopy
 
+from twisted.internet.defer import inlineCallbacks, returnValue
+
 SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 TIMING_CHANNEL = 'Trigger@D15'
 YEARS = 2
@@ -13,7 +15,7 @@ YEARS = 2
 def zero_sequence(dt):
     return {'dt': dt, 'type': 's', 'vf': 0}
 
-
+@inlineCallbacks
 def value_to_sequence(sequence, cxn):
     if type(sequence.value).__name__ == 'list':
         
@@ -22,14 +24,15 @@ def value_to_sequence(sequence, cxn):
 
         for x in sequence.value:
             out = read_sequence_file(sequence.sequence_directory, x)
-            seq_fixed = json.loads(cxn.sequencer.fix_sequence_keys(json.dumps(out[0])))
+            fixed_json = yield cxn.sequencer.fix_sequence_keys(json.dumps(out[0]))
+            seq_fixed = json.loads(fixed_json)
             seqs.append(seq_fixed)
             e_seqs += out[1]
 
-        return (combine_sequences(seqs), e_seqs)
+        returnValue((combine_sequences(seqs), e_seqs))
         
     else:
-        return "Error: Sequence parameter expects list as input"
+        returnValue("Error: Sequence parameter expects list as input")
 
 
 # Presets is the value returned from electrode.get_presets()

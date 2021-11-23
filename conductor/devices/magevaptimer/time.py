@@ -44,8 +44,8 @@ class Time(ConductorParameter):
             try:
                 param_values = yield self.cxn.conductor.get_parameter_values()
                 param_values = json.loads(param_values)['sequencer']
-                parameterized_sequence = value_to_sequence(valuething(), self.cxn)[0]
-                parameters = get_parameters(parameterized_sequence)
+                parameterized_sequence = yield value_to_sequence(valuething(), self.cxn)
+                parameters = get_parameters(parameterized_sequence[0])
                 for i in parameters:
                     if i not in param_values:
                         raise Exception("Conductor variables not yet loaded.")
@@ -53,7 +53,7 @@ class Time(ConductorParameter):
                 pv_json = yield self.cxn.conductor.get_parameter_values(
                         parameters_json, True)
                 parameter_values = json.loads(pv_json)['sequencer']
-                sequence = substitute_sequence_parameters(parameterized_sequence, parameter_values)
+                sequence = substitute_sequence_parameters(parameterized_sequence[0], parameter_values)
                 time = 0
                 for block in sequence['Trigger@D15'][0:3]:
                     time += block['dt']
