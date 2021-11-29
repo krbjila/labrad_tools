@@ -9,7 +9,7 @@ node_dicts = [
                 'usb', 
                 # 'labjack',
                 # 'pco',
-                'database',
+                # 'database',
             ]
     },
     {
