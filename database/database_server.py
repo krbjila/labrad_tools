@@ -188,7 +188,7 @@ class DatabaseServer(LabradServer):
                 returnValue("{}")
 
         url = "mongodb://{}:{}@{}:{}/?authSource=admin".format(user, password, address, port)
-        c.c = yield MongoClient(url)
+        c.c = yield MongoClient(url, connectTimeoutMS=timeout)
         try:
             server_info = yield c.c.server_info()
             server_info_str = dumps(server_info)
@@ -216,11 +216,11 @@ class DatabaseServer(LabradServer):
             c: LabRAD context
         """
 
-        if c.c is not None:
-            try:
+        try:
+            if c.c is not None:
                 c.c.close()
-            except Exception as e:
-                print("Could not close MongoDB connection: {}".format(e))
+        except Exception as e:
+            print("Could not close MongoDB connection: {}".format(e))
         c.c = None
 
     @inlineCallbacks
@@ -353,9 +353,9 @@ class DatabaseServer(LabradServer):
             returnValue("{}")
 
     @setting(16, db_filter='s', update='s', upsert='b', returns='s')
-    def update_one(self, c, db_filter, update, upsert=False):
+    def update_one(self, c, db_filter, update, upsert=True):
         """
-        update_one(self, c, db_filter, update, upsert=False)
+        update_one(self, c, db_filter, update, upsert=True)
 
         Update a single document matching ``db_filter`` with ``update``.
         
@@ -365,7 +365,7 @@ class DatabaseServer(LabradServer):
             c: LabRAD context
             db_filter (str): BSON-dumped string of the filter
             update (str): BSON-dumped string of update
-            upsert (bool, optional): Whether to create a document if none exists. Defaults to ``False``.
+            upsert (bool, optional): Whether to create a document if none exists. Defaults to ``True``.
 
         Returns:
             str: A BSON-dumped string of the :py:class:`pymongo.results.UpdateResult`
