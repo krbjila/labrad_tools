@@ -17,6 +17,22 @@
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true
+        },
+        "N=1": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "imaging_serial",
+            "address": "ASRL4::INSTR",
+            "baud": 2400,
+            "timeout": 100
+        },
+        "N=2": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "imaging_serial",
+            "address": "ASRL5::INSTR",
+            "baud": 2400,
+            "timeout": 100
         }
-    }
+    }   
 }
