@@ -30,7 +30,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import json
 from datetime import datetime
 
-import helpers # helper functions for calculating bytes to transfer
+# import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.device_server import DeviceServer
 

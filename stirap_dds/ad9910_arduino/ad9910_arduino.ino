@@ -10,7 +10,7 @@ enum fsm state = CXN;
 int numLines = 0; // Length of the program in modules
 int currPos = 0; // Current position in the program
 bool forceTriggered = false; // Holds if the program has been force triggered
-const long sweepTime = 2000; // length of force triggered sweep
+const long sweepTime = 200; // length of force triggered sweep
 
 
 void setup() {
@@ -70,6 +70,7 @@ void loop() {
         currPos = 0;
         numLines = last + 1;
         echoData(last);
+        // forceTriggered = true;
         state = PROFILES_LOAD;
       }
       break;
@@ -77,7 +78,7 @@ void loop() {
     case FORCE_TRIGGERED: 
       {
         forceTriggered = true;
-        state =  SETUP_NEXT;
+        state =  WAIT_FOR_TRIGGER;
       }
       break;
     
@@ -103,12 +104,6 @@ void loop() {
         if (current->mode == 1) {
           // set dds to sweep mode drg enable
           // set drLimits, drStepSize, drRate
-          writeRegister(DRL, current->drLimits, 8);
-          writeRegister(DRSS, current->drStepSize, 8);
-          writeRegister(DRR, current->drRate, 4);
-
-          drgEnable(true);
-
           if (current->sweepInvert) {
             // if inverted, need to let dds sweep up to upper limit
             digitalWrite(DRCTL, HIGH);
@@ -116,6 +111,12 @@ void loop() {
           else {
             digitalWrite(DRCTL, LOW);
           }
+
+          writeRegister(DRL, current->drLimits, 8);
+          writeRegister(DRSS, current->drStepSize, 8);
+          writeRegister(DRR, current->drRate, 4);
+
+          drgEnable(true);
         }
         else {
           // single frequenct output line

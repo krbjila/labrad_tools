@@ -3,8 +3,8 @@
         "stirap_ch1": {
             "device_type": "Arduino",
             "connection_type": "Serial",
-            "servername": "krbg2_serial",
-            "address": "ASRL6::INSTR",
+            "servername": "randomlaptop_serial",
+            "address": "ASRL3::INSTR",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true
@@ -12,8 +12,8 @@
         "stirap_ch2": {
             "device_type": "Arduino",
             "connection_type": "Serial",
-            "servername": "krbg2_serial",
-            "address": "ASRL11::INSTR",
+            "servername": "randomlaptop_serial",
+            "address": "ASRL4::INSTR",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true

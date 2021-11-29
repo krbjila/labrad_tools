@@ -23,6 +23,7 @@ TODO:
 from labrad.server import LabradServer, setting
 from twisted.internet.defer import inlineCallbacks
 import json
+import time
 
 
 class StirapServer(LabradServer):
@@ -38,11 +39,11 @@ class StirapServer(LabradServer):
     Currently, this server assumes this general architecture; however, it should be straightforward to add new hardware implementations (``./devices``) in the future.
     """
     name = '%LABRADNODE%_stirap'
-    default_up_freq = 74
+    default_up_freq = 200
     default_down_freq = 130
-    dt = 1000
+    dt = 100
     nsteps = 5000
-    servername = 'krbg2_ad9910'
+    servername = 'randomlaptop_ad9910'
 
     channels = {"up" : {"channel" : "stirap_ch1", "last_freq": default_up_freq}, 
                 "down" : {"channel" : "stirap_ch2", "last_freq": default_down_freq}}
@@ -57,11 +58,12 @@ class StirapServer(LabradServer):
         self.server = yield self.client.servers[self.servername]
     
     def _program_from_freqs(self, channel, freqs):
-        program = [{"mode": "sweep", "start": self.channels[channel]['last_freq'], "stop":freqs[0], "dt":self.dt, "nsteps": self.nsteps}]
+        program = [{"mode": "sweep", "start": self.channels[channel]['last_freq'], "stop":self.channels[channel]['last_freq'], "dt":10, "nsteps": self.nsteps}]
+        program.append({"mode": "sweep", "start": self.channels[channel]['last_freq'], "stop":freqs[0], "dt":self.dt, "nsteps": self.nsteps})
         for i in range(len(freqs)-1):
             program.append({"mode": "sweep", "start":freqs[i], "stop":freqs[i+1], "dt":self.dt, "nsteps": self.nsteps})
         # print(program)
-        for _ in range(len(freqs), 11):
+        for _ in range(len(freqs), 10):
             program.append({"mode": "single", "freq" : freqs[-1], "ampl": 0, "phase": 0})
         return json.dumps(program)
     
@@ -81,10 +83,15 @@ class StirapServer(LabradServer):
         """
         try:
             program = self._program_from_freqs(channel,freqs)
+            print(program)
             self.channels[channel]['last_freq'] = freqs[-1]
             yield self.server.select_device(self.channels[channel]['channel'])
             yield self.server.write_data(program, self.profiles)
+            # time.sleep(1)
             yield self.server.force_trigger()
+            time.sleep(0.3)
+            yield self.server.force_trigger()
+            
 
         except KeyError:
             print('Please select a valid device: {}\n'.format(self.channels.keys()))

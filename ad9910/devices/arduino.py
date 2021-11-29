@@ -279,6 +279,7 @@ class Arduino(DeviceWrapper):
              raise Exception("Could not verify {} has force trigger option".format(self.address))
 
         yield self.connection.write(FORCE_TRIGGER)
+        yield self.connection.flush_input()
         yield self.connection.flush_output()
         
 
