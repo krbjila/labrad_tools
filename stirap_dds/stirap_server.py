@@ -41,9 +41,9 @@ class StirapServer(LabradServer):
     name = '%LABRADNODE%_stirap'
     default_up_freq = 200
     default_down_freq = 130
-    dt = 100
+    dt = 200
     nsteps = 5000
-    servername = 'randomlaptop_ad9910'
+    servername = 'polarkrb_ad9910'
 
     channels = {"up" : {"channel" : "stirap_ch1", "last_freq": default_up_freq}, 
                 "down" : {"channel" : "stirap_ch2", "last_freq": default_down_freq}}
@@ -83,7 +83,7 @@ class StirapServer(LabradServer):
         """
         try:
             program = self._program_from_freqs(channel,freqs)
-            print(program)
+            # print(program)
             self.channels[channel]['last_freq'] = freqs[-1]
             yield self.server.select_device(self.channels[channel]['channel'])
             yield self.server.write_data(program, self.profiles)
