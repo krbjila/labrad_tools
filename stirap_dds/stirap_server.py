@@ -8,7 +8,7 @@ TODO:
     name = stirap
     version = 1.1
     description = 
-    instancename = %LABRADNODE%_stirap
+    instancename = stirap
 
     [startup]
     cmdline = %PYTHON% %FILE%
@@ -38,10 +38,10 @@ class StirapServer(LabradServer):
     
     Currently, this server assumes this general architecture; however, it should be straightforward to add new hardware implementations (``./devices``) in the future.
     """
-    name = '%LABRADNODE%_stirap'
+    name = 'stirap'
     default_up_freq = 200
     default_down_freq = 130
-    dt = 200
+    dt = 1
     nsteps = 5000
     servername = 'polarkrb_ad9910'
 
@@ -89,7 +89,7 @@ class StirapServer(LabradServer):
             yield self.server.write_data(program, self.profiles)
             # time.sleep(1)
             yield self.server.force_trigger()
-            time.sleep(0.3)
+            time.sleep(0.002)
             yield self.server.force_trigger()
             
 

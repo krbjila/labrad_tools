@@ -10,7 +10,7 @@ enum fsm state = CXN;
 int numLines = 0; // Length of the program in modules
 int currPos = 0; // Current position in the program
 bool forceTriggered = false; // Holds if the program has been force triggered
-const long sweepTime = 200; // length of force triggered sweep
+const long sweepTime = 1; // length of force triggered sweep
 
 
 void setup() {
