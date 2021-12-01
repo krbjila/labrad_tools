@@ -43,7 +43,7 @@ class StirapServer(LabradServer):
     default_down_freq = 130
     dt = 1
     nsteps = 5000
-    servername = 'polarkrb_ad9910'
+    servername = 'ad9910'
 
     channels = {"up" : {"channel" : "stirap_ch1", "last_freq": default_up_freq}, 
                 "down" : {"channel" : "stirap_ch2", "last_freq": default_down_freq}}

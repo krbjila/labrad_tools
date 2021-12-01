@@ -9,7 +9,7 @@ The hardware and Arduino software are described `here <https://1drv.ms/w/s!Aqecc
     name = ad9910
     version = 1.1
     description = 
-    instancename = %LABRADNODE%_ad9910
+    instancename = ad9910
 
     [startup]
     cmdline = %PYTHON% %FILE%
@@ -102,7 +102,7 @@ class AD9910Server(DeviceServer):
     
     Currently, this server assumes this general architecture; however, it should be straightforward to add new hardware implementations (``./devices``) in the future.
     """
-    name = '%LABRADNODE%_ad9910'
+    name = 'ad9910'
 
     @setting(10, "Write data", program_dump='s', profiles_dump='s')
     def write_data(self, c, program_dump, profiles_dump):
