@@ -130,11 +130,9 @@ class StatusClient(QWidget):
         self.reconnect = LoopingCall(self.connect)
         self.reconnect.start(1.0)
 
-
     @inlineCallbacks
     def connect(self): 
         try:
-            print("poo, {}", self.connected)
             if not self.connected:
                 try:
                     self.cxn.disconnect()
@@ -169,10 +167,16 @@ class StatusClient(QWidget):
                 self.textedit.append("Connected to LabRAD!")
 
                 self.parametersRefreshed.emit()
+                self.abort_button.button.setEnabled(False)
+                self.refresh_button.button.setEnabled(True)
+                self.error_flag = 0
+
                 self.connected = True
 
         except Exception as e:
             self.connected = False
+            self.abort_button.button.setEnabled(False)
+            self.refresh_button.button.setEnabled(False)
             self.server_stopped("conductor not running")
             print("Conductor not running: {}".format(e))
         returnValue(self.connected)
