@@ -86,14 +86,6 @@
                 "default": 1
             }
         },    
-        "3xAD9959_0": {
-            "downlegexp": {
-                "default": 0
-            },
-            "uplegdp": {
-                "default": 0
-            }
-        },
         "time": {
             "timestamp": {}
         },
