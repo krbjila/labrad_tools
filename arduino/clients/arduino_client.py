@@ -10,6 +10,7 @@ from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import LoopingCall
+from connection import connection
 
 SEP = os.path.sep
 
@@ -55,8 +56,11 @@ class ArduinoClient(QtGui.QWidget):
                 # connect to LABRAD
                 # needs Arduino server and Conductor running
                 from labrad.wrappers import connectAsync
-                self.cxn = yield connectAsync(name = 'ArduinoControl')
-                self.server = yield self.cxn.krbjila_arduino
+                
+                self.cxn = connection()
+                yield self.cxn.connect()
+                self.server = yield self.cxn.get_server('krbjila_arduino')
+                self.conductor = yield self.cxn.get_server('conductor')
 
                 # open connection with Arduino device
                 devices = yield self.server.get_interface_list()
@@ -78,23 +82,47 @@ class ArduinoClient(QtGui.QWidget):
                 yield self.server.addListener(listener = self.displaySignal, source = None, ID = self.ID_case)
                 
                 # Connect to experiment_started signal from Conductor
-                yield self.cxn.conductor.signal__experiment_started(self.ID_start)
-                yield self.cxn.conductor.addListener(listener = self.started, source = None, ID = self.ID_start)
+                yield self.conductor.signal__experiment_started(self.ID_start)
+                yield self.conductor.addListener(listener = self.started, source = None, ID = self.ID_start)
 
                 # Connect to experiment_stopped signal from Conductor
-                yield self.cxn.conductor.signal__experiment_stopped(self.ID_stop)
-                yield self.cxn.conductor.addListener(listener = self.stopped, source = None, ID = self.ID_stop)
+                yield self.conductor.signal__experiment_stopped(self.ID_stop)
+                yield self.conductor.addListener(listener = self.stopped, source = None, ID = self.ID_stop)
 
                 # Connect to kill signal from ArduinoServer
                 yield self.server.signal__kill(self.ID_kill)
                 yield self.server.addListener(listener = self.onKillSignal, source = None, ID = self.ID_kill)
-                
+
+                # Connect to conductor disconnected server
+                yield self.cxn.add_on_disconnect('conductor', self.onDisconnect)
+
                 self.connected = True
                 self.textedit.append("Connected to Arduino server")
             except Exception as e:
                 print("Could not connect Arduino server: {}".format(e))
                 self.textedit.append("Could not connect Arduino server: {}".format(e))
                 self.connected = False
+
+    def onDisconnect(self, message=""):
+        self.connected = False
+        try:
+            self.server.removeListener(listener = self.displaySignal, source = None, ID = self.ID_case)
+        except Exception as e:
+            print(e)
+        try:
+            self.server.removeListener(listener = self.started, source = None, ID = self.ID_start)
+        except Exception as e:
+            print(e)
+        try:
+            self.server.removeListener(listener = self.onKillSignal, source = None, ID = self.ID_kill)
+        except Exception as e:
+            print(e)
+        try:
+            self.server.removeListener(listener = self.stopped, source = None, ID = self.ID_stop)
+        except Exception as e:
+            print(e)
+
+
 
     def onKillSignal(self, cntx, signal):
         if signal:
