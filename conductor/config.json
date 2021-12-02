@@ -53,6 +53,14 @@
                 "default": 0
             }
         },
+        "stirap": {
+            "up": {
+                "default_freq": [80]
+            },
+            "down": {
+                "default_freq": [157]
+            }
+        },
         "dg800": {
             "sin": {
                 "default_sin" : {

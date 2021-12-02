@@ -9,7 +9,7 @@ The hardware and Arduino software are described `here <https://1drv.ms/w/s!Aqecc
     name = ad9910
     version = 1.1
     description = 
-    instancename = %LABRADNODE%_ad9910
+    instancename = ad9910
 
     [startup]
     cmdline = %PYTHON% %FILE%
@@ -30,7 +30,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 import json
 from datetime import datetime
 
-import helpers # helper functions for calculating bytes to transfer
+# import helpers # helper functions for calculating bytes to transfer
 sys.path.append('..')
 from server_tools.device_server import DeviceServer
 
@@ -102,7 +102,7 @@ class AD9910Server(DeviceServer):
     
     Currently, this server assumes this general architecture; however, it should be straightforward to add new hardware implementations (``./devices``) in the future.
     """
-    name = '%LABRADNODE%_ad9910'
+    name = 'ad9910'
 
     @setting(10, "Write data", program_dump='s', profiles_dump='s')
     def write_data(self, c, program_dump, profiles_dump):
@@ -211,6 +211,26 @@ class AD9910Server(DeviceServer):
 
         dev = self.devices[name]
         return dev.get_echo()
+
+    @setting(12, "Force trigger")
+    def force_trigger(self, c):
+        """
+        force_trigger(self, c)
+    
+        Issue trigger to device over serial (instead of external trigger)
+
+        Args:
+            c: LabRAD context
+        Returns:
+
+        """
+        try:
+            name = c['name']
+        except KeyError:
+            raise Exception('Please select a device first; devices: {}'.format(self.devices.keys()))
+
+        dev = self.devices[name]
+        return dev.force_trigger()
 
 if __name__ == '__main__':
     from labrad import util

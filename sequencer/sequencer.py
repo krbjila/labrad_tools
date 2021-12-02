@@ -171,8 +171,7 @@ class SequencerServer(DeviceServer):
         for d in self.devices.values():
             for c in d.channels:
                 if c.key not in fixed_sequence:
-                    default_sequence = [{'dt': s['dt'], 'out': c.manual_output} 
-                                        for s in sequence[TRIGGER_CHANNEL]]
+                    default_sequence = [{'dt': s['dt'], 'out': c.manual_output} for s in sequence[TRIGGER_CHANNEL]]
                     fixed_sequence.update({c.key: default_sequence})
         return fixed_sequence
 
