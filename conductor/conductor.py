@@ -238,7 +238,7 @@ class ConductorServer(LabradServer):
         Registers default parameters and loads sequencer variables after connected to LabRAD
         """
         callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
-        callLater(0.1, self.load_variables)
+        callLater(0.5, self.load_variables)
 
 
     # Re-initialize parameters
@@ -255,6 +255,8 @@ class ConductorServer(LabradServer):
         Args:
             c: LabRAD context
         """
+
+        print("hello MOFOMOFOFMOFOFMOFOF")
 
         # Signal to clients that parameters are being refreshed
         self.parameters_refreshed(True)
