@@ -194,10 +194,10 @@ TODO: Document this more, including how to write a conductor device
       :show-inheritance:
       :exclude-members: call_if_available, cam_info
 
-      conductor.devices.electrode.electrode module
+      conductor.devices.electrode.update module
       ----------------------------------------------------------
       
-      .. automodule:: conductor.devices.electrode.electrode
+      .. automodule:: conductor.devices.electrode.update
          :members:
          :undoc-members:
          :show-inheritance:
@@ -381,6 +381,45 @@ TODO: Document this more, including how to write a conductor device
       ----------------------------------------------------------
       
       .. automodule:: conductor.devices.time.timestamp
+         :members:
+         :undoc-members:
+         :show-inheritance:
+         :exclude-members: call_if_available, cam_info
+
+
+   conductor.devices.stirap module
+   ----------------------------------------------------------
+   
+   Conductor device for setting the EOM frequencies which offset the STIRAP lasers from the cavity.
+
+   .. automodule:: conductor.devices.stirap
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      :exclude-members: call_if_available, cam_info
+
+      conductor.devices.stirap.helpers module
+      ----------------------------------------------------------
+      
+      .. automodule:: conductor.devices.stirap.helpers
+         :members:
+         :undoc-members:
+         :show-inheritance:
+         :exclude-members: call_if_available, cam_info
+
+      conductor.devices.stirap.down module
+      ----------------------------------------------------------
+      
+      .. automodule:: conductor.devices.stirap.down
+         :members:
+         :undoc-members:
+         :show-inheritance:
+         :exclude-members: call_if_available, cam_info
+
+      conductor.devices.stirap.up module
+      ----------------------------------------------------------
+      
+      .. automodule:: conductor.devices.stirap.up
          :members:
          :undoc-members:
          :show-inheritance:
