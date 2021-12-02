@@ -33,7 +33,7 @@ variables_dict = [
     ['*LowField', 0.46], # was 0.457 (11/2/21); was 0.465
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.68], # was -4.65 (11/2/21); was -4.725, was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.64], # was -4.65 (11/2/21); was -4.725, was -3.6 before moving stuff to back corridor
     ['*BiasSub', -8.45],
     ['*StableBias', -0.1], # was 0.45
     ['*FeshBias', -5.245],
