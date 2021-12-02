@@ -134,7 +134,13 @@ class StatusClient(QWidget):
     @inlineCallbacks
     def connect(self): 
         try:
+            print("poo, {}", self.connected)
             if not self.connected:
+                try:
+                    self.cxn.disconnect()
+                except:
+                    print("disconnection failed, or connection not initialized")
+
                 self.cxn = connection()
                 yield self.cxn.connect()
                 server = yield self.cxn.get_server('conductor')
@@ -162,8 +168,7 @@ class StatusClient(QWidget):
                 self.textedit.setTextColor(QColor(client_config.widget['colorOff']))
                 self.textedit.append("Connected to LabRAD!")
 
-                yield self.refresh_button.refresh_parameters(None)
-
+                self.parametersRefreshed.emit()
                 self.connected = True
 
         except Exception as e:
