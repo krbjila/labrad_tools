@@ -14,17 +14,18 @@ class STIRAPDevice(ConductorParameter):
 
         [...]
 
-    See documentation for :mod:`stirap_dds.striap_server` for the correct format for the ``program`` and ``profile`` lists.
+    See documentation for :mod:`stirap_dds.stirap_server` for the correct format for the ``program`` and ``profile`` lists.
 
     TODO: Finish documenting this.
     """
     priority = 1
+    value_type = 'list'
 
     def __init__(self, channel, config={}):
         super(STIRAPDevice, self).__init__(config)
         self.channel = channel
         self.value = self.default_freq
-    
+
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
@@ -34,7 +35,7 @@ class STIRAPDevice(ConductorParameter):
         except AttributeError:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
-            print("stirap parameter error: stirap server not connected.")
+            print("STIRAP parameter error: STIRAP server not connected.")
 
 
     @inlineCallbacks
