@@ -97,11 +97,6 @@
                 "default": {
                 }
             }
-        },
-        "database": {
-            "update": {
-                
-            }
         }
     }
 }
