@@ -29,7 +29,7 @@ class Arduino(DeviceWrapper):
         """
         write_data(self, program, profiles)
 
-        Writes data to the Arduino. See mod:`ad9910.ad9910_server` for definitions of ``ProgramLine`` and ``Profile`` .
+        Writes data to the Arduino. See :mod:`ad9910.ad9910_server` for definitions of ``ProgramLine`` and ``Profile`` .
 
         Args:
             program (list(ProgramLine)): list of ``ProgramLine`` s
