@@ -58,7 +58,7 @@
                 "default_freq": [80]
             },
             "down": {
-                "default_freq": [157]
+                "default_freq": [157.05]
             }
         },
         "dg800": {

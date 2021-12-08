@@ -639,9 +639,12 @@ class ConductorServer(LabradServer):
                 parameter.value = parameter.value
                 if parameter_name == 'sequence':
                     parameter.value = [parameter.default_sequence]
-                #LDM added following two lines 2017.08.16
-                if parameter_name == 'enable':
+                # Ensure that Rb uwave synth outputs default
+                if parameter_name == 'enable' and device_name == 'E8257D':
                     parameter.value = 0
+                # Ensure that the STIRAP DDS's are not rewritten
+                if device_name == 'stirap' and (parameter_name == 'up' or parameter_name == 'down'):
+                    parameter.value = []
         self.data = {}
         self.data_path = None
         self.experiment_stopped(True)
