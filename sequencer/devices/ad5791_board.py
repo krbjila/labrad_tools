@@ -213,8 +213,12 @@ class AD5791Board(DeviceWrapper):
             # longer than the maximum ramp time.
             # If we did, then just need to split the ramp.
             final_ramps = []
-            for r in consolidated_ramps:
+            for (idx, r) in enumerate(consolidated_ramps):
                 if r['dt'] > MAX_TIME:
+                    if idx > 0:
+                        last_v = consolidated_ramps[idx - 1]['v']
+                    else:
+                        last_v = 0
                     n_steps = math.ceil(r['dt'] / MAX_TIME)
                     dt = float(r['dt']) / n_steps
                     for i in range(n_steps):
