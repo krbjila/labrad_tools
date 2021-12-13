@@ -16,7 +16,7 @@ class Sequence(ConductorParameter):
 
     TODO: Finish documenting this.
     """
-    priority = 10
+    priority = 1
     value_type = 'list'
     critical = True
     
