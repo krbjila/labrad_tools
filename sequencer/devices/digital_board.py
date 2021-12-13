@@ -55,7 +55,6 @@ class DigitalBoard(DeviceWrapper):
         self.init_commands = []
 
         # removed KM 08/10/2017
-        # self.bitfile = 'digital_sequencer.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -74,9 +73,9 @@ class DigitalBoard(DeviceWrapper):
 
         # added KM 08/10/2017    
         if self.address == 'KRbDigi01':    
-            self.bitfile = 'digital_lower_drive_no_zero.bit'
+            self.bitfile = 'KRbDigi01.bit'
         else:
-            self.bitfile = 'digital_triggered.bit'
+            self.bitfile = 'KRbDigi02.bit'
 
         for c in self.channels:
             c['board_name'] = self.name
