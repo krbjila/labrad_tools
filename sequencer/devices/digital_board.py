@@ -3,8 +3,8 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
 
-#T_TRIG = 10e-6
-T_TRIG = 0
+T_TRIG = 10e-6
+# T_TRIG = 0
 T_END = 1e0
 TRIGGER_CHANNEL = 'Trigger@D15'
 
@@ -129,6 +129,7 @@ class DigitalBoard(DeviceWrapper):
                 sequence[c.key].insert(0, s)
 
         # trigger other boards
+        # Note: Trigger channel is inverted!
         for s in sequence[TRIGGER_CHANNEL]:
             s['out'] = False
         sequence[TRIGGER_CHANNEL][0]['out'] = True
