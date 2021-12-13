@@ -74,11 +74,9 @@ class DigitalBoard(DeviceWrapper):
 
         # added KM 08/10/2017    
         if self.address == 'KRbDigi01':    
-            # self.bitfile = 'digital_sequencer.bit'
             self.bitfile = 'digital_lower_drive_no_zero.bit'
         else:
-            # self.bitfile = 'digital_lower_drive_no_zero.bit'
-            self.bitfile = 'digital_triggered_lower_drive.bit'
+            self.bitfile = 'digital_triggered.bit'
 
         for c in self.channels:
             c['board_name'] = self.name
