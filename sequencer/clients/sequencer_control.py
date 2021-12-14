@@ -124,6 +124,10 @@ class SequencerControl(QtGui.QWidget):
                 print("Connected to LabRAD!")
             except Exception as e:
                 self.onDisconnect("Could not connect to LabRAD: {}".format(e))
+                try:
+                    self.cxn.disconnect()
+                except:
+                    pass
 
     def onDisconnect(self, message=None):
         if message is not None:

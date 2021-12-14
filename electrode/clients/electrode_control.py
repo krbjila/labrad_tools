@@ -139,6 +139,10 @@ class ElectrodeControl(QtGui.QWidget):
                 self.on_connect()
             except Exception as e:
                 self.disconnected("Error connecting to LabRAD: {}".format(e))
+                try:
+                    self.cxn.disconnect()
+                except:
+                    pass
 
     @inlineCallbacks
     def getPresets(self):

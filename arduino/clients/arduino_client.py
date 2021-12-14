@@ -102,6 +102,10 @@ class ArduinoClient(QtGui.QWidget):
                 print("Could not connect Arduino server: {}".format(e))
                 self.textedit.append("Could not connect Arduino server: {}".format(e))
                 self.connected = False
+                try:
+                    self.cxn.disconnect()
+                except Exception as e:
+                    pass
 
     def onDisconnect(self, message=""):
         self.connected = False
