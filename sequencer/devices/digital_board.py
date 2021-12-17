@@ -3,9 +3,9 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
 
-#T_TRIG = 10e-6
-T_TRIG = 0
-T_END = 1e0
+T_TRIG = 10e-6
+# T_TRIG = 0
+T_END = 10e-3
 TRIGGER_CHANNEL = 'Trigger@D15'
 
 def time_to_ticks(clk, time):
@@ -55,7 +55,6 @@ class DigitalBoard(DeviceWrapper):
         self.init_commands = []
 
         # removed KM 08/10/2017
-        # self.bitfile = 'digital_sequencer.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -74,11 +73,9 @@ class DigitalBoard(DeviceWrapper):
 
         # added KM 08/10/2017    
         if self.address == 'KRbDigi01':    
-            # self.bitfile = 'digital_sequencer.bit'
-            self.bitfile = 'digital_lower_drive_no_zero.bit'
+            self.bitfile = 'KRbDigi01.bit'
         else:
-            # self.bitfile = 'digital_lower_drive_no_zero.bit'
-            self.bitfile = 'digital_triggered_lower_drive.bit'
+            self.bitfile = 'KRbDigi02.bit'
 
         for c in self.channels:
             c['board_name'] = self.name
@@ -129,11 +126,18 @@ class DigitalBoard(DeviceWrapper):
                 sequence[c.key].insert(0, s)
 
         # trigger other boards
+        # Note: Trigger channel is inverted!
         for s in sequence[TRIGGER_CHANNEL]:
             s['out'] = False
         sequence[TRIGGER_CHANNEL][0]['out'] = True
+        
+        # append an extra block to ensure that sequence is at least 2 blocks long
+        for c in self.channels:
+            s = {'dt': T_END, 'out': sequence[c.key][-1]['out']}
+            sequence[c.key].append(s)
+
         # allow for analog's ramp to zero, last item will not be written
-        sequence[TRIGGER_CHANNEL].append({'dt': T_END, 'out': True})
+        sequence[TRIGGER_CHANNEL][-1]['out'] = True # Keep trigger low at end (it's inverted)
 
         for c in self.channels:
             total_ticks = 0
@@ -145,6 +149,7 @@ class DigitalBoard(DeviceWrapper):
         # each sequence point updates all outs for some number of clock ticks
         # since some channels may have different 'dt's, every time any channel 
         # changes state we need to write all channel outs.
+        # Note: this assumes that the sequence is at least 2 blocks long!
         t_ = sorted(list(set([s['t'] for c in self.channels 
                                      for s in sequence[c.key]])))
         dt_ = [t_[i+1] - t_[i] for i in range(len(t_)-1)] + [time_to_ticks(self.clk, T_END)]

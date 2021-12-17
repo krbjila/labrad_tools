@@ -6,46 +6,33 @@ from itertools import chain
 from time import strftime
 from copy import deepcopy
 
+from twisted.internet.defer import inlineCallbacks, returnValue
+
 SEQUENCE_DIRECTORY = '/home/bialkali/data/{}/sequences/'
 TIMING_CHANNEL = 'Trigger@D15'
+YEARS = 2
 
 def zero_sequence(dt):
     return {'dt': dt, 'type': 's', 'vf': 0}
 
-
-def value_to_sequence(sequence):
+@inlineCallbacks
+def value_to_sequence(sequence, cxn):
     if type(sequence.value).__name__ == 'list':
-
-#        # removed KM 3/18/18
-#        # the try-except block is nice for error handling but
-#        # we'd rather just break conductor if an
-#        # incorrect sequence is put in 
-#        try: 
-#            return combine_sequences([
-#                read_sequence_file(sequence.sequence_directory, v) 
-#                for v in sequence.value
-#            ])
-#        except Exception as e:
-#            print(e)
-#            return read_sequence_file(sequence.sequence_directory, 'all_off')
-
         
         seqs = []
         e_seqs = []
 
         for x in sequence.value:
             out = read_sequence_file(sequence.sequence_directory, x)
-            seqs.append(out[0])
+            fixed_json = yield cxn.sequencer.fix_sequence_keys(json.dumps(out[0]))
+            seq_fixed = json.loads(fixed_json)
+            seqs.append(seq_fixed)
             e_seqs += out[1]
 
-        return (combine_sequences(seqs), e_seqs)
-
-        # return combine_sequences([
-        #     read_sequence_file(sequence.sequence_directory, v) 
-        #     for v in sequence.value
-        # ])
+        returnValue((combine_sequences(seqs), e_seqs))
+        
     else:
-        return "Error: Sequence parameter expects list as input"
+        returnValue("Error: Sequence parameter expects list as input")
 
 
 # Presets is the value returned from electrode.get_presets()
@@ -114,7 +101,7 @@ def read_sequence_file(sequence_directory, filename):
         else:
             return (filename, [])
     if not os.path.exists(filename):
-        for i in range(365):
+        for i in range(365 * YEARS):
             day = date.today() - timedelta(i)
             path = sequence_directory.format(day.strftime('%Y%m%d')) + filename
             if os.path.exists(path):

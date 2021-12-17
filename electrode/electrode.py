@@ -165,6 +165,11 @@ class ElectrodeServer(LabradServer):
                 self.lookup[x['id']] = x
     
             self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
+
+            # Make sure the normalModes and main compShim values are consistent
+            for preset in self.presets:
+                if "normalModes" in preset and "CompShim" in preset["normalModes"]:
+                    preset["compShim"] = preset["normalModes"]["CompShim"]
     
             with open(self.relative_presets_path, 'w') as f:
                 f.write(json.dumps(self.presets, sort_keys=True, indent=4))
@@ -199,15 +204,24 @@ class ElectrodeServer(LabradServer):
         except:
             return -1
         
-        temp = deepcopy(self.lookup)
-        
+        changed = False
         for k, v in d.items():
+            k = int(k)
             if self.lookup.has_key(k):
-                if v != self.lookup[k]:
-                    self.lookup[k] = v
+                electrode_setting = self.lookup[k]
+
+                for kk, vv in v.items():
+                    if kk in electrode_setting and vv != electrode_setting[kk]:
+                        electrode_setting[kk] = vv
+                        changed = True
         
-        if self.lookup != temp:
+        if changed:
             self.presets = [self.lookup[key] for key in sorted(self.lookup.keys())]
+
+            # Make sure the normalModes and main compShim values are consistent
+            for preset in self.presets:
+                if "normalModes" in preset and "CompShim" in preset["normalModes"]:
+                    preset["compShim"] = preset["normalModes"]["CompShim"]
         
             with open(self.relative_presets_path, 'w') as f:
                 f.write(json.dumps(self.presets, sort_keys=True, indent=4))

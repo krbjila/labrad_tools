@@ -6,9 +6,11 @@ node_dicts = [
     {
         'node polarkrb': [
                 # start hardware interfaces first
-                'usb', 
+                'usb',
+                'serial',
                 # 'labjack',
-                # 'pco'
+                # 'pco',
+                # 'database',
             ]
     },
     {
@@ -30,6 +32,11 @@ node_dicts = [
         #     'okfpga',
         #     'dds'
         # ]
+    },
+    {
+        'node polarkrb' : [
+            'stirap',
+        ]
     },
     {
         'node krbjila': [

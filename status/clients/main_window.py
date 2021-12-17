@@ -55,12 +55,15 @@ class MainClient(QMainWindow):
 
         self.scroll = QScrollArea()
         self.scroll.setWidget(ParameterControl(ControlConfig(), self.reactor))
+        self.scroll.setMinimumSize(180, 100)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setWidgetResizable(False)
         self.parameter_widget.setWidget(self.scroll)
 
         self.setCentralWidget(self.status_widget)
+        self.setCorner(Qt.BottomRightCorner, Qt.RightDockWidgetArea)
 
-        self.addDockWidget(Qt.RightDockWidgetArea, self.arduino_widget)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.arduino_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.parameter_widget)
 
         self.arduino_widget.setMaximumHeight(client_config.arduino['y'])

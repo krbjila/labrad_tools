@@ -16,7 +16,7 @@ class Sequence(ConductorParameter):
 
     TODO: Finish documenting this.
     """
-    priority = 10
+    priority = 1
     value_type = 'list'
     critical = True
     
@@ -34,7 +34,7 @@ class Sequence(ConductorParameter):
         t_advance = 5
         if self.value:
             # Have to do a bit of work here to get the electrode sequence
-            (parameterized_sequence, electrode_sequence) = value_to_sequence(self)
+            (parameterized_sequence, electrode_sequence) = yield value_to_sequence(self, self.cxn)
             (ret, electrode_presets, e_channels) = yield self.get_e()
 
             # Only update the parameters if get_e() returned successful

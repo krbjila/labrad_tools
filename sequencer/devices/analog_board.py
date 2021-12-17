@@ -83,9 +83,7 @@ class AnalogBoard(DeviceWrapper):
         self.update_parameters = []
         self.init_commands = []
 
-#        self.bitfile = 'analog_sequencer.bit'
-#        self.bitfile = 'dac.bit'
-        self.bitfile = 'analog_lower_drive.bit'
+        self.bitfile = 'KRbAnlg.bit'
         self.mode_ints = {'idle': 0, 'load': 1, 'run': 2}
         self.mode_wire = 0x00
         self.sequence_pipe = 0x80
@@ -94,11 +92,10 @@ class AnalogBoard(DeviceWrapper):
                                      0x05, 0x06, 0x07, 0x08]
 
         self.clk =  48e6 / (8.*2. + 2.)
-#        self.clk = 12e6 / (8.*4. + 2.)
+        # self.clk = 12e6 / (8.*4. + 2.)
         self.mode = 'idle'
 
-        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name})
-                            for i in range(8)]
+        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name}) for i in range(8)]
 
         """ non-defaults"""
         for key, value in config.items():
@@ -145,7 +142,7 @@ class AnalogBoard(DeviceWrapper):
         """ 
         take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
         """
-        
+
         # ramp to zero at end
         for c in self.channels:
             sequence[c.key].append({'dt': 10e-3, 'type': 'lin', 'vf': 0})

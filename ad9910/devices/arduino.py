@@ -12,10 +12,11 @@ tx_types_dictionary = {
     'drLimits': 1,
     'drStepSize': 2,
     'drRate': 3,
-    'sweepInvert': 4 # send 0 for no invert, 1 for invert
+    'sweepInvert': 4, # send 0 for no invert, 1 for invert
 }
 
-SYSCLK = 1000 # MHz
+SYSCLK = 1000 # MHz\
+FORCE_TRIGGER = "trigger\n"
 
 # Returns string of bytes MSB
 # In format "byte_3,byte_2,byte_1,byte_0,"
@@ -245,6 +246,8 @@ class Arduino(DeviceWrapper):
         yield self.connection.flush_output()
 
         self.echo = yield self.read_echo(self.program)
+        yield self.connection.flush_input()
+        yield self.connection.flush_output()
 
     def get_echo(self):
         return self.echo
@@ -264,6 +267,21 @@ class Arduino(DeviceWrapper):
             print(s)
             echo += s + '\n'
         returnValue(echo)
+
+    @inlineCallbacks
+    def force_trigger(self):
+        """
+        force_trigger(self)
+
+        Issues trigger to device instead of external trigger
+        """
+        if not self.has_force_trigger:
+             raise Exception("Could not verify {} has force trigger option".format(self.address))
+
+        yield self.connection.write(FORCE_TRIGGER)
+        yield self.connection.flush_input()
+        yield self.connection.flush_output()
+        
 
     
 

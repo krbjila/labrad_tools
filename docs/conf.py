@@ -57,7 +57,10 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-intersphinx_mapping = {'python': ('https://docs.python.org/2', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/2', None),
+    'pymongo': ('https://pymongo.readthedocs.io/en/stable/', None)
+    }
 
 master_doc = 'index'
 

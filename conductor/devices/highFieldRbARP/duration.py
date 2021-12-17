@@ -45,4 +45,4 @@ class Duration(ConductorParameter):
     def update(self):
         if self.value:
             f = 1.0/self.value
-	    yield self.server.write('FREQ ' + str(f) +"kHz")
+        yield self.server.write('FREQ ' + str(f) +"kHz")

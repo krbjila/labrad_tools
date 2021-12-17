@@ -12,7 +12,8 @@ sys.path.append('../client_tools')
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.task import LoopingCall
 from connection import connection
 
 from abort_button import AbortButton
@@ -124,34 +125,65 @@ class StatusClient(QWidget):
         # start connections with LABRAD
         self.initialize()
     
-    @inlineCallbacks
     def initialize(self):
-        self.cxn = connection()
-        yield self.cxn.connect()
-        self.connect()
+        self.connected = False
+        self.reconnect = LoopingCall(self.connect)
+        self.reconnect.start(1.0)
 
     @inlineCallbacks
     def connect(self): 
         try:
-            server = yield self.cxn.get_server('conductor')
-            # Connect to experiment_started signal from conductor
-            yield server.signal__experiment_started(self.ID_start)
-            yield server.addListener(listener = self.started, source = None, ID = self.ID_start)
-    
-            # Connect to experiment_stopped signal from Conductor
-            yield server.signal__experiment_stopped(self.ID_stop)
-            yield server.addListener(listener = self.stopped, source = None, ID = self.ID_stop)
-     
-            # Connect to parameter_removed signal from Conductor
-            yield server.signal__parameter_removed(self.ID_par_removed)
-            yield server.addListener(listener = self.parameter_removed, source = None, ID = self.ID_par_removed)
-    
-            yield server.signal__parameters_refreshed(self.ID_pars_refreshed)
-            yield server.addListener(listener=self.parameters_refreshed, source=None, ID = self.ID_pars_refreshed)
+            if not self.connected:
+                try:
+                    self.cxn.disconnect()
+                except:
+                    print("disconnection failed, or connection not initialized")
 
-            yield self.cxn.add_on_disconnect('conductor', self.server_stopped)
-        except:
+                self.cxn = connection()
+                yield self.cxn.connect()
+                server = yield self.cxn.get_server('conductor')
+                
+                # Connect to experiment_started signal from conductor
+                yield server.signal__experiment_started(self.ID_start)
+                yield server.addListener(listener = self.started, source = None, ID = self.ID_start)
+        
+                # Connect to experiment_stopped signal from Conductor
+                yield server.signal__experiment_stopped(self.ID_stop)
+                yield server.addListener(listener = self.stopped, source = None, ID = self.ID_stop)
+        
+                # Connect to parameter_removed signal from Conductor
+                yield server.signal__parameter_removed(self.ID_par_removed)
+                yield server.addListener(listener = self.parameter_removed, source = None, ID = self.ID_par_removed)
+        
+                yield server.signal__parameters_refreshed(self.ID_pars_refreshed)
+                yield server.addListener(listener=self.parameters_refreshed, source=None, ID = self.ID_pars_refreshed)
+
+                yield self.cxn.add_on_disconnect('conductor', self.server_stopped)
+
+                self.color = QColor(client_config.widget['colorOff'])
+                self.update()
+
+                self.textedit.setTextColor(QColor(client_config.widget['colorOff']))
+                self.textedit.append("Connected to LabRAD!")
+
+                self.parametersRefreshed.emit()
+                self.abort_button.button.setEnabled(False)
+                self.refresh_button.button.setEnabled(True)
+                self.error_flag = 0
+
+                self.connected = True
+
+        except Exception as e:
+            self.connected = False
+            self.abort_button.button.setEnabled(False)
+            self.refresh_button.button.setEnabled(False)
             self.server_stopped("conductor not running")
+            print("Conductor not running: {}".format(e))
+            try:
+                    self.cxn.disconnect()
+            except:
+                pass
+        returnValue(self.connected)
 
     # Sets variables, writes a timestamp to the widget
     # Emits signal for the indicator to change color
@@ -215,6 +247,8 @@ class StatusClient(QWidget):
             self.textedit.append(message + " " + timestr)
         else:
             self.textedit.append("conductor stopped " + timestr)
+            self.connected = False
+            self.refresh_button.button.setEnabled(False)
         self.labradServerError.emit()
 
     # Lays out the widget

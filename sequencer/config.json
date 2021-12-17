@@ -232,14 +232,14 @@
                 },
                 {
                     "loc": ["C", 0],
-                    "name": "Conrad Laser AOM",
+                    "name": "Rb MOT AOM Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 1],
-                    "name": "Conrad Laser Shutter",
+                    "name": "K MOT AOM Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -281,7 +281,7 @@
                 },
                 {
                     "loc": ["C", 7],
-                    "name": "TTL C7",
+                    "name": "|2,0> DDS Trig.",
                     "mode": "auto",
                     "manual_output": 1,
                     "invert": 0
@@ -330,7 +330,7 @@
                 },
                 {
                     "loc": ["C", 14],
-                    "name": "LATT2 AOM",
+                    "name": "|2,0> RF Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -443,7 +443,7 @@
                 },
                 {
                     "loc": ["D", 14],
-                    "name": "TTL D14",
+                    "name": "Blackman Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1146,13 +1146,13 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32: V. Latt. Phase Stab.", 
+                    "name": "DAC32: Unused (Noisy)", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC33: ", 
+                    "name": "DAC33: V. Latt. Phase Stab.", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },

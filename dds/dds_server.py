@@ -108,7 +108,8 @@ class ddsServer(DeviceServer):
                         # Check if the channel name is in the dict already
                         if entry['name'] in self.current_values[key].keys():
                             # If frequency is not the same, then we add it to the list of changes
-                            if entry['frequency'] != self.current_values[key][entry['name']]:
+                            # Edit: update all the channels all the time
+                            # if entry['frequency'] != self.current_values[key][entry['name']]:
                                 fixed_sequence[key].append(entry)
                         # If it's not, that's because the channel has never been updated since the server has been alive
                         # so it doesn't know what the value is

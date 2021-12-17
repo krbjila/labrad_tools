@@ -8,6 +8,7 @@ import variables_config
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 
 sys.path.append('../../client_tools')
 from connection import connection
@@ -28,14 +29,13 @@ class ParameterRow(QtGui.QWidget):
         self.nameBox.setFixedSize(self.boxWidth, self.boxHeight)
         self.valueBox = NeatSpinBox()
         self.valueBox.setFixedSize(self.boxWidth, self.boxHeight)
-#        self.valueBox.display(0)
+        self.valueBox.setValidator(QtGui.QDoubleValidator())
 
         self.layout = QtGui.QHBoxLayout()
         self.layout.addWidget(self.nameBox)
         self.layout.addWidget(self.valueBox)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 10, 0)
-
 
         self.setLayout(self.layout)
 
@@ -48,7 +48,10 @@ class ParameterControl(QtGui.QGroupBox):
         self.reactor = reactor
         self.cxn = cxn
         self.loadControlConfiguration(configuration)
-        self.connect()
+        self.connected = False
+        self.layout = QtGui.QVBoxLayout()
+        self.reconnect = LoopingCall(self.connect)
+        self.reconnect.start(1.0)
 
     def loadControlConfiguration(self, configuration):
         self.configuration = configuration
@@ -57,64 +60,94 @@ class ParameterControl(QtGui.QGroupBox):
 
     @inlineCallbacks
     def connect(self):
-        if self.cxn is None:
-            self.cxn = connection()
-            yield self.cxn.connect()
-        self.context = yield self.cxn.context()
-        try:
-            self.populateGUI()
-            yield self.connectSignals()
-        except Exception as e:
-            print(e)
-            self.setDisabled(True)
+        if not self.connected:
+            try:
+                self.connected = True
+                self.cxn = connection()
+                yield self.cxn.connect()
+                self.context = yield self.cxn.context()
+                self.server = yield self.cxn.get_server(self.servername)
+                yield self.populateGUI()
+                yield self.connectSignals()
+            except Exception as e:
+                self.setDisabled(True)
+                self.connected = False
+                print("Could not connect: {}".format(e))
 
     @inlineCallbacks
     def getServerConfiguratiom(self):
         yield None
 
+    @inlineCallbacks
     def populateGUI(self):
         # added KM 08/28/17
         # initialize default variables and values from variables_config.py
+        self.setDisabled(True)
+        
         default_variables = variables_config.variables_dict
-        self.numRows = len(default_variables) + 1
 
-        self.parameterRows = [ParameterRow(self.configuration) 
-                for i in range(self.numRows)]
+        # Gets variables which have been added to conductor but aren't stored in default_variables
+        try:
+            parameters = yield self.server.get_parameter_values()
+            conductor_var_dict = json.loads(parameters)["sequencer"]
+            if "sequence" in conductor_var_dict:
+                del conductor_var_dict["sequence"]
+            new_variables = [[k, v] for k,v in conductor_var_dict.items() if len(k) > 0 and k[0] == '*' and [k, v] not in default_variables]
+            default_variables += new_variables
 
-        self.layout = QtGui.QVBoxLayout()
-        for pr in self.parameterRows:
-            self.layout.addWidget(pr)
-        self.layout.setSpacing(1)
-        self.layout.setContentsMargins(0, 1, 0, 0)
-        
-        
-        for i in range(len(default_variables)):
-            self.parameterRows[i].nameBox.setText(default_variables[i][0])
-            self.parameterRows[i].valueBox.display(default_variables[i][1])
-            # write the parameters to conductor
-            self.forceWriteValue(self.parameterRows[i])
-            i += 1
+            for v in default_variables:
+                if v[0] in conductor_var_dict and conductor_var_dict[v[0]] != v[1]:
+                    v[1] = conductor_var_dict[v[0]]
 
-        self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
-        self.setLayout(self.layout)
+
+            self.numRows = len(default_variables) + 1
+
+            self.parameterRows = [ParameterRow(self.configuration) for i in range(self.numRows)]
+
+            while self.layout.count():
+                child = self.layout.takeAt(0)
+                if child.widget() is not None:
+                    child.widget().deleteLater()
+
+            for pr in self.parameterRows:
+                self.layout.addWidget(pr)
+            self.layout.setSpacing(1)
+            self.layout.setContentsMargins(0, 1, 0, 0)
+            
+            
+            for i in range(len(default_variables)):
+                self.parameterRows[i].nameBox.setText(default_variables[i][0])
+                self.parameterRows[i].valueBox.display(default_variables[i][1])
+                i += 1
+            
+            # Read in parameter values from LabRAD
+            self.do_update()
+
+            self.setFixedSize(2*(self.boxWidth+2), self.numRows*(self.boxHeight+2))
+            self.setLayout(self.layout)
+
+            self.setDisabled(False)
+        except Exception as e:
+            self.onDisconect()
+            print("Could not populate GUI: {}".format(e))
 
     @inlineCallbacks
     def connectSignals(self):
-        server = yield self.cxn.get_server(self.servername)
-        yield server.signal__parameters_updated(self.update_id)
-        yield server.addListener(listener=self.receive_update, source=None,
-                                 ID=self.update_id)
-        yield self.cxn.add_on_connect(self.servername, self.reinit)
-        yield self.cxn.add_on_disconnect(self.servername, self.disable)
+        try:
+            yield self.server.signal__parameters_updated(self.update_id)
+            yield self.server.addListener(listener=self.receive_update, source=None, ID=self.update_id)
+            yield self.cxn.add_on_disconnect(self.servername, self.onDisconect)
 
-        for pr in self.parameterRows:
-            pr.nameBox.returnPressed.connect(self.do_update)
-            pr.valueBox.returnPressed.connect(self.writeValue(pr))
+            for pr in self.parameterRows:
+                pr.nameBox.returnPressed.connect(self.do_update)
+                pr.valueBox.returnPressed.connect(self.writeValue(pr))
 
-            pr.nameBox.returnPressed.connect(self.appendToRows)
-            pr.valueBox.returnPressed.connect(self.appendToRows)
+                pr.nameBox.returnPressed.connect(self.appendToRows)
+                pr.valueBox.returnPressed.connect(self.appendToRows)
+        except Exception as e:
+            self.onDisconect()
+            print("Could not connect signals: {}".format(e))
 
-    # 
     def appendToRows(self):
         arr = self.parameterRows
         if arr[-1].nameBox.text() != "" or arr[-1].valueBox.text() != "":
@@ -133,26 +166,40 @@ class ParameterControl(QtGui.QGroupBox):
     @inlineCallbacks
     def receive_update(self, c, signal):
         if signal:
-            yield self.do_update()
+            try:
+                yield self.do_update()
+            except Exception as e:
+                self.onDisconect()
+                print("Could not receive update: {}".format(e))
 
     @inlineCallbacks
     def do_update(self):
-            server = yield self.cxn.get_server(self.servername)
-            parameters_json = yield server.get_parameter_values()
+        try:
+            parameters_json = yield self.server.get_parameter_values()
             parameters = json.loads(parameters_json)[self.device]
             for pr in self.parameterRows:
                 parameterName = str(pr.nameBox.text())
                 if parameterName in parameters.keys():
                     pr.valueBox.display(parameters[parameterName])
+        except Exception as e:
+            self.onDisconect()
+            print("Could not do update: {}".format(e))
 
     def writeValue(self, parameterRow):
         @inlineCallbacks
         def wv():
-            name = str(parameterRow.nameBox.text())
-            value = float(parameterRow.valueBox.value())
-            server = yield self.cxn.get_server(self.servername)
-            yield server.set_parameter_values(json.dumps({self.device: {name: value}}))
-            parameterRow.valueBox.display(value)
+            try:
+                name = str(parameterRow.nameBox.text())
+                value = float(parameterRow.valueBox.value())
+                if len(name) > 1 and name[0] != '*':
+                    parameterRow.nameBox.setStyleSheet("background-color: red;")
+                elif len(name) > 0:
+                    parameterRow.nameBox.setStyleSheet("background-color: white;")
+                    yield self.server.set_parameter_values(json.dumps({self.device: {name: value}}))
+                    parameterRow.valueBox.display(value)
+            except Exception as e:
+                self.onDisconect()
+                print("Could not write value: {}".format(e))
         return wv
 
     # There is some kind of subtlety with functions that are defined as
@@ -160,23 +207,18 @@ class ParameterControl(QtGui.QGroupBox):
     # to be able to call it directly in the code
     @inlineCallbacks
     def forceWriteValue(self, parameterRow):
-        name = str(parameterRow.nameBox.text())
-        value = float(parameterRow.valueBox.value())
-        server = yield self.cxn.get_server(self.servername)
-        yield server.set_parameter_values(json.dumps({self.device: {name: value}}))
-        parameterRow.valueBox.display(value)
+        try:
+            name = str(parameterRow.nameBox.text())
+            value = float(parameterRow.valueBox.value())
+            yield self.server.set_parameter_values(json.dumps({self.device: {name: value}}))
+            parameterRow.valueBox.display(value)
+        except Exception as e:
+            self.onDisconect()
+            print("Could not force write value: {}".format(e))
 
-    @inlineCallbacks	
-    def reinit(self): 
-        self.setDisabled(False)
-        server = yield self.cxn.get_server(self.servername)
-        yield server.signal__parameters_updated(self.update_id, context=self.context)
-        yield server.addListener(listener=self.receive_update, source=None,
-                                 ID=self.update_id, context=self.context)
-
-    def disable(self):
-        print('oh no!')
+    def onDisconect(self):
         self.setDisabled(True)
+        self.connected = False
 
 
     def closeEvent(self, x):

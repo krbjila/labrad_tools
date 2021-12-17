@@ -53,6 +53,14 @@
                 "default": 0
             }
         },
+        "stirap": {
+            "up": {
+                "default_freq": [80]
+            },
+            "down": {
+                "default_freq": [157.05]
+            }
+        },
         "dg800": {
             "sin": {
                 "default_sin" : {
@@ -78,19 +86,17 @@
                 "default": 1
             }
         },    
-        "3xAD9959_0": {
-            "downlegexp": {
-                "default": 0
-            },
-            "uplegdp": {
-                "default": 0
-            }
-        },
         "time": {
             "timestamp": {}
         },
         "magevaptimer": {
             "time": {}
+        },
+        "electrode" : {
+            "update": {
+                "default": {
+                }
+            }
         }
     }
 }

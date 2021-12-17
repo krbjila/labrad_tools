@@ -66,7 +66,7 @@ class elliptecServer(HardwareInterfaceServer):
     """Provides access to Thorlabs elliptec stages."""
     name = '%LABRADNODE%_elliptec'
 
-    TICKS_PER_MM = 1024
+    TICKS_PER_MM = 1024.0
     N_CHANNELS = 1
     STATUS_DICT = {
         '00': 'OK',

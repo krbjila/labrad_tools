@@ -7,6 +7,7 @@ import sys
 from PyQt4 import QtGui, QtCore, Qt
 from PyQt4.QtCore import pyqtSignal 
 from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 
 sys.path.append('./lib/')
 sys.path.append('./lib/forms')
@@ -14,11 +15,13 @@ sys.path.append('./lib/settings')
 sys.path.append('./lib/displays')
 sys.path.append('./lib/efield')
 
-from form_widget import FormWidget
-from setting_widget import SettingWidget
-from display_widget import DisplayWidget 
-from calculator import ECalculator
-from optimize_dialog import OptimizationDialog
+from lib.form_widget import FormWidget
+from lib.setting_widget import SettingWidget
+from lib.display_widget import DisplayWidget 
+from lib.efield.calculator import ECalculator
+from lib.optimize_dialog import OptimizationDialog
+from lib.forms.gui_defaults_helpers import NormalModesToVs
+
 
 from helpers import json_loads_byteified
 from gui_defaults_helpers import DACsToVs, VsToDACs, VsToNormalModes
@@ -31,8 +34,8 @@ SEP = os.path.sep
 fit_coeffs_path = './lib/efield/comsol/data/fit_coeffs.json'
 
 WIDGET_GEOMETRY = {
-	'w' : 1600,
-	'h' : 800
+    'w' : 1600,
+    'h' : 800
 }
 
 WINDOW_TITLE = 'Electrode Control'
@@ -40,181 +43,228 @@ WINDOW_TITLE = 'Electrode Control'
 CXN_ID = 110101
 
 class ElectrodeWindow(QtGui.QWidget):
-	def __init__(self, reactor, cxn=None):
-		super(ElectrodeWindow, self).__init__()
-		self.reactor = reactor
-		self.cxn = cxn
-		self.populate()
-                self.resize(WIDGET_GEOMETRY['w'], WIDGET_GEOMETRY['h'])
-	
-	def populate(self):
-		self.setWindowTitle(WINDOW_TITLE)
+    def __init__(self, reactor, cxn=None):
+        super(ElectrodeWindow, self).__init__()
+        self.reactor = reactor
+        self.cxn = cxn
+        self.populate()
+        self.resize(WIDGET_GEOMETRY['w'], WIDGET_GEOMETRY['h'])
+    
+    def populate(self):
+        self.setWindowTitle(WINDOW_TITLE)
 
-		self.layout = QtGui.QHBoxLayout()
-		self.widget = ElectrodeControl(self.reactor, self, self.cxn)
+        self.layout = QtGui.QHBoxLayout()
+        self.widget = ElectrodeControl(self.reactor, self, self.cxn)
 
-		self.scroll = QtGui.QScrollArea()
-		self.scroll.setWidget(self.widget)
-		self.scroll.setWidgetResizable(True)
-		self.scroll.setHorizontalScrollBarPolicy(2)
-		self.scroll.setVerticalScrollBarPolicy(2)
-		self.scroll.setFrameShape(0)
+        self.scroll = QtGui.QScrollArea()
+        self.scroll.setWidget(self.widget)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setHorizontalScrollBarPolicy(2)
+        self.scroll.setVerticalScrollBarPolicy(2)
+        self.scroll.setFrameShape(0)
 
-		self.layout.addWidget(self.scroll)
-		self.setLayout(self.layout)
+        self.layout.addWidget(self.scroll)
+        self.setLayout(self.layout)
 
 
 class ElectrodeControl(QtGui.QWidget):
-	def __init__(self, reactor, parent=None, cxn=None):
-		super(ElectrodeControl, self).__init__()
-		self.reactor = reactor
-		self.cxn = cxn
+    def __init__(self, reactor, parent=None, cxn=None):
+        super(ElectrodeControl, self).__init__()
+        self.reactor = reactor
+        self.cxn = cxn
 
-		self.parent = parent
+        self.parent = parent
 
-		self.calculator = ECalculator(fit_coeffs_path)
+        self.calculator = ECalculator(fit_coeffs_path)
 
-		self.setFixedWidth(WIDGET_GEOMETRY['w'])
-		self.setFixedHeight(WIDGET_GEOMETRY['h'])
+        self.setFixedWidth(WIDGET_GEOMETRY['w'])
+        self.setFixedHeight(WIDGET_GEOMETRY['h'])
 
-		self.populate()
-		self.connect_to_labrad()
+        self.populate()
 
-	def populate(self):
-		self.setWindowTitle("Electrode Control")
-		self.layout = QtGui.QVBoxLayout()
+        self.disconnected("")
+        self.reconnect = LoopingCall(self.connect_to_labrad)
+        self.reconnect.start(1.0)
 
-		self.settings = SettingWidget()
-		self.optimizeButton = QtGui.QPushButton('Parameter optimization')
-		self.forms = FormWidget(self.calculator)
-		self.displays = DisplayWidget(self.calculator)
+    def populate(self):
+        self.setWindowTitle("Electrode Control")
+        self.layout = QtGui.QVBoxLayout()
 
-		self.optimizeButton.clicked.connect(self.optimize)
-		self.optimizeButton.setFixedWidth(WIDGET_GEOMETRY['w']/4)
+        self.settings = SettingWidget()
+        self.optimizeButton = QtGui.QPushButton('Parameter optimization')
+        self.forms = FormWidget(self.calculator)
+        self.displays = DisplayWidget(self.calculator)
 
-		self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
-		self.settings.updateDescriptionSignal.connect(self.descriptionChanged)
+        self.optimizeButton.clicked.connect(self.optimize)
+        self.optimizeButton.setFixedWidth(WIDGET_GEOMETRY['w']/4)
 
-		self.settings.settingChangedSignal.connect(self.settingChanged)
-		self.settings.newSettingSignal.connect(self.newSettingAdded)
-		self.settings.saveSettingSignal.connect(self.saveSetting)
-		self.settings.settingDeletedSignal.connect(self.settingDeleted)
-		self.settings.refreshSignal.connect(self.refresh)
+        self.forms.inputForms.crossUpdated.connect(self.inputFormChanged)
+        self.settings.updateDescriptionSignal.connect(self.descriptionChanged)
 
-		self.layout.addWidget(self.settings)
-		self.layout.addWidget(self.optimizeButton)
-		self.layout.addWidget(self.forms)
-		self.layout.addWidget(self.displays)
+        self.settings.settingChangedSignal.connect(self.settingChanged)
+        self.settings.newSettingSignal.connect(self.newSettingAdded)
+        self.settings.saveSettingSignal.connect(self.saveSetting)
+        self.settings.settingDeletedSignal.connect(self.settingDeleted)
+        self.settings.refreshSignal.connect(self.refresh)
 
-		font = QtGui.QFont()
-		font.setPointSize(12)
-		self.setFont(font)
+        self.layout.addWidget(self.settings)
+        self.layout.addWidget(self.optimizeButton)
+        self.layout.addWidget(self.forms)
+        self.layout.addWidget(self.displays)
 
-		self.setLayout(self.layout)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.setFont(font)
 
-	@inlineCallbacks
-	def connect_to_labrad(self):
-		if self.cxn is None:
-			self.cxn = connection()  
-			yield self.cxn.connect()
-		self.context = yield self.cxn.context()
-		self.server = yield self.cxn.get_server(SERVERNAME)
+        self.setLayout(self.layout)
 
-		yield self.server.signal__presets_changed(CXN_ID)
-		yield self.server.addListener(listener=self._refresh, source=None, ID=CXN_ID)
-		yield self.getPresets()
-		for p in self.presets:
-			if 'volts' not in p:
-				p['volts'] = DACsToVs(p['values'])
-			p['normalModes'] = VsToNormalModes(p['volts'], p['compShim'])
-			p['values'] = VsToDACs(p['volts'])
-		yield self.saveSetting()
+    @inlineCallbacks
+    def connect_to_labrad(self):
+        if not self.connected:
+            try:
+                self.cxn = connection()  
+                yield self.cxn.connect()
+                self.context = yield self.cxn.context()
+                self.server = yield self.cxn.get_server(SERVERNAME)
 
-	@inlineCallbacks
-	def getPresets(self):
-		s = yield self.server.get_presets()
-		self.presets = json_loads_byteified(s)
-		self.settings.setPresets(self.presets)
+                yield self.server.signal__presets_changed(CXN_ID)
+                yield self.server.addListener(listener=self._refresh, source=None, ID=CXN_ID)
+                yield self.getPresets()
+                for p in self.presets:
+                    if 'volts' not in p:
+                        p['volts'] = DACsToVs(p['values'])
+                    p['normalModes'] = VsToNormalModes(p['volts'], p['compShim'])
+                    p['values'] = VsToDACs(p['volts'])
+                yield self.saveSetting()
+                self.on_connect()
+            except Exception as e:
+                self.disconnected("Error connecting to LabRAD: {}".format(e))
+                try:
+                    self.cxn.disconnect()
+                except:
+                    pass
 
-	def descriptionChanged(self):
-		self.presets[self.settings.currentSetting]['description'] = str(self.settings.descriptionEdit.text())
-		self.unsavedChanges()
+    @inlineCallbacks
+    def getPresets(self):
+        try:
+            s = yield self.server.get_presets()
+            self.presets = json_loads_byteified(s)
+            self.settings.setPresets(self.presets)
+        except Exception as e:
+            self.disconnected("Error getting presets: {}".format(e))
+            
 
-	def inputFormChanged(self):
-		(vals, comp_shim) = self.forms.getValues()
-		self.presets[self.settings.currentSetting]['normalModes'] = VsToNormalModes(vals, comp_shim)
-		self.presets[self.settings.currentSetting]['volts'] = vals
-		self.presets[self.settings.currentSetting]['values'] = VsToDACs(vals)
-		self.presets[self.settings.currentSetting]['compShim'] = comp_shim
-		self.displays.setValues(vals, comp_shim)
-		self.unsavedChanges()
+    def descriptionChanged(self):
+        self.presets[self.settings.currentSetting]['description'] = str(self.settings.descriptionEdit.text())
+        self.unsavedChanges()
 
-	def unsavedChanges(self):
-		if self.parent:
-			self.parent.setWindowTitle(WINDOW_TITLE + '*')
-		else:
-			self.setWindowTitle(WINDOW_TITLE + '*')
+    def inputFormChanged(self):
+        (vals, comp_shim) = self.forms.getValues()
+        self.presets[self.settings.currentSetting]['normalModes'] = VsToNormalModes(vals, comp_shim)
+        self.presets[self.settings.currentSetting]['volts'] = vals
+        self.presets[self.settings.currentSetting]['values'] = VsToDACs(vals)
+        self.presets[self.settings.currentSetting]['compShim'] = comp_shim
+        self.displays.setValues(vals, comp_shim)
+        self.unsavedChanges()
 
-	def savedChanges(self):
-		if self.parent:
-			self.parent.setWindowTitle(WINDOW_TITLE)
-		else:
-			self.setWindowTitle(WINDOW_TITLE)
+    def unsavedChanges(self):
+        if self.parent:
+            self.parent.setWindowTitle(WINDOW_TITLE + (" DISCONNECTED" if not self.connected else "") + '*')
+        else:
+            self.setWindowTitle(WINDOW_TITLE + (" DISCONNECTED" if not self.connected else "") + '*')
 
-	@inlineCallbacks
-	def saveSetting(self):
-		yield self.server.update_presets(json.dumps(self.presets))
-		self.savedChanges()
+    def savedChanges(self):
+        if self.parent:
+            self.parent.setWindowTitle(WINDOW_TITLE + (" DISCONNECTED" if not self.connected else ""))
+        else:
+            self.setWindowTitle(WINDOW_TITLE + (" DISCONNECTED" if not self.connected else ""))
 
-	def newSettingAdded(self):
-		# Because of aliasing between self.presets and self.settings.presets, following (commented) line is not necessary
-		# self.presets.append(self.settings.presets[-1])
-		self.settingChanged()
+    def disconnected(self, message=""):
+        if len(message):
+            print(message)
+        self.connected = False
+        if self.parent:
+            title = self.parent.windowTitle()
+        else:
+            title = self.windowTitle()
+        if "*" in title:
+            self.unsavedChanges()
+        else:
+            self.savedChanges()
 
-	def settingChanged(self):
-		if 'volts' in self.presets[self.settings.currentSetting]:
-			vals = self.presets[self.settings.currentSetting]['volts']
-			vs = VsToDACs(vals)
-		else:
-			vs = self.presets[self.settings.currentSetting]['values']
-			vals = DACsToVs(vs)
-		
-		comp_shim = self.presets[self.settings.currentSetting]['compShim']
-		self.forms.setValues(vals, comp_shim)
-		self.displays.setValues(vals, comp_shim)
-		self.savedChanges()
+    def on_connect(self):
+        self.connected = True
+        if self.parent:
+            title = self.parent.windowTitle()
+        else:
+            title = self.windowTitle()
+        if "*" in title:
+            self.unsavedChanges()
+        else:
+            self.savedChanges()
 
-	def settingDeleted(self, index):
-		self.presets.pop(index)
-		self.unsavedChanges()
+    @inlineCallbacks
+    def saveSetting(self):
+        try:
+            yield self.server.update_presets(json.dumps(self.presets))
+            self.savedChanges()
+        except Exception as e:
+            self.disconnected("Error saving setting: {}".format(e))
 
-	@inlineCallbacks
-	def _refresh(self, c, x):
-		# The signal is emitted every time the presets are changed or reloaded.
-		# We will cause a loop if we refresh every time we catch the signal,
-		# since self.refresh() calls self.server.reload_presets(), which 
-		# causes the signal to be emitted again.
-		# So the signal comes with a bool that tells us if we should update:
-		if x:
-			yield self.refresh()
+    def newSettingAdded(self):
+        # Because of aliasing between self.presets and self.settings.presets, following (commented) line is not necessary
+        # self.presets.append(self.settings.presets[-1])
+        self.settingChanged()
 
-	@inlineCallbacks
-	def refresh(self):
-		yield self.server.reload_presets()
-		self.getPresets()
+    def settingChanged(self):
+        if 'normalModes' in self.presets[self.settings.currentSetting]:
+            vals = NormalModesToVs(self.presets[self.settings.currentSetting]['normalModes'])
+            vs = VsToDACs(vals)
+        elif 'volts' in self.presets[self.settings.currentSetting]:
+            vals = self.presets[self.settings.currentSetting]['volts']
+            vs = VsToDACs(vals)
+        else:
+            vs = self.presets[self.settings.currentSetting]['values']
+            vals = DACsToVs(vs)
+        
+        comp_shim = self.presets[self.settings.currentSetting]['compShim']
+        self.forms.setValues(vals, comp_shim)
+        self.displays.setValues(vals, comp_shim)
+        self.savedChanges()
 
+    def settingDeleted(self, index):
+        self.presets.pop(index)
+        self.unsavedChanges()
 
-	def optimize(self):
-		(vals, comp_shim) = self.forms.getValues()
+    @inlineCallbacks
+    def _refresh(self, c, x):
+        # The signal is emitted every time the presets are changed or reloaded.
+        # We will cause a loop if we refresh every time we catch the signal,
+        # since self.refresh() calls self.server.reload_presets(), which 
+        # causes the signal to be emitted again.
+        # So the signal comes with a bool that tells us if we should update:
+        if x:
+            yield self.refresh()
 
-		dialog = OptimizationDialog(self.calculator, vals, comp_shim)
-		if dialog.exec_():
-			results = dialog.getResults()
-			if results:
-				self.forms.setValues(results, comp_shim)
+    @inlineCallbacks
+    def refresh(self):
+        try:
+            yield self.server.reload_presets()
+            self.getPresets()
+        except Exception as e:
+            self.disconnected("Error refreshing: {}".format(e))
 
-	def closeEvent(self, x):
-		self.reactor.stop()
+    def optimize(self):
+        (vals, comp_shim) = self.forms.getValues()
+
+        dialog = OptimizationDialog(self.calculator, vals, comp_shim)
+        if dialog.exec_():
+            results = dialog.getResults()
+            if results:
+                self.forms.setValues(results, comp_shim)
+
+    def closeEvent(self, x):
+        self.reactor.stop()
 
 
 

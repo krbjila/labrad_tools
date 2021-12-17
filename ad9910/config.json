@@ -1,5 +1,23 @@
 {
     "devices": {
+        "stirap_ch1": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "polarkrb_serial",
+            "address": "ASRL11::INSTR",
+            "baud": 2400,
+            "timeout": 100,
+            "has_force_trigger": true
+        },
+        "stirap_ch2": {
+            "device_type": "Arduino",
+            "connection_type": "Serial",
+            "servername": "polarkrb_serial",
+            "address": "ASRL12::INSTR",
+            "baud": 2400,
+            "timeout": 100,
+            "has_force_trigger": true
+        },
         "N=1": {
             "device_type": "Arduino",
             "connection_type": "Serial",
@@ -16,5 +34,5 @@
             "baud": 2400,
             "timeout": 100
         }
-    }
+    }   
 }

@@ -42,7 +42,7 @@ class AD9910Device(ConductorParameter):
     def initialize(self):
         self.cxn = yield connectAsync()
         try:
-            self.server = self.cxn.imaging_ad9910
+            self.server = self.cxn.ad9910
             devs = yield self.server.get_device_list()
             
             if self.device not in devs:

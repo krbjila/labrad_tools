@@ -89,6 +89,8 @@ from lib.exceptions import ParameterNotImported
 from lib.exceptions import ParameterNotRegistered
 from lib.exceptions import ParameterNotInitialized
 
+from clients import variables_config
+
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 
 class ConductorServer(LabradServer):
@@ -207,7 +209,7 @@ class ConductorServer(LabradServer):
         Set instance attributes defined in json config.
 
         Args:
-            path (str, optional): [description]. Defaults to None, in which case the object's ``self.config_path`` is loaded.
+            path (str, optional): Location of the JSON config. Defaults to None, in which case the object's ``self.config_path`` is loaded.
         """        
         if path is not None:
             self.config_path = path
@@ -217,13 +219,26 @@ class ConductorServer(LabradServer):
                 setattr(self, key, value)
         # TODO: RUN conductor/clients/variables_config.py and setattr from those also. Refer to conductor/clients/forceWriteValue in parameter_values_control.py
 
+    def load_variables(self):
+        """
+        load_variables(self)
+
+        Loads sequencer variables from ``clients/variables_config.py``.
+        """
+        self.variables = {}
+        for v in variables_config.variables_dict:
+            self.variables[v[0]] = float(v[1])
+        update = json.dumps({"sequencer": self.variables})
+        self.set_parameter_values(None, update)
+
     def initServer(self):
         """
         initServer(self)
 
-        Registers default parameters after connected to labrad
+        Registers default parameters and loads sequencer variables after connected to LabRAD
         """
         callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
+        callLater(0.5, self.load_variables)
 
 
     # Re-initialize parameters
@@ -233,11 +248,15 @@ class ConductorServer(LabradServer):
         """
         refresh_default_parameters(self, c)
 
-        Tries to register all default parameters defined in the ``config.json`` file
+        Tries to register all default parameters defined in the ``config.json`` file.
+        
+        Also checks that all sequencer variables are defined.
 
         Args:
             c: LabRAD context
         """
+
+        print("hello MOFOMOFOFMOFOFMOFOF")
 
         # Signal to clients that parameters are being refreshed
         self.parameters_refreshed(True)
@@ -259,6 +278,10 @@ class ConductorServer(LabradServer):
                     if not param in self.parameters[device]:
                         param_dict = {param: self.default_parameters[device][param]}
                         yield self.register_parameters(c, json.dumps({device: param_dict}))
+
+        for k, v in self.variables.items():
+            if not k in self.parameters["sequencer"]:
+                self.set_parameter_values(c, json.dumps({"sequencer": {k: float(v)}}))
 
 
     @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
@@ -441,8 +464,7 @@ class ConductorServer(LabradServer):
         returnValue(True)
 
     @inlineCallbacks
-    def set_parameter_value(self, device_name, parameter_name, parameter_value,
-                            generic_parameter=False, value_type=None):
+    def set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None):
         """
         set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None)
 
@@ -617,9 +639,12 @@ class ConductorServer(LabradServer):
                 parameter.value = parameter.value
                 if parameter_name == 'sequence':
                     parameter.value = [parameter.default_sequence]
-                #LDM added following two lines 2017.08.16
-                if parameter_name == 'enable':
+                # Ensure that Rb uwave synth outputs default
+                if parameter_name == 'enable' and device_name == 'E8257D':
                     parameter.value = 0
+                # Ensure that the STIRAP DDS's are not rewritten
+                if device_name == 'stirap' and (parameter_name == 'up' or parameter_name == 'down'):
+                    parameter.value = []
         self.data = {}
         self.data_path = None
         self.experiment_stopped(True)
