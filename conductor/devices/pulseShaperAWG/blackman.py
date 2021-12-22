@@ -42,7 +42,7 @@ class Blackman(ConductorParameter):
         try:
             # Build Blackman waveform
             def blackman(tau, t):
-	            return (0.42 - 0.5*np.cos(2*np.pi*t/tau) + 0.08 * np.cos(4*np.pi*t/tau))
+                return (0.42 - 0.5*np.cos(2*np.pi*t/tau) + 0.08 * np.cos(4*np.pi*t/tau))
 
             samples = 8192
             pts = np.array(blackman(samples,np.arange(samples)))*(samples-1)
@@ -53,6 +53,7 @@ class Blackman(ConductorParameter):
             waveform = waveform[:-1]
 
             yield self.usb.select_interface(address)
+            yield self.usb.termination('\n', '\n')
             yield self.usb.write('DATA:DAC VOLATILE,' + waveform)
 
             yield self.usb.write('DATA:COPY BLACKMAN')

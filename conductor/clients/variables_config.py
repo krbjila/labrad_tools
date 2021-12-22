@@ -11,9 +11,9 @@ variables_dict = [
     ['*RbHFOP', 5.2], 
     # QUAD shims
     ['*NWhigh', 4.7],# was 4.3, changed 11/21/2021
-    ['*NWlow', 4.47], # was 4.35 11/12/21
+    ['*NWlow', 4.3], # was 4.47 12/14/21
     ['*SWhigh', 4.7], # was 4.83, changed 11/21/2021
-    ['*SWlow',4.55], # was 4.66 11/12/21 # 4.645
+    ['*SWlow',4.6], # was 4.55 12/14/21 # 4.645
     # Evaporation
     ['*MagEvapTime', 12.9],
     # Plug PZTs
@@ -25,7 +25,7 @@ variables_dict = [
     ['*QUADV', -3.6], # was -3.6
     ['*QTRAP', 7.5],
     ['*QuadI2', 4.5], # was 3.8, was 4.0, was 5
-    ['*QuadV2', -2.3], # was -2.5 on 9/17/2020
+    ['*QuadV2', -2.4], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*BIASI', 0.0485], # was .04, 0.044
