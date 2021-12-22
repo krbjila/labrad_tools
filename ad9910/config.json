@@ -4,7 +4,7 @@
             "device_type": "Arduino",
             "connection_type": "Serial",
             "servername": "polarkrb_serial",
-            "address": "ASRL11::INSTR",
+            "address": "ASRL5::INSTR",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true
@@ -13,7 +13,7 @@
             "device_type": "Arduino",
             "connection_type": "Serial",
             "servername": "polarkrb_serial",
-            "address": "ASRL12::INSTR",
+            "address": "ASRL6::INSTR",
             "baud": 2400,
             "timeout": 100,
             "has_force_trigger": true
