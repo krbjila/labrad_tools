@@ -114,7 +114,7 @@ class USBServer(HardwareInterfaceServer):
             interface.timeout = timeout
         return interface.timeout
 
-    @setting(7, write='s', read='s', returns='(s)')
+    @setting(7, write='s', read='s', returns='(s,s)')
     def termination(self, c, write=None, read=None):
         """
         termination(self, c, write=None, read=None)
