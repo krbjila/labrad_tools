@@ -16,15 +16,16 @@ Provides low-level control of the 4-channel RF synthesizer developed by the JILA
     timeout = 20
     ### END NODE INFO
 """
+
 from math import pi
 import sys
 from labrad.server import LabradServer, setting
 sys.path.append("../client_tools")
-# from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
 from labrad.util import getNodeName
 import struct
+from json import loads
 
 class SynthesizerServer(LabradServer):
     """Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop."""
@@ -33,7 +34,6 @@ class SynthesizerServer(LabradServer):
     def __init__(self):
         self.name = '{}_synthesizer'.format(getNodeName())
         super(SynthesizerServer, self).__init__()
-        self.uart = serial.Serial('/dev/ttyUSB2', 115200, timeout=0.1)
 
     @inlineCallbacks
     def initServer(self):
@@ -44,45 +44,11 @@ class SynthesizerServer(LabradServer):
         """
         self.USB_server_name = '{}_usb'.format(getNodeName())
         self.USB = yield self.client.servers[self.USB_server_name]
-
-    @setting(5, returns='*s')
-    def get_devices(self, c):
-        """
-        get_devices(self, c)
-
-        Lists connected DG800 AWGs. Note that the function connects to each device to check its ID.
-
-        Args:
-            c: A LabRAD context (which is passed on to passed to :meth:`select_device`)
-
-        Yields:
-            A list of strings corresponding to the IDs of connected DG800 AWGs
-        """
-        interfaces = yield self.USB.get_interface_list()
-        self.devices = []
-        for i in interfaces:
-            self.select_device(c, i)
-            try:
-                id = yield self.USB.query('*IDN?')
-                if "DG832" in id:
-                    self.devices.append(i)
-            except Exception as e:
-                print("Could not connect to {}".format(i))
-                print(e)
-        returnValue(self.devices)
-
-    @setting(6, device='s')
-    def select_device(self, c, device):
-        """
-        select_device(self, c, device)
-        
-        Select a connected DG800 AWG
-
-        Args:
-            c: A LabRAD context (not used)
-            device (string): The ID of the DG800 AWG to connect to, as returned by :meth:`get_devices`
-        """
-        self.USB.select_interface(device)
+        self.USB.select_interface("COM6")
+        self.USB.termination('', '')
+        self.USB.baudrate(115200)
+        self.USB.timeout(0.1)
+        self.uart = self.USB
 
     @staticmethod
     def f_to_ftw(f):
@@ -203,13 +169,20 @@ class SynthesizerServer(LabradServer):
         self.uart.write(struct.pack('>B', 0x00))
         if verbose: print("terminator", struct.pack('>B', 0x00))
 
-        if verbose: print("  End timestamp")
+        if verbose: print("End timestamp")
 
         # the uart buffer is only 16 bytes deep, so we need to wait until all data is written after every word
         self.uart.flush()
 
-    def trigger(self):
-        """_summary_
+    @setting(3)
+    def trigger(self, c=None):
+        """
+        trigger(self)
+
+        Triggers the synthesizer
+
+        Args:
+            c (optional): The LabRAD context. Defaults to None.
         """
         msg = bytearray(2)
         msg[0] = 0xA2
@@ -218,8 +191,15 @@ class SynthesizerServer(LabradServer):
         # the uart buffer is only 16 bytes deep, so we need to wait until all data is written after every word
         self.uart.flush()
 
-    def reset(self):
-        """_summary_
+    @setting(4)
+    def reset(self, c=None):
+        """
+        reset(self)
+
+        Resets the synthesizer
+
+        Args:
+            c (optional): The LabRAD context. Defaults to None.
         """
         msg = bytearray(2)
         msg[0] = 0xA3
@@ -227,6 +207,32 @@ class SynthesizerServer(LabradServer):
         self.uart.write(msg)
         # the uart buffer is only 16 bytes deep, so we need to wait until all data is written after every word
         self.uart.flush()
+
+    def write_timestamps(self, timestamps):
+        """_summary_
+
+        Args:
+            timestamps (_type_): _description_
+        """
+        for s in timestamps:
+            channel = s.channel
+            address = s.address
+            timestamp = SynthesizerServer.t_to_timestamp(s.timestamp)
+            phase_update = s.phase_update
+            ptw = SynthesizerServer.phase_to_ptw(s.phase)
+            atw = SynthesizerServer.a_to_atw(s.amplitude)
+            ftw = SynthesizerServer.f_to_ftw(s.frequency)
+            self.write_timestamp(s.channel, s.address, s.timestamp, s.phase_update, s.ptw, s.atw, s.ftw)
+
+    @setting(5, timestamps='s')
+    def write_timestamps(self, c, timestamps):
+        """_summary_
+
+        Args:
+            c (_type_): _description_
+            timestamps (_type_): _description_
+        """
+        self.write_timestamps(loads(timestamps))
 
 if __name__ == '__main__':
     from labrad import util
