@@ -136,7 +136,7 @@ class USBServer(HardwareInterfaceServer):
             interface.read_termination = read
         return (interface.write_termination, interface.read_termination)
 
-    @setting(8, baudrate='i', returns='i')
+    @setting(8, baud_rate='i', returns='i')
     def baud_rate(self, c, baud_rate=None):
         """
         baudrate(self, c, baud_rate=None)
