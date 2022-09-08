@@ -2,8 +2,6 @@
 Classes and functions for generating sequences for the RF synthesizer
 
 To do:
-    * Write documentation for Ramsey and decoupling sequences
-    * Design RFBlocks that work as breakpoints for synchronizing different channels
     * Design functions for maintaining phase on frequency switching
     * Fininsh implementing all functions
     * Develop low-level compiler that converts basic RFBlocks into synthesizer commands
@@ -11,7 +9,7 @@ To do:
     * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
 """
 
-from math import pi
+from math import pi, log10
 
 class RFBlock():
     """
@@ -84,7 +82,7 @@ class Timestamp(RFBlock):
         self.duration = duration
         self.amplitude = amplitude
         self.phase = phase
-        self.frequency = frequency        
+        self.frequency = frequency
 
 class Wait(Timestamp):
     """
@@ -101,7 +99,21 @@ class WaitForTrigger(RFBlock):
     """
     Waits for the synthesizer to receive a software or hardware trigger.
     """
-    pass
+    def __init__(self):
+        pass
+
+class SyncPoint(RFBlock):
+    """
+    Allows different channels to be synchronized. If SyncPoints with the same name appear in different channels, an appropriate sequence of :class:`WaitForTrigger` and :class:`Wait` blocks are inserted into the channels for which it would occur earlier such that all channels reach the SyncPoint at the same time.
+
+    Throws an error upon compilation if SyncPoints with the same name occur in one channel's sequence or in an order such that they cannot be applied.
+    """
+    def __init__(self, name):
+        """
+        Args:
+            name: An identifier for the synchronization point.
+        """
+        self.name = name
 
 class AdjustPrevDuration(RFBlock):
     """
@@ -228,12 +240,58 @@ class AmplitudeRamp(RFBlock):
         raise NotImplementedError()
 
 class Transition():
-    def __init__(self):
+    """
+    Describes the calibrated frequency and Rabi frequencies for a transition. Used in :class:`SetTransition` to set parameters for :func:`AreaPulse`.
+    """
+    def __init__(self, frequency, amplitudes, Rabi_frequencies, default_amplitude=None, frequency_offset=0):
+        """
+        Args:
+            frequency (float): The frequency of the transition in Hertz.
+            amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated.
+            Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to `amplitudes`. Must be the same length as `amplitudes`.
+            default_amplitude (float, optional): The default amplitude for pulses on the transition. Defaults to None, in which case the first element of amplitudes is used.
+            synthesizer_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is `frequency - synthesizer_offset`. Defaults to 0.
+        """
         raise NotImplementedError()
 
-class SetTransition():
-    def __init__(self):
+class SetTransition(RFBlock):
+    """
+    Sets the transition to be used for subsequent :meth:`AreaPulse` commands.
+    """
+    def __init__(self, transition):
+        """
+        Args:
+            transition (Transition): The transition to use for the following :meth:`AreaPulse` commands.
+        """
         raise NotImplementedError
+
+def todB(amplitude_lin):
+    """
+    todB(amplitude_lin)
+
+    Converts an amplitude ratio from linear to decibels per :math:`A_{dB} = 20 \\log_{10}(A)`.
+
+    Args:
+        amplitude_lin (float): An amplitude ratio.
+
+    Returns:
+        float: The amplitude ratio in decibels.
+    """
+    return 20.0*log10(amplitude_lin)
+
+def fromdB(amplitude_dB):
+    """
+    fromdB(amplitude_dB)
+
+    Converts an amplitude ratio from decibels to linear per :math:`A = 10^{A_{dB}/20}`.
+
+    Args:
+        amplitude_lin (float): An amplitude ratio in decibels.
+
+    Returns:
+        float: The amplitude ratio.
+    """
+    return 10**(amplitude_dB/20)
 
 def Pulse(duration, amplitude, phase=None, frequency=None, center=False, window=RectangularPulse, **kwargs):
     """
@@ -291,17 +349,78 @@ def PiOver2Pulse(amplitude=None, phase=None, center=False, window=RectangularPul
     return AreaPulse(pi/2, amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs)
 
 def SpinEcho(duration, pulse=None):
+    """
+    SpinEcho(duration, pulse=None)
+
+    Returns a list of pulses and :class:`Wait` commands implementing a spin echo decoupling sequence consisting of a `duration/2` :class:`Wait`, a pi pulse about the `x` axis and another `duration/2` :class:`Wait`.
+
+    Args:
+        duration (float): The duration of the decoupling sequence in seconds.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+
+    Returns:
+        list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a spin echo decoupling sequence.
+    """
     raise NotImplementedError()
 
 def XY8(duration, pulse=None):
+    """
+    XY8(duration, pulse=None)
+
+    Returns a list of pulses and :class:`Wait` commands implementing an XY8 decoupling sequence. Refer to `this review <https://doi.org/10.1098/rsta.2011.0355>`_ for information about the XY8 pulse sequence.
+
+    Args:
+        duration (float): The duration of the decoupling sequence in seconds.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+
+    Returns:
+        list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing an XY8 decoupling sequence.
+    """
     raise NotImplementedError()
 
 def XY16(duration, pulse=None):
+    """
+    XY16(duration, pulse=None)
+
+    Returns a list of pulses and :class:`Wait` commands implementing an XY16 decoupling sequence. Refer to `this review <https://doi.org/10.1098/rsta.2011.0355>`_ for information about the XY8 pulse sequence.
+
+    Args:
+        duration (float): The duration of the decoupling sequence in seconds.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+
+    Returns:
+        list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing an XY16 decoupling sequence.
+    """
     raise NotImplementedError()
 
 def KDD(duration, pulse=None):
-    # https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.106.240501
+    """
+    KDD(duration, pulse=None)
+
+    Returns a list of pulses and :class:`Wait` commands implementing a KDD decoupling sequence. Refer to `this review <https://doi.org/10.1098/rsta.2011.0355>`_ and `this paper <https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.106.240501>`_ for information about the KDD pulse sequence.
+
+    Args:
+        duration (float): The duration of the decoupling sequence in seconds.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+
+    Returns:
+        list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a KDD decoupling sequence.
+    """
     raise NotImplementedError()
 
-def Ramsey(duration, phase, pulse=None, decoupling=None):
+def Ramsey(duration, phase=0, pulse=None, decoupling=None):
+    """
+    Ramsey(duration, phase, pulse=None, decoupling=None)
+
+    Returns a list of pulses and :class:`Wait` commands implementing a Ramsey interferometry sequence, consisting of a pi/2 pulse with zero phase, a :class:`Wait` of length `duration`, and a final pi/2 pulse with phase `phase`. A decoupling sequence can optionally be inserted instead of the :class:`Wait`.
+
+    Args:
+        duration (float): The dark time (in seconds) for the Ramsey sequence.
+        phase (float, optional): The phase of the final pulse. Defaults to 0.
+        pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to `duration`. Defaults to None.
+
+    Returns:
+        list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a Ramsey sequence.
+    """
     raise NotImplementedError()
