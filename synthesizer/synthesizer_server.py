@@ -1,6 +1,10 @@
 """
 Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop.
 
+To do:
+    * Rewrite timestamps using Timestamp class from synthesizer_sequences
+    * Figure out how to use serial server
+
 ..
     ### BEGIN NODE INFO
     [info]
