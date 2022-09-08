@@ -67,3 +67,4 @@ master_doc = 'index'
 autodoc_mock_imports = ['pycurl', 'pywin32', 'krbcollisionmodule', 'pexpect', 'pypiwin32', 'pyttsx3', 'labjack.ljm', 'PyQt5', 'cameras.lib', 'helpers', 'serial', 'PyQt4', 'generic_device', 'conductor_device', 'evaporate', 'calibrations', 'gui_defaults_helpers']
 
 autodoc_class_signature = 'separated'
+autoclass_content = 'both'
