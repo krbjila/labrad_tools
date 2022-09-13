@@ -3,13 +3,13 @@ Classes and functions for generating sequences for the RF synthesizer
 
 To do:
     * Design functions for maintaining phase on frequency switching
-    * Fininsh implementing all functions
+    * Finish implementing all functions
     * Develop low-level compiler that converts basic RFBlocks into synthesizer commands
     * Develop a graphical tool for visualizing RF sequences
     * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
 """
 
-from math import pi, log10
+import numpy as np
 
 class RFBlock():
     """
@@ -84,6 +84,16 @@ class Timestamp(RFBlock):
         self.phase = phase
         self.frequency = frequency
 
+    def __repr__(self) -> str:
+        val = "Timestamp({}".format(self.duration)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        if self.frequency is not None:
+            val += ", frequency={}".format(self.frequency)
+        return val + ")"
+
 class Wait(Timestamp):
     """
     Waits for a fixed duration.
@@ -102,11 +112,14 @@ class WaitForTrigger(RFBlock):
     def __init__(self):
         pass
 
+    def __repr__(self) -> str:
+        return "WaitForTrigger()"
+
 class SyncPoint(RFBlock):
     """
     Allows different channels to be synchronized. If SyncPoints with the same name appear in different channels, an appropriate sequence of :class:`WaitForTrigger` and :class:`Wait` blocks are inserted into the channels for which it would occur earlier such that all channels reach the SyncPoint at the same time.
 
-    Throws an error upon compilation if SyncPoints with the same name occur in one channel's sequence or in an order such that they cannot be applied.
+    Throws an error upon compilation if multiple SyncPoints with the same name occur in one channel's sequence or in an order such that they cannot be applied.
     """
     def __init__(self, name):
         """
@@ -114,6 +127,9 @@ class SyncPoint(RFBlock):
             name: An identifier for the synchronization point.
         """
         self.name = name
+    
+    def __repr__(self) -> str:
+        return "SyncPoint({})".format(self.name)
 
 class AdjustPrevDuration(RFBlock):
     """
@@ -126,6 +142,9 @@ class AdjustPrevDuration(RFBlock):
         """
         self.duration = duration
 
+    def __repr__(self) -> str:
+        return "AdjustPrevDuration({})".format(self.duration)
+
 class AdjustNextDuration(RFBlock):
     """
     Adjusts the duration of the next :class:`Timestamp`. Throws an error on compilation if the next :class:`RFBlock` is not a :class:`Timestamp` or the adjustment would result in negative duration.
@@ -137,11 +156,14 @@ class AdjustNextDuration(RFBlock):
         """
         self.duration = duration
 
+    def __repr__(self) -> str:
+        return "AdjustNextDuration({})".format(self.duration)
+
 class RectangularPulse(RFPulse):
     """
     Generates a `rectangular pulse <https://en.wikipedia.org/wiki/List_of_window_functions#Rectangular_window>`_.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, center=False):
+    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False):
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
         """
@@ -149,7 +171,7 @@ class RectangularPulse(RFPulse):
         self.amplitude = amplitude
         self.phase = phase
         self.frequency = frequency
-        self.center = center
+        self.centered = centered
 
     def area(self):
         return 1
@@ -165,40 +187,89 @@ class BlackmanPulse(RFPulse):
     """
     Generates a pulse with an `Blackman window <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, center=False, steps=20, exact=False):
+    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False, steps=20, exact=False):
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
 
         Keyword Args:
-            steps (int, optional): The number of steps to approximate the pulse. Defaults to 20.
+            steps (int, optional): The number of steps to approximate the pulse. Should be at least 7. Defaults to 20.
             exact (bool, optional): Whether to use exact parameters for the window, as described `here <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_.
         """
-        raise NotImplementedError()
+        if duration <= 0:
+            raise ValueError("The duration {} must be positive.".format(duration))
+        self.duration = duration
+        self.amplitude = amplitude
+        self.phase = phase
+        self.frequency = frequency
+        self.centered = centered
+        if steps < 7 or int(steps) != steps:
+            raise ValueError("Steps (currently {}) must be an integer >= 7.".format(steps))
+        self.steps = steps
+        self.exact = exact
 
     def area(self):
-        raise NotImplementedError()
+        self.compile()
+        return self.step * sum(self.amplitudes)  / (self.amplitude * self.duration)
 
     def compile(self):
-        raise NotImplementedError()
+        if self.exact:
+            a = [7938.0/18608, 9240.0/18608, 1430.0/18608]
+        else:
+            a = [0.42, 0.5, 0.08]
+        self.step = self.duration/self.steps
+        N = self.steps - 1
+        n = np.linspace(0, N, self.steps, endpoint=True)
+        self.amplitudes = self.amplitude * (a[0] - a[1] * np.cos(2*np.pi*n/N) + a[2] * np.cos(4*np.pi*n/N))
+        timestamps = [Timestamp(self.step, amp) for amp in self.amplitudes]
+        timestamps[0].phase = self.phase
+        timestamps[0].frequency = self.frequency
+        return RFPulse.center(self.centered, timestamps + [Timestamp(0,0)], self.duration)
+        
 
 class GaussianPulse(RFPulse):
     """
-    Generates a pulse with an `approximate confined Gaussian window <https://en.wikipedia.org/wiki/List_of_window_functions#Approximate_confined_Gaussian_window>`_.
+    Generates a pulse with an `approximate confined Gaussian window <https://en.wikipedia.org/wiki/List_of_window_functions#Approximate_confined_Gaussian_window>`_. See also `here <http://dx.doi.org/10.1016/j.sigpro.2014.03.033>`_ for more details.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, center=False, steps=20):
+    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False, steps=26, sigt=0.11):
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
 
         Keyword Args:
-            steps (int, optional): The number of steps to approximate the pulse. Defaults to 20.
+            steps (int, optional): The number of steps to approximate the pulse. Should be at least 16. Defaults to 26.
+            sigt (float, optional): The RMS time width of the pulse relative to duration. Approximates a cosine window for :math:`\\sigma_{t} \\approx 0.18` and approaches the time-frequency uncertainty limit for :math:`\\sigma_{t} \\approx 0.13`. Throws an error if not between 0.08 and 0.20. Defaults to 0.11.
         """
-        raise NotImplementedError()
+        if duration <= 0:
+            raise ValueError("The duration {} must be positive.".format(duration))
+        self.duration = duration
+        self.amplitude = amplitude
+        self.phase = phase
+        self.frequency = frequency
+        self.centered = centered
+        if sigt < 0.08 or sigt > 0.2:
+            raise ValueError("sigt (currently {}) must be between 0.08 and 0.20.".format(sigt))
+        self.sigt = sigt
+        if steps < 16 or int(steps) != steps:
+            raise ValueError("Steps (currently {}) must be an integer >= 16.".format(steps))
+        self.steps = steps
 
     def area(self):
-        raise NotImplementedError()
+        self.compile()
+        return self.step * sum(self.amplitudes) / (self.amplitude * self.duration)
 
     def compile(self):
-        raise NotImplementedError()
+        self.step = self.duration/self.steps
+        N = self.steps - 1
+        L = self.steps
+        n = np.linspace(0, N, self.steps, endpoint=True)
+
+        def G(x):
+            return np.exp(-((x - N/2.0)/(2* L * self.sigt))**2)
+
+        self.amplitudes = self.amplitude * (G(n) - (G(-0.5) * (G(n + L) + G(n - L)))/(G(L - 0.5) + G(-L - 0.5)))
+        timestamps = [Timestamp(self.step, amp) for amp in self.amplitudes]
+        timestamps[0].phase = self.phase
+        timestamps[0].frequency = self.frequency
+        return RFPulse.center(self.centered, timestamps + [Timestamp(0,0)], self.duration)
 
 class FrequencyRamp(RFBlock):
     """
@@ -277,7 +348,7 @@ def todB(amplitude_lin):
     Returns:
         float: The amplitude ratio in decibels.
     """
-    return 20.0*log10(amplitude_lin)
+    return 20.0*np.log10(amplitude_lin)
 
 def fromdB(amplitude_dB):
     """
@@ -338,7 +409,7 @@ def PiPulse(amplitude=None, phase=None, center=False, window=RectangularPulse, *
 
     A wrapper for :func:`AreaPulse` with pulse area set to pi. Refer to :func:`AreaPulse` for full documentation.
     """
-    return AreaPulse(pi, amplitude=None, phase=None, center=False, window=RectangularPulse, *kwargs)
+    return AreaPulse(np.pi, amplitude=None, phase=None, center=False, window=RectangularPulse, *kwargs)
 
 def PiOver2Pulse(amplitude=None, phase=None, center=False, window=RectangularPulse, *kwargs):
     """
@@ -346,7 +417,7 @@ def PiOver2Pulse(amplitude=None, phase=None, center=False, window=RectangularPul
 
     A wrapper for :func:`AreaPulse` with pulse area set to pi/2. Refer to :func:`AreaPulse` for full documentation.
     """
-    return AreaPulse(pi/2, amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs)
+    return AreaPulse(np.pi/2, amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs)
 
 def SpinEcho(duration, pulse=None):
     """
