@@ -15,16 +15,22 @@ class RFBlock():
     """
     A base class for elements of a sequence for a synthesizer channel.
     """
-    def compile(self):
+    def compile(self, state=None):
         """
         compile(self)
 
         Compiles the block into a list of basic :class:`RFBlock` that can be sent to the synthesizer.
 
+        Args:
+            state (dict): The :code:`phase`, :code:`amplitude`, :code:`frequency`, and :class:`Transition` of the channel, as of the end of the previous block. Not used by default.
+
         Returns:
             (list of :class:`RFBlock`): The compiled :class:`RFBlock`.
         """
         return [self]
+
+    def __repr__(self) -> str:
+        raise ValueError("Please implement me in subclasses.")
 
 class RFPulse(RFBlock):
     """
@@ -48,7 +54,7 @@ class RFPulse(RFBlock):
             duration (float): The duration of the sequence in seconds.
 
         Returns:
-            (list of :class:`RFBlock`): The sequence, centered if `center`.
+            (list of :class:`RFBlock`): The sequence, centered if :code:`center`.
         """
         if center:
             return [AdjustPrevDuration(-duration/2)] + sequence + [AdjustNextDuration(-duration/2)]
@@ -64,7 +70,7 @@ class RFPulse(RFBlock):
         """
         raise NotImplementedError("Please implement me in each subclass!")
 
-    def compile(self):
+    def compile(self, state=None):
         raise("Please implement me in each subclass!")
 
 class Timestamp(RFBlock):
@@ -176,7 +182,7 @@ class RectangularPulse(RFPulse):
     def area(self):
         return 1
 
-    def compile(self):
+    def compile(self, state=None):
         sequence = [
             Timestamp(self.duration, self.amplitude, self.phase, self.frequency),
             Timestamp(0, 0)
@@ -211,7 +217,7 @@ class BlackmanPulse(RFPulse):
         self.compile()
         return self.step * sum(self.amplitudes)  / (self.amplitude * self.duration)
 
-    def compile(self):
+    def compile(self, state=None):
         if self.exact:
             a = [7938.0/18608, 9240.0/18608, 1430.0/18608]
         else:
@@ -236,7 +242,7 @@ class GaussianPulse(RFPulse):
 
         Keyword Args:
             steps (int, optional): The number of steps to approximate the pulse. Should be at least 16. Defaults to 26.
-            sigt (float, optional): The RMS time width of the pulse relative to duration. Approximates a cosine window for :math:`\\sigma_{t} \\approx 0.18` and approaches the time-frequency uncertainty limit for :math:`\\sigma_{t} \\approx 0.13`. Throws an error if not between 0.08 and 0.20. Defaults to 0.11.
+            sigt (float, optional): The RMS time width of the pulse relative to duration. Approximates a cosine window for :math:`\\sigma_{t} \\approx 0.18` and approaches the time-frequency uncertainty limit for :math:`\\sigma_{t} \\leq 0.13`. Throws an error if not between 0.08 and 0.20. Defaults to 0.11.
         """
         if duration <= 0:
             raise ValueError("The duration {} must be positive.".format(duration))
@@ -256,7 +262,7 @@ class GaussianPulse(RFPulse):
         self.compile()
         return self.step * sum(self.amplitudes) / (self.amplitude * self.duration)
 
-    def compile(self):
+    def compile(self, state=None):
         self.step = self.duration/self.steps
         N = self.steps - 1
         L = self.steps
@@ -282,12 +288,12 @@ class FrequencyRamp(RFBlock):
             amplitude (float, optional): The amplitude of the tone relative to full scale. Defaults to None.
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase setting is maintained.
             start_frequency (float, optional): The initial frequency in Hertz. Defaults to None, in which case the previous frequency setting is used.
-            end_frequency (float, optional): The final frequency in Hertz. Defaults to None, in which case `start_frequency` is used.
+            end_frequency (float, optional): The final frequency in Hertz. Defaults to None, in which case :code:`start_frequency` is used.
             steps (int, optional): The number of frequency steps to include in the ramp. Defaults to 20.
         """
         raise NotImplementedError()
 
-    def compile(self):
+    def compile(self, state):
         raise NotImplementedError()
 
 class AmplitudeRamp(RFBlock):
@@ -299,7 +305,7 @@ class AmplitudeRamp(RFBlock):
         Args:
             duration (float): The duration of the ramp in seconds.
             start_amplitude (float, optional): The initial amplitude, relative to full scale. Defaults to None, in which case the amplitude of the previous :class:`RFBlock` is used.
-            end_amplitude (float, optional): The final amplitude, relative to full scale. Defaults to None, in which case `start_amplitude` is used.
+            end_amplitude (float, optional): The final amplitude, relative to full scale. Defaults to None, in which case :code:`start_amplitude` is used.
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase setting is maintained.
             frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency setting is maintained.
             steps (int, optional): The number of amplitude steps to include in the ramp. Defaults to 20.
@@ -307,7 +313,7 @@ class AmplitudeRamp(RFBlock):
         """
         raise NotImplementedError()
 
-    def compile(self):
+    def compile(self, state):
         raise NotImplementedError()
 
 class Transition():
@@ -318,10 +324,10 @@ class Transition():
         """
         Args:
             frequency (float): The frequency of the transition in Hertz.
-            amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated.
-            Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to `amplitudes`. Must be the same length as `amplitudes`.
+            amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. 
+            Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes`.
             default_amplitude (float, optional): The default amplitude for pulses on the transition. Defaults to None, in which case the first element of amplitudes is used.
-            synthesizer_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is `frequency - synthesizer_offset`. Defaults to 0.
+            synthesizer_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is :code:`frequency - synthesizer_offset`. Defaults to 0.
         """
         raise NotImplementedError()
 
@@ -364,9 +370,9 @@ def fromdB(amplitude_dB):
     """
     return 10**(amplitude_dB/20)
 
-def Pulse(duration, amplitude, phase=None, frequency=None, center=False, window=RectangularPulse, **kwargs):
+def Pulse(duration, amplitude, phase=None, frequency=None, centered=False, window=RectangularPulse, **kwargs):
     """
-    Pulse(duration, amplitude, phase=None, frequency=None, center=False, window=RectangularPulse, **kwargs)
+    Pulse(duration, amplitude, phase=None, frequency=None, centered=False, window=RectangularPulse, **kwargs)
 
     Low level function for generating an RF pulse. Provides a unified constructor for all subclasses of :class:`RFPulse`. See also :func:`AreaPulse` for a higher level interface to pulses on a specified :class:`Transition`.
 
@@ -375,33 +381,37 @@ def Pulse(duration, amplitude, phase=None, frequency=None, center=False, window=
         amplitude (float): The peak amplitude of the pulse, relative to full scale.
         phase (float, optional): The phase of the pulse in radians. Defaults to None, in which case the previous phase setting is maintained.
         frequency (float, optional): The frequency of the pulse in Hertz. Defaults to None, in which case the previous frequency setting is maintained.
-        center (bool, optional): Whether to reduce the duration of the preceding and following :class:`Wait` commands `duration/2`. Will throw an error during compilation if the :class:`Wait` commands are too short or the pulse is not adjacent to at least one :class:`Wait` command. If there is only one neighboring :class:`Wait` command, its duration is reduced by `duration/2`. Defaults to False.
+        centered (bool, optional): Whether to reduce the duration of the preceding and following :class:`Wait` commands :code:`duration/2`. Will throw an error during compilation if the :class:`Wait` commands are too short or the pulse is not adjacent to at least one :class:`Wait` command. If there is only one neighboring :class:`Wait` command, its duration is reduced by :code:`duration/2`. Defaults to False.
         window (RFPulse, optional): The shape of the pulse. Defaults to RectangularPulse.
-        **kwargs: Additional keyword arguments, which are passed to window's `__init__` method
+        **kwargs: Additional keyword arguments, which are passed to window's :code:`__init__` method
 
     Returns:
         RFPulse: An :class:`RFPulse` with the specified parameters
     """
-    return window(duration, amplitude, phase, frequency, center, **kwargs)
+    return window(duration, amplitude, phase, frequency, centered, **kwargs)
 
-def AreaPulse(area, amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs):
+class AreaPulse(RFPulse):
     """
-    AreaPulse(area, amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs)
-
-    High level function for generating an RF pulse on a specified :class:`Transition`, which must be set by a :class:`SetTransition` command before the first :func:`AreaPulse`. The pulse timing is calculated to provide the specified pulse `area`. See also :func:`Pulse` for a low level function for generating pulses with manually specified frequency, amplitude, and duration.
-
-    Args:
-        area (float): The pulse area in radians.
-        amplitude (float, optional): The peak amplitude of the pulse, relative to full scale. Defaults to None, in which case the default amplitude for the specified :class:`Transition` is used.
-        phase (float, optional): The phase of the pulse in radians. Defaults to None, in which case the previous phase setting is maintained.
-        center (bool, optional): Whether to reduce the duration of the preceding and following :class:`Wait` commands `duration/2`. Will throw an error during compilation if the :class:`Wait` commands are too short or the pulse is not adjacent to at least one :class:`Wait` command. If there is only one neighboring :class:`Wait` command, its duration is reduced by `duration/2`. Defaults to False.
-        window (RFPulse, optional): The shape of the pulse. Defaults to RectangularPulse.
-        **kwargs: Additional keyword arguments, which are passed to window's `__init__` method
-
-    Returns:
-        RFPulse: An :class:`RFPulse` with the specified parameters
+    Class for generating an RF pulse on a specified :class:`Transition`, which must be set by a :class:`SetTransition` command before the first :func:`AreaPulse`. The pulse timing is calculated to provide the specified pulse :code:`area`. See also :func:`Pulse` for a low level function for generating pulses with manually specified frequency, amplitude, and duration.
     """
-    raise NotImplementedError
+    
+    def __init__(self, area, amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs):
+        """
+        Args:
+            area (float): The pulse area in radians.
+            amplitude (float, optional): The peak amplitude of the pulse, relative to full scale. Defaults to None, in which case the default amplitude for the specified :class:`Transition` is used.
+            phase (float, optional): The phase of the pulse in radians. Defaults to None, in which case the previous phase setting is maintained.
+            centered (bool, optional): Whether to reduce the duration of the preceding and following :class:`Wait` commands :code:`duration/2`. Will throw an error during compilation if the :class:`Wait` commands are too short or the pulse is not adjacent to at least one :class:`Wait` command. If there is only one neighboring :class:`Wait` command, its duration is reduced by :code:`duration/2`. Defaults to False.
+            window (RFPulse, optional): The shape of the pulse. Defaults to RectangularPulse.
+            **kwargs: Additional keyword arguments, which are passed to window's :code:`__init__` method
+        """
+        pass
+
+    def compile(self, state=None):
+        pass
+
+    def __repr__(self) -> str:
+        pass
 
 def PiPulse(amplitude=None, phase=None, center=False, window=RectangularPulse, **kwargs):
     """
@@ -423,7 +433,7 @@ def SpinEcho(duration, pulse=None):
     """
     SpinEcho(duration, pulse=None)
 
-    Returns a list of pulses and :class:`Wait` commands implementing a spin echo decoupling sequence consisting of a `duration/2` :class:`Wait`, a pi pulse about the `x` axis and another `duration/2` :class:`Wait`.
+    Returns a list of pulses and :class:`Wait` commands implementing a spin echo decoupling sequence consisting of a `duration/2` :class:`Wait`, a pi pulse about the :code:`x` axis and another :code:`duration/2` :class:`Wait`.
 
     Args:
         duration (float): The duration of the decoupling sequence in seconds.
@@ -483,15 +493,32 @@ def Ramsey(duration, phase=0, pulse=None, decoupling=None):
     """
     Ramsey(duration, phase, pulse=None, decoupling=None)
 
-    Returns a list of pulses and :class:`Wait` commands implementing a Ramsey interferometry sequence, consisting of a pi/2 pulse with zero phase, a :class:`Wait` of length `duration`, and a final pi/2 pulse with phase `phase`. A decoupling sequence can optionally be inserted instead of the :class:`Wait`.
+    Returns a list of pulses and :class:`Wait` commands implementing a Ramsey interferometry sequence, consisting of a pi/2 pulse with zero phase, a :class:`Wait` of length :code:`duration`, and a final pi/2 pulse with phase :code:`phase`. A decoupling sequence can optionally be inserted instead of the :class:`Wait`.
 
     Args:
         duration (float): The dark time (in seconds) for the Ramsey sequence.
         phase (float, optional): The phase of the final pulse. Defaults to 0.
         pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
-        decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to `duration`. Defaults to None.
+        decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to :code:`duration`. Defaults to None.
 
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a Ramsey sequence.
     """
     raise NotImplementedError()
+
+def compile_sequence(sequence):
+    """
+    compile_sequence(sequence)
+
+    Compilation steps:
+        * Compiles instance of :class:`RFBlock` with :code:`compile` functions
+        * Updates durations based on :class:`AdjustPrevDuration` and :class:`AdjustNextDuration`
+        * Replaces :class:`SyncPoint` blocks with  :class:`Wait` and :class:`WaitForTrigger` blocks.
+        * Converts timestamps from relative to absolute time
+        * Computes durations of each section of the sequence
+        * Outputs the sequence in a list of serializable dictionaries that can be sent to the synthesizer server.
+
+    Args:
+        sequence (list or list of lists of :class:`RFBlock`): The sequence to compile. If a list of lists is given, compiles multiple channels at once, handling :class:`SyncPoint` blocks. Otherwise, compiles a single channel's sequence, ignoring :class:`SyncPoint`.
+    """
+    pass
