@@ -7,11 +7,12 @@ To do:
     * Develop a graphical tool for visualizing RF sequences
     * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
 """
-
+from __future__ import annotations
 from copy import copy, deepcopy
 import numpy as np
 from scipy.interpolate import interp1d
 import warnings
+from typing import List, Set, Dict, Tuple, Optional
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 16384
@@ -21,7 +22,7 @@ class SequenceState():
     """
     Records the state of a synthesizer channel at any point in the sequence. Used by :func:`compile_sequence` and the :meth:`RFBlock.compile`.
     """
-    def __init__(self, amplitude=0, phase=0, frequency=0, transition=None, time=0, triggers=0, syncpoints=[]) -> None:
+    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 0, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = []) -> None:
         """
         Args:
             amplitude (float): The amplitude of the channel. Defaults to 0.
@@ -50,17 +51,17 @@ class RFBlock():
 
     atomic = False
 
-    def compile(self, state=None):
+    def compile(self, state: Optional[SequenceState] = None) -> RFBlock | List[RFBlock]:
         """
         compile(self)
 
         Compiles the block into a list of basic :class:`RFBlock` that can be sent to the synthesizer.
 
         Args:
-            state (:class:`SequenceState`): The state of the channel when the block is to be called. Defaults to None, which can be used for testing :code:`compile` functions of :class:`RFBlock` objects that do not depend on channel state.
+            state (:class:`SequenceState`, optional): The state of the channel when the block is to be called. Defaults to None, which can be used for testing :code:`compile` functions of :class:`RFBlock` objects that do not depend on channel state.
 
         Returns:
-            (list of :class:`RFBlock`): The compiled :class:`RFBlock`.
+            (RFBlock | List[RFBlock]): The compiled :class:`RFBlock`.
         """
         return self
 
@@ -72,7 +73,7 @@ class RFPulse(RFBlock):
     An base class for RF pulses.
     """
     @staticmethod
-    def center(center, sequence, duration):
+    def center(center: bool, sequence: List[RFBlock], duration: float):
         """
         center(center, sequence, duration):
 
@@ -85,7 +86,7 @@ class RFPulse(RFBlock):
 
         Args:
             center (bool): Whether to center the sequence by adjusting the time of the surrounding :class:`Timestamp`.
-            sequence (list of :class:`RFBlock`): The sequence.
+            sequence (List[RFBlock]): The sequence.
             duration (float): The duration of the sequence in seconds.
 
         Returns:
@@ -97,18 +98,21 @@ class RFPulse(RFBlock):
             return sequence
 
     @property
-    def area(self):
+    def area(self) -> float:
         """
         area(self)
 
         Returns the area of the pulse, relative to a rectangular pulse of the same duration and peak amplitude.
+
+        Returns:
+            (float): The area of the pulse, relative to a rectangular pulse of the same duration and peak amplitude
         """
         raise NotImplementedError("Please implement me in each subclass!")
 
-    def compile(self, state=None):
+    def compile(self, state:SequenceState = None) -> RFBlock | List[RFBlock]:
         raise("Please implement me in each subclass!")
 
-def validate_parameters(duration=None, amplitude=None, phase=None, frequency=None):
+def validate_parameters(duration: Optional[float] = None, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None) -> None:
     """
     validate_parameters(duration=None, amplitude=None, phase=None, frequency=None)
 
@@ -139,7 +143,7 @@ class Timestamp(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration, amplitude=None, phase=None, frequency=None):
+    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None) -> None:
         """
         Args:
             duration (float): The duration of the timestamp. If the duration is zero, the parameters override ommited parameters in the next Timestamp.
@@ -162,7 +166,7 @@ class Timestamp(RFBlock):
             val += ", frequency={}".format(self.frequency)
         return val + ")"
 
-    def compile(self, state=None):
+    def compile(self, state: Optional[SequenceState] = None) -> Timestamp:
         validate_parameters(self.duration, self.amplitude, self.phase, self.frequency)
         state.time += self.duration
         if self.amplitude is not None:
@@ -177,7 +181,7 @@ class Wait(Timestamp):
     """
     Waits for a fixed duration.
     """
-    def __init__(self, duration):
+    def __init__(self, duration: float) -> None:
         """
         Args:
             duration (float): The duration to wait in seconds.
@@ -191,13 +195,13 @@ class WaitForTrigger(RFBlock):
 
     atomic = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def __repr__(self) -> str:
         return "WaitForTrigger()"
 
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> WaitForTrigger:
         state.triggers += 1
         state.time = 0
         return super().compile(state)
@@ -211,7 +215,7 @@ class SyncPoint(RFBlock):
 
     atomic = True
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         """
         Args:
             name: An identifier for the synchronization point.
@@ -221,7 +225,7 @@ class SyncPoint(RFBlock):
     def __repr__(self) -> str:
         return "SyncPoint('{}')".format(self.name)
     
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> SyncPoint:
         state.syncpoints.append(self.name)
         return super().compile(state)
 
@@ -232,7 +236,7 @@ class AdjustPrevDuration(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration):
+    def __init__(self, duration: float) -> None:
         """
         Args:
             duration (float): The duration in seconds by which to increment the duration of the previous timestamp.
@@ -242,7 +246,7 @@ class AdjustPrevDuration(RFBlock):
     def __repr__(self) -> str:
         return "AdjustPrevDuration({})".format(self.duration)
 
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> AdjustPrevDuration:
         state.time += self.duration
         return super().compile(state)
 
@@ -253,7 +257,7 @@ class AdjustNextDuration(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration):
+    def __init__(self, duration: float) -> None:
         """
         Args:
             duration (float): The duration in seconds by which to increment the duration of the next timestamp.
@@ -263,7 +267,7 @@ class AdjustNextDuration(RFBlock):
     def __repr__(self) -> str:
         return "AdjustNextDuration({})".format(self.duration)
 
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> AdjustNextDuration:
         state.time += self.duration
         return super().compile(state)
 
@@ -271,7 +275,7 @@ class RectangularPulse(RFPulse):
     """
     Generates a `rectangular pulse <https://en.wikipedia.org/wiki/List_of_window_functions#Rectangular_window>`_.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False):
+    def __init__(self, duration: float, amplitude: float, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False) -> None:
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
         """
@@ -282,10 +286,10 @@ class RectangularPulse(RFPulse):
         self.centered = centered
 
     @property
-    def area(self):
+    def area(self) -> float:
         return 1
 
-    def compile(self, state=None):
+    def compile(self, state: Optional[SequenceState] = None) -> List[RFBlock]:
         validate_parameters(self.duration, self.amplitude, self.phase, self.frequency)
         sequence = [
             Timestamp(self.duration, self.amplitude, self.phase, self.frequency),
@@ -307,7 +311,7 @@ class BlackmanPulse(RFPulse):
     """
     Generates a pulse with an `Blackman window <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False, steps=20, exact=False):
+    def __init__(self, duration: float, amplitude: float, phase: Optional[float] = None, frequency: Optional[float] = None, centered: Optional[float] = False, steps: int = 20, exact: bool = False) -> None:
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
 
@@ -336,12 +340,12 @@ class BlackmanPulse(RFPulse):
         return val + ", exact={})".format(self.exact)
 
     @property
-    def area(self):
+    def area(self) -> float:
         self.compile()
         step = self.duration/self.steps
         return step * sum(self.amplitudes)  / (self.amplitude * self.duration)
 
-    def compile(self, state=None):
+    def compile(self, state: Optional[SequenceState] = None) -> List[RFBlock]:
         validate_parameters(self.duration, self.amplitude, self.phase, self.frequency)
         if self.steps < 7 or int(self.steps) != self.steps:
             raise ValueError("Steps (currently {}) must be an integer >= 7.".format(self.steps))
@@ -363,7 +367,7 @@ class GaussianPulse(RFPulse):
     """
     Generates a pulse with an `approximate confined Gaussian window <https://en.wikipedia.org/wiki/List_of_window_functions#Approximate_confined_Gaussian_window>`_. See also `here <http://dx.doi.org/10.1016/j.sigpro.2014.03.033>`_ for more details.
     """
-    def __init__(self, duration, amplitude, phase=None, frequency=None, centered=False, steps=26, sigt=0.11):
+    def __init__(self, duration: float, amplitude: float, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False, steps: int = 26, sigt: float = 0.11) -> None:
         """
         Refer to :func:`Pulse` for descriptions of the arguments.
 
@@ -380,12 +384,12 @@ class GaussianPulse(RFPulse):
         self.steps = steps
 
     @property
-    def area(self):
+    def area(self) -> float:
         self.compile()
         step = self.duration/self.steps
         return step * sum(self.amplitudes) / (self.amplitude * self.duration)
 
-    def compile(self, state=None):
+    def compile(self, state: Optional[SequenceState] = None) -> List[RFBlock]:
         validate_parameters(self.duration, self.amplitude, self.phase, self.frequency)
         if self.sigt < 0.08 or self.sigt > 0.2:
             raise ValueError("sigt (currently {}) must be between 0.08 and 0.20.".format(self.sigt))
@@ -424,7 +428,7 @@ class FrequencyRamp(RFBlock):
     """
     Linearly ramps the frequency of the RF tone while maintaining constant amplitude and phase.
     """
-    def __init__(self, duration, amplitude=None, phase=None, start_frequency=None, end_frequency=None, steps=20):
+    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, start_frequency: Optional[float] = None, end_frequency: Optional[float] = None, steps: int = 20):
         """
         Args:
             duration (float): The duration of the ramp in seconds.
@@ -441,7 +445,7 @@ class FrequencyRamp(RFBlock):
         self.end_frequency = end_frequency
         self.steps = steps
 
-    def compile(self, state):
+    def compile(self, state: SequenceState) -> List[RFBlock]:
         validate_parameters(self.duration, self.amplitude, self.phase, self.start_frequency)
         validate_parameters(frequency=self.end_frequency)
         if self.steps < 2 or self.steps != int(self.steps):
@@ -475,7 +479,7 @@ class AmplitudeRamp(RFBlock):
     """
     Linearly ramps the amplitude of the RF tone while maintaining constant frequency and phase.
     """
-    def __init__(self, duration, start_amplitude=None, end_amplitude=None, phase=None, frequency=None, steps=20):
+    def __init__(self, duration: float, start_amplitude: Optional[float] = None, end_amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, steps: int = 20):
         """
         Args:
             duration (float): The duration of the ramp in seconds.
@@ -492,7 +496,7 @@ class AmplitudeRamp(RFBlock):
         self.frequency = frequency
         self.steps = steps
 
-    def compile(self, state):
+    def compile(self, state:SequenceState) -> List[RFBlock]:
         validate_parameters(self.duration, self.start_amplitude, self.phase, self.frequency)
         validate_parameters(amplitude=self.end_amplitude)
         if self.steps < 2 or self.steps != int(self.steps):
@@ -525,7 +529,7 @@ class Transition():
     """
     Describes the calibrated frequency and Rabi frequencies for a transition. Used in :class:`SetTransition` to set parameters for :func:`AreaPulse`.
     """
-    def __init__(self, frequency, amplitudes, Rabi_frequencies, default_amplitude=None, frequency_offset=0):
+    def __init__(self, frequency: float, amplitudes: List[float], Rabi_frequencies: List[float], default_amplitude:Optional[float] = None, frequency_offset: float = 0) -> None:
         """
         Args:
             frequency (float): The frequency of the transition in Hertz.
@@ -558,7 +562,7 @@ class Transition():
     def __repr__(self) -> str:
         return "Transition({}, {}, {}, default_amplitude={}, frequency_offset={})".format(self.frequency, self.amplitudes, self.Rabi_frequencies, self.default_amplitude, self.frequency_offset)
 
-    def Rabi_frequency(self, amplitude=None):
+    def Rabi_frequency(self, amplitude: Optional[float] = None) -> float:
         """
         Rabi_frequency(self, amplitude=None)
 
@@ -583,7 +587,7 @@ class SetTransition(RFBlock):
 
     atomic = True
 
-    def __init__(self, transition):
+    def __init__(self, transition: Transition) -> None:
         """
         Args:
             transition (Transition): The transition to use for the following :meth:`AreaPulse` commands.
@@ -593,7 +597,7 @@ class SetTransition(RFBlock):
     def __repr__(self) -> str:
         return "SetTransition({})".format(self.transition)
 
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> RFBlock:
         state.transition = self.transition
         return super().compile(state)
 
@@ -625,7 +629,7 @@ def fromdB(amplitude_dB):
     """
     return 10**(amplitude_dB/20)
 
-def Pulse(duration, amplitude, phase=None, frequency=None, centered=False, window=RectangularPulse, **kwargs):
+def Pulse(duration: float, amplitude: float, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> RFPulse:
     """
     Pulse(duration, amplitude, phase=None, frequency=None, centered=False, window=RectangularPulse, **kwargs)
 
@@ -650,7 +654,7 @@ class AreaPulse(RFPulse):
     Class for generating an RF pulse on a specified :class:`Transition`, which must be set by a :class:`SetTransition` command before the first :func:`AreaPulse`. The pulse timing is calculated to provide the specified pulse :code:`area`. See also :func:`Pulse` for a low level function for generating pulses with manually specified frequency, amplitude, and duration.
     """
     
-    def __init__(self, pulse_area, amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs):
+    def __init__(self, pulse_area: float, amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> None:
         """
         Args:
             pulse_area (float): The pulse area in radians.
@@ -667,7 +671,7 @@ class AreaPulse(RFPulse):
         self.window = window
         self.kwargs = kwargs
 
-    def compile(self, state=None):
+    def compile(self, state: SequenceState) -> List[RFPulse]:
         transition: Transition = state.transition
         if self.amplitude is None:
             self.amplitude = transition.default_amplitude
@@ -696,7 +700,7 @@ class AreaPulse(RFPulse):
         val += ")"
         return val
 
-def PiPulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs):
+def PiPulse(amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
     """
     PiPulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs)
 
@@ -704,7 +708,7 @@ def PiPulse(amplitude=None, phase=None, centered=False, window=RectangularPulse,
     """
     return AreaPulse(np.pi, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
 
-def PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs):
+def PiOver2Pulse(amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
     """
     PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs)
 
@@ -712,7 +716,7 @@ def PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularP
     """
     return AreaPulse(np.pi/2, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
 
-def SpinEcho(duration, pulse=None):
+def SpinEcho(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     """
     SpinEcho(duration, pulse=None)
 
@@ -731,7 +735,7 @@ def SpinEcho(duration, pulse=None):
         pulse.phase = 0
     return [Wait(duration/2), pulse, Wait(duration/2)]
 
-def XY8(duration, pulse=None):
+def XY8(duration: float, pulse: RFPulse = None) -> List[RFBlock]:
     """
     XY8(duration, pulse=None)
 
@@ -753,7 +757,7 @@ def XY8(duration, pulse=None):
     phases = [0, np.pi/2, 0, np.pi/2, np.pi/2, 0, np.pi/2, 0] # XYXYYXYX
     return [Wait(duration/16)] + [f(phi) for phi in phases for f in (phased_pulse, lambda x: Wait(duration/8))][:-1] + [Wait(duration/16)]
 
-def XY16(duration, pulse=None):
+def XY16(duration: float, pulse:Optional[RFPulse] = None) -> List[RFBlock]:
     """
     XY16(duration, pulse=None)
 
@@ -775,7 +779,7 @@ def XY16(duration, pulse=None):
     phases = [0, np.pi/2, 0, np.pi/2, np.pi/2, 0, np.pi/2, 0, np.pi, 3*np.pi/2, np.pi, 3*np.pi/2, 3*np.pi/2, np.pi, 3*np.pi/2, np.pi] # XYXYYXYX-X-Y-X-Y-Y-X-Y-X
     return [Wait(duration/32)] + [f(phi) for phi in phases for f in (phased_pulse, lambda x: Wait(duration/16))][:-1] + [Wait(duration/32)]
 
-def KDD(duration, pulse=None):
+def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     """
     KDD(duration, pulse=None)
 
@@ -811,7 +815,7 @@ def KDD(duration, pulse=None):
         ]
     return (KDDphi(0) + KDDphi(np.pi/2))*2
 
-def Ramsey(duration, phase=0, pulse=None, decoupling=None):
+def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
     """
     Ramsey(duration, phase, pulse=None, decoupling=None)
 
@@ -821,14 +825,37 @@ def Ramsey(duration, phase=0, pulse=None, decoupling=None):
         duration (float): The dark time (in seconds) for the Ramsey sequence.
         phase (float, optional): The phase of the final pulse. Defaults to 0.
         pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
-        decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to :code:`duration`. Defaults to None.
+        decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to :code:`duration`. Must only contain :class:`RFPulse` and :class:`Wait` blocks. Defaults to None.
          
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a Ramsey sequence.
     """
-    raise NotImplementedError()
+    if decoupling == None:
+        decoupling = [Wait(duration)]
+    else:
+        decoupling = deepcopy(decoupling)
+        decoupling_duration = 0
+        for b in decoupling:
+            if isinstance(b, Wait):
+                decoupling_duration += b.duration
+            elif isinstance(b, RFPulse):
+                b.centered = True
+            else:
+                raise TypeError("Only RFPulse and Wait are allowed in the decoupling sequence. {} was included.".format(b))
+        for b in decoupling:
+            if isinstance(b, Wait):
+                b.duration *= duration/decoupling_duration
+    if pulse is None:
+        pulse = PiOver2Pulse()
+    else:
+        pulse.phase = 0
+    end_pulse = copy(pulse)
+    end_pulse.phase = phase
+    return [pulse] + decoupling + [end_pulse]
+        
 
-def compile_sequence(sequence):
+
+def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
     """
     compile_sequence(sequence)
 
