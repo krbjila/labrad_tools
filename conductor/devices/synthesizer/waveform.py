@@ -8,36 +8,16 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 
+import synthesizer.synthesizer_sequences as ss
+
 class Waveform(ConductorParameter):
     """
     Waveform(ConductorParameter)
 
-    Conductor parameter for controlling the waveform output by the RF synthesizer. Example config:
-
-    .. code-block:: json
-
-            {
-                "dg800": {
-                    "sin": [{
-                        "freq1": 100,
-                        "amplitude1": 0.20,
-                        "phase1": 0,
-                        "offset1": 0,
-                        "output1": 1,
-                        "gated1": 1,
-                        "ncycles1": 5,
-                        "freq2": 100,
-                        "amplitude2": 0.31,
-                        "phase2": 0,
-                        "offset2": 0,
-                        "output2": 0,
-                        "gated2": 1,
-                        "ncycles2": 5,
-                    }]
-                }
-            }
+    Conductor parameter for controlling the waveform output by the RF synthesizer.
     """
     priority = 1
+    value_type = 'list'
 
     def __init__(self, config={}):
         super(Waveform, self).__init__(config)
@@ -46,13 +26,15 @@ class Waveform(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        devices = yield self.cxn.imaging_dg800.get_devices()
-
+        self.synthesizer = yield self.cxn.synthesizer
 
     @inlineCallbacks
     def update(self):
         if self.value:
             try:
-                pass
+                seq = ss.compile_sequence(self.value)
+                yield self.synthesizer.reset()
+                for i, channel in enumerate(seq):
+                    yield self.synthesizer.write_timestamps(channel, i)
             except Exception as e:
                 print(e)

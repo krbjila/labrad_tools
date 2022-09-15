@@ -3,7 +3,7 @@ Classes and functions for generating sequences for the RF synthesizer
 
 To do:
     * Design functions for maintaining phase on frequency switching
-    * Finish implementing all functions
+    * Finish implementing SyncPoints and WaitForTrigger
     * Develop a graphical tool for visualizing RF sequences
     * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
 """
@@ -12,7 +12,8 @@ from copy import copy, deepcopy
 import numpy as np
 from scipy.interpolate import interp1d
 import warnings
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Optional
+from json import dumps, JSONEncoder
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 16384
@@ -22,12 +23,12 @@ class SequenceState():
     """
     Records the state of a synthesizer channel at any point in the sequence. Used by :func:`compile_sequence` and the :meth:`RFBlock.compile`.
     """
-    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 0, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = []) -> None:
+    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 1E6, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = []) -> None:
         """
         Args:
             amplitude (float): The amplitude of the channel. Defaults to 0.
             phase (float): The phase of the channel. Defaults to 0.
-            frequency (float): The frequency of the channel. Defaults to zero.
+            frequency (float): The frequency of the channel. Defaults to 1E6.
             transition (:class:`Transition`): The selected transition, as set by :class:`SetTransition`. Defaults to None.
             time (float): The time since the start or the last :class:`WaitForTrigger`. Defaults to 0.
             triggers (int): The number of :class:`WaitForTrigger` blocks so far. Defaults to 0.
@@ -155,6 +156,7 @@ class Timestamp(RFBlock):
         self.amplitude = amplitude
         self.phase = phase
         self.frequency = frequency
+        self.phase_update = True if self.phase is not None else False
 
     def __repr__(self) -> str:
         val = "Timestamp({}".format(self.duration)
@@ -855,7 +857,7 @@ def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling:
         
 
 
-def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
+def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[RFBlock] | str:
     """
     compile_sequence(sequence)
 
@@ -869,6 +871,10 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
 
     Args:
         sequence (list or list of lists of :class:`RFBlock`): The sequence to compile. If a list of lists is given, compiles multiple channels at once, handling :class:`SyncPoint` blocks. Otherwise, compiles a single channel's sequence, ignoring :class:`SyncPoint`.
+        output_json (bool): Outputs a JSON-formatted string of timestamos that can be sent to :class:`synthesizer.synthesizer_server` if True, or a list of :class:`RFBlock` if False. Defaults to True.
+
+    Returns
+        (List[RFBlock] | str): The compiled sequence
     """
 
     if len(sequence) == 0:
@@ -882,8 +888,8 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
     sequence = deepcopy(sequence)
     for channel, stack in enumerate(sequence):
         stack.reverse()
-        compiled_channel = []
         state = SequenceState()
+        compiled_channel = [Timestamp(0, amplitude=state.amplitude, phase=state.phase, frequency=state.frequency)]
         while len(stack) > 0:
             head = stack.pop()
             if head.atomic:
@@ -891,7 +897,7 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
                 if len(compiled_channel) > 0 and isinstance(compiled_channel[-1], AdjustNextDuration) and not isinstance(block, Timestamp):
                     print(compiled_channel[-1])
                     print(block)
-                    raise ValueError("{} must be followed by a Timestamp, but is followed by {}".format(compiled_channel[-1], block))
+                    raise TypeError("{} must be followed by a Timestamp, but is followed by {}".format(compiled_channel[-1], block))
                 if isinstance(block, WaitForTrigger):
                     warnings.warn("Synthesizer does not yet support multiple triggers. WaitForTrigger will be ignored.")
                     # TODO: Make this do something.
@@ -907,7 +913,7 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
                     if len(compiled_channel) == 0:
                         pass
                     elif not isinstance(compiled_channel[-1], Timestamp):
-                        raise ValueError("{} must follow a Timestamp, but follows {}".format(block, compiled_channel[-1]))
+                        raise TypeError("{} must follow a Timestamp, but follows {}".format(block, compiled_channel[-1]))
                     elif -block.duration > compiled_channel[-1].duration:
                         raise ValueError("{} would make the duration of {} negative".format(block, compiled_channel[-1]))
                     else:
@@ -930,7 +936,7 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
                 elif isinstance(block, AdjustNextDuration):
                     compiled_channel.append(block)
                 else:
-                    raise ValueError("Cannot add a {} to the sequence".format(block))
+                    raise TypeError("Cannot add a {} to the sequence".format(block))
             else:
                 blocks = head.compile(state)
                 blocks.reverse()
@@ -951,5 +957,21 @@ def compile_sequence(sequence: List[RFBlock]) -> List[RFBlock]:
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
         compiled.append(compiled_channel)
-    return compiled
+    if output_json:
+
+        class RFBlockEncoder(JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, Timestamp):
+                    return {
+                        "timestamp": obj.duration,
+                        "phase_update": obj.phase_update,
+                        "phase": obj.phase,
+                        "amplitude": obj.amplitude,
+                        "frequency": obj.frequency
+                    }
+                return JSONEncoder.default(self, obj)
+
+        return dumps(compiled, cls=RFBlockEncoder)
+    else:
+        return compiled
     
