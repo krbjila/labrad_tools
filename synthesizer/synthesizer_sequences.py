@@ -4,16 +4,41 @@ Classes and functions for generating sequences for the RF synthesizer
 To do:
     * Design functions for maintaining phase on frequency switching
     * Finish implementing all functions
-    * Develop low-level compiler that converts basic RFBlocks into synthesizer commands
     * Develop a graphical tool for visualizing RF sequences
     * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
 """
 
 from copy import copy, deepcopy
 import numpy as np
+from scipy.interpolate import interp1d
 import warnings
 
 MAX_FREQUENCY = 307.2E6 # Hertz
+MAX_LENGTH = 16384
+MAX_DURATION = 27.962 # seconds
+
+class SequenceState():
+    """
+    Records the state of a synthesizer channel at any point in the sequence. Used by :func:`compile_sequence` and the :meth:`RFBlock.compile`.
+    """
+    def __init__(self, amplitude=0, phase=0, frequency=0, transition=None, time=0, triggers=0, syncpoints=[]) -> None:
+        """
+        Args:
+            amplitude (float): The amplitude of the channel. Defaults to 0.
+            phase (float): The phase of the channel. Defaults to 0.
+            frequency (float): The frequency of the channel. Defaults to zero.
+            transition (:class:`Transition`): The selected transition, as set by :class:`SetTransition`. Defaults to None.
+            time (float): The time since the start or the last :class:`WaitForTrigger`. Defaults to 0.
+            triggers (int): The number of :class:`WaitForTrigger` blocks so far. Defaults to 0.
+            syncpoints (list of str): The ordered list of :class:`SyncPoint` so far. Defaults to :code:`[]`.
+        """
+        self.amplitude = amplitude
+        self.phase = phase
+        self.frequency = frequency
+        self.transition = transition
+        self.time = time
+        self.triggers = triggers
+        self.syncpoints = syncpoints
 
 class RFBlock():
     """
@@ -32,7 +57,7 @@ class RFBlock():
         Compiles the block into a list of basic :class:`RFBlock` that can be sent to the synthesizer.
 
         Args:
-            state (dict): The :code:`phase`, :code:`amplitude`, :code:`frequency`, and :class:`Transition` of the channel, as of the end of the previous block. Not used by default.
+            state (:class:`SequenceState`): The state of the channel when the block is to be called. Defaults to None, which can be used for testing :code:`compile` functions of :class:`RFBlock` objects that do not depend on channel state.
 
         Returns:
             (list of :class:`RFBlock`): The compiled :class:`RFBlock`.
@@ -256,6 +281,7 @@ class RectangularPulse(RFPulse):
         self.frequency = frequency
         self.centered = centered
 
+    @property
     def area(self):
         return 1
 
@@ -265,7 +291,7 @@ class RectangularPulse(RFPulse):
             Timestamp(self.duration, self.amplitude, self.phase, self.frequency),
             Timestamp(0, 0)
         ]
-        return RFPulse.center(self.center, sequence, self.duration)
+        return RFPulse.center(self.centered, sequence, self.duration)
 
     def __repr__(self) -> str:
         val = "RectangularPulse({}, {}".format(self.duration, self.amplitude)
@@ -297,6 +323,19 @@ class BlackmanPulse(RFPulse):
         self.steps = steps
         self.exact = exact
 
+    def __repr__(self) -> str:
+        val = "BlackmanPulse({}, {}".format(self.duration, self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        if self.frequency is not None:
+            val += ", frequency={}".format(self.frequency)
+        if self.centered:
+            val += ", centered=True"
+        if self.steps is not None:
+            val += ", steps={}".format(self.steps)
+        return val + ", exact={})".format(self.exact)
+
+    @property
     def area(self):
         self.compile()
         step = self.duration/self.steps
@@ -314,7 +353,7 @@ class BlackmanPulse(RFPulse):
         N = self.steps - 1
         n = np.linspace(0, N, self.steps, endpoint=True)
         self.amplitudes = self.amplitude * (a[0] - a[1] * np.cos(2*np.pi*n/N) + a[2] * np.cos(4*np.pi*n/N))
-        timestamps = [Timestamp(step, amp) for amp in self.amplitudes]
+        timestamps = [Timestamp(step, min(1, max(amp, 0))) for amp in self.amplitudes]
         timestamps[0].phase = self.phase
         timestamps[0].frequency = self.frequency
         return RFPulse.center(self.centered, timestamps + [Timestamp(0,0)], self.duration)
@@ -340,6 +379,7 @@ class GaussianPulse(RFPulse):
         self.sigt = sigt
         self.steps = steps
 
+    @property
     def area(self):
         self.compile()
         step = self.duration/self.steps
@@ -361,7 +401,7 @@ class GaussianPulse(RFPulse):
             return np.exp(-((x - N/2.0)/(2* L * self.sigt))**2)
 
         self.amplitudes = self.amplitude * (G(n) - (G(-0.5) * (G(n + L) + G(n - L)))/(G(L - 0.5) + G(-L - 0.5)))
-        timestamps = [Timestamp(step, amp) for amp in self.amplitudes]
+        timestamps = [Timestamp(step, min(1, max(amp, 0))) for amp in self.amplitudes]
         timestamps[0].phase = self.phase
         timestamps[0].frequency = self.frequency
         return RFPulse.center(self.centered, timestamps + [Timestamp(0,0)], self.duration)
@@ -492,9 +532,49 @@ class Transition():
             amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. 
             Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes`.
             default_amplitude (float, optional): The default amplitude for pulses on the transition. Defaults to None, in which case the first element of amplitudes is used.
-            synthesizer_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is :code:`frequency - synthesizer_offset`. Defaults to 0.
+            frequency_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is :code:`frequency - frequency_offset`. Defaults to 0.
         """
-        raise NotImplementedError()
+        if len(amplitudes) == 0 or len(Rabi_frequencies) != len(amplitudes):
+            raise ValueError("amplitudes and Rabi_frequencies must be non-empty arrays of the same length.")
+        for a in amplitudes:
+            if a <= 0 or a >1:
+                raise ValueError("All amplitudes must be > 0 and <= 1; {} isn't.".format(a))
+        for f in Rabi_frequencies:
+            if f <= 0:
+                raise ValueError("All Rabi frequencies must be positive; {} isn't.".format(f))
+        if default_amplitude is not None and (default_amplitude <= 0 or default_amplitude > 1):
+            raise ValueError("Default amplitude {} must be > 0 and <= 1".format(default_amplitude))
+        if frequency - frequency_offset < 0 or frequency - frequency_offset > MAX_FREQUENCY:
+            raise ValueError("The output frequency (frequency {} - frequency_offset {}) must be between 0 and {} but is {}".format(frequency, frequency_offset, MAX_FREQUENCY, frequency - frequency_offset))
+        self.frequency = frequency
+        self.amplitudes = amplitudes
+        self.Rabi_frequencies = Rabi_frequencies
+        if default_amplitude is None:
+            default_amplitude = amplitudes[0]
+        self.default_amplitude = default_amplitude
+        self.frequency_offset = frequency_offset
+        self.interp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
+
+    def __repr__(self) -> str:
+        return "Transition({}, {}, {}, default_amplitude={}, frequency_offset={})".format(self.frequency, self.amplitudes, self.Rabi_frequencies, self.default_amplitude, self.frequency_offset)
+
+    def Rabi_frequency(self, amplitude=None):
+        """
+        Rabi_frequency(self, amplitude=None)
+
+        Computes the Rabi frequency corresponding to :code:`amplitude` using interpolation or extrapolation from the values provided by :code:`amplitudes` and :code:`Rabi_frequencies`.
+
+        Args:
+            amplitude (float, optional): The amplitude for which to compute the Rabi frequency. Defaults to None, in which case :code:`default_amplitude` is used.
+
+        Returns:
+            float: The Rabi frequency, in Hertz, associated with :code:`amplitude`.
+        """
+        if amplitude is None:
+            amplitude = self.default_amplitude
+        if amplitude <= 0 or amplitude > 1:
+            raise ValueError("Amplitude {} must be > 0 and <= 1".format(amplitude))
+        return self.interp(amplitude)
 
 class SetTransition(RFBlock):
     """
@@ -514,7 +594,7 @@ class SetTransition(RFBlock):
         return "SetTransition({})".format(self.transition)
 
     def compile(self, state=None):
-        state.transition += self.transition
+        state.transition = self.transition
         return super().compile(state)
 
 def todB(amplitude_lin):
@@ -558,7 +638,7 @@ def Pulse(duration, amplitude, phase=None, frequency=None, centered=False, windo
         frequency (float, optional): The frequency of the pulse in Hertz. Defaults to None, in which case the previous frequency setting is maintained.
         centered (bool, optional): Whether to reduce the duration of the preceding and following :class:`Wait` commands :code:`duration/2`. Will throw an error during compilation if the :class:`Wait` commands are too short or the pulse is not adjacent to at least one :class:`Wait` command. If there is only one neighboring :class:`Wait` command, its duration is reduced by :code:`duration/2`. Defaults to False.
         window (RFPulse, optional): The shape of the pulse. Defaults to RectangularPulse.
-        **kwargs: Additional keyword arguments, which are passed to window's :code:`__init__` method
+        **kwargs: Additional keyword arguments, which are passed to :code:`window`'s :code:`__init__` method
 
     Returns:
         RFPulse: An :class:`RFPulse` with the specified parameters
@@ -588,7 +668,21 @@ class AreaPulse(RFPulse):
         self.kwargs = kwargs
 
     def compile(self, state=None):
-        raise NotImplementedError()
+        transition: Transition = state.transition
+        if self.amplitude is None:
+            self.amplitude = transition.default_amplitude
+        if self.amplitude <= 0 or self.amplitude > 1:
+            raise ValueError("Amplitude {} must be > 0 and <= 1".format(self.amplitude))
+        if self.pulse_area < 0:
+            raise ValueError("Pulse area {} must be non-negative".format(self.pulse_area))
+        validate_parameters(phase=self.phase)
+        if self.pulse_area == 0:
+            return [Wait(0)]
+        Rabi_frequency = transition.Rabi_frequency(self.amplitude)
+        rect_pulse_duration = self.pulse_area/Rabi_frequency
+        pulse = Pulse(1, self.amplitude, self.phase, transition.frequency, self.centered, self.window, **self.kwargs)
+        pulse.duration = rect_pulse_duration/pulse.area
+        return [pulse]
 
     def __repr__(self) -> str:
         val = "AreaPulse({}".format(self.pulse_area)
@@ -608,9 +702,9 @@ def PiPulse(amplitude=None, phase=None, centered=False, window=RectangularPulse,
 
     A wrapper for :func:`AreaPulse` with pulse area set to pi. Refer to :func:`AreaPulse` for full documentation.
     """
-    return AreaPulse(np.pi, amplitude=amplitude, phase=phase, centered=centered, window=window, *kwargs)
+    return AreaPulse(np.pi, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
 
-def PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, *kwargs):
+def PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs):
     """
     PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs)
 
@@ -728,7 +822,7 @@ def Ramsey(duration, phase=0, pulse=None, decoupling=None):
         phase (float, optional): The phase of the final pulse. Defaults to 0.
         pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
         decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to :code:`duration`. Defaults to None.
-
+         
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a Ramsey sequence.
     """
@@ -750,19 +844,6 @@ def compile_sequence(sequence):
         sequence (list or list of lists of :class:`RFBlock`): The sequence to compile. If a list of lists is given, compiles multiple channels at once, handling :class:`SyncPoint` blocks. Otherwise, compiles a single channel's sequence, ignoring :class:`SyncPoint`.
     """
 
-    class SequenceState():
-        """
-        Records the state of the synthesizer at any point in the sequence
-        """
-        def __init__(self) -> None:
-            self.amplitude = 0
-            self.phase = 0
-            self.frequency = 0
-            self.transition = None
-            self.time = 0
-            self.triggers = 0
-            self.syncpoints = []
-
     if len(sequence) == 0:
         return []
     multichannel = True
@@ -772,7 +853,7 @@ def compile_sequence(sequence):
     compiled = []
 
     sequence = deepcopy(sequence)
-    for stack in sequence:
+    for channel, stack in enumerate(sequence):
         stack.reverse()
         compiled_channel = []
         state = SequenceState()
@@ -787,6 +868,12 @@ def compile_sequence(sequence):
                 if isinstance(block, WaitForTrigger):
                     warnings.warn("Synthesizer does not yet support multiple triggers. WaitForTrigger will be ignored.")
                     # TODO: Make this do something.
+                if isinstance(block, SyncPoint):
+                    if multichannel:
+                        pass
+                        # TODO: Implement this
+                    else:
+                        warnings.warn("SyncPoints are ignored when a single channel is compiled.")
                 elif isinstance(block, SetTransition):
                     pass
                 elif isinstance(block, AdjustPrevDuration):
@@ -829,8 +916,13 @@ def compile_sequence(sequence):
             if isinstance(block, WaitForTrigger):
                 durations.append(duration)
                 duration = 0
+            if duration > MAX_DURATION:
+                raise ValueError("The duration {} s of channel {}'s sequence exceeds the maximum duration of {} s after {}".format(duration, channel, MAX_DURATION, block))
         if len(compiled_channel) > 0 and compiled_channel[-1].duration != duration:
             compiled_channel.append(Timestamp(duration, amplitude=state.amplitude, phase=state.phase,frequency=state.frequency))
         compiled_channel.append(Timestamp(0, 0, 0, 0))
+        if len(compiled_channel) > MAX_LENGTH:
+            raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
         compiled.append(compiled_channel)
     return compiled
+    
