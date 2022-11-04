@@ -1249,6 +1249,180 @@
                 }
             ]
         },
+        "O": {
+
+            "device_type": "AnalogBoard",
+            "connection_type": "OKFPGA",
+            "servername": "krbg2_okfpga",
+            "address": "KRbtest1",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 657895,
+            "channels": [
+                {
+                    "loc": 0, 
+                    "name": "DAC240:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 1, 
+                    "name": "DAC250:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 2, 
+                    "name": "DAC260:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 3, 
+                    "name": "DAC270:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 4, 
+                    "name": "DAC280:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {   "loc": 5, 
+                    "name": "DAC290:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 6, 
+                    "name": "DAC300:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 7, 
+                    "name": "DAC310:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                }
+            ]
+        },
+        "P": {
+
+            "device_type": "AnalogBoard",
+            "connection_type": "OKFPGA",
+            "servername": "krbg2_okfpga",
+            "address": "KRbtest2",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 657895,
+            "channels": [
+                {
+                    "loc": 0, 
+                    "name": "DAC320:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 1, 
+                    "name": "DAC330:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 2, 
+                    "name": "DAC340:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 3, 
+                    "name": "DAC350:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 4, 
+                    "name": "DAC360:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {   "loc": 5, 
+                    "name": "DAC370:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 6, 
+                    "name": "DAC380:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 7, 
+                    "name": "DAC390:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                }
+            ]
+        },
+        "Q": {
+
+            "device_type": "AnalogBoard",
+            "connection_type": "OKFPGA",
+            "servername": "krbg2_okfpga",
+            "address": "KRbtest3",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 657895,
+            "channels": [
+                {
+                    "loc": 0, 
+                    "name": "DAC400:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 1, 
+                    "name": "DAC410:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 2, 
+                    "name": "DAC420:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 3, 
+                    "name": "DAC430:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 4, 
+                    "name": "DAC440:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {   "loc": 5, 
+                    "name": "DAC450:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 6,
+                    "name": "DAC460:", 
+                    "mode": "auto",
+                    "manual_output": 0.0
+                },
+                {
+                    "loc": 7, 
+                    "name": "DAC470:", 
+                    "mode": "auto", 
+                    "manual_output": 0.0
+                }
+            ]
+        },
         "S": {
             "device_type": "AD5791Board",
             "connection_type": "OKFPGA",
