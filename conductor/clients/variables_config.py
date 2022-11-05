@@ -6,14 +6,14 @@ variables_dict = [
     ['*RbProbeI', -4.4],
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
-    ['*KMOT', 5.5], # was 5.1
-    ['*RbMOT', 3.4], # was 3.5
+    ['*KMOT', 3.0], # was 5.1
+    ['*RbMOT', 2.0], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
-    ['*NWhigh', 4.55],# was 4.7, changed 05/14/2021
-    ['*NWlow', 4.32], # was 4.3 05/14/21
-    ['*SWhigh', 4.7], # was 4.7, changed 05/14/2021
-    ['*SWlow',4.53], # was 4.6 05/14/21 # 4.645
+    ['*NWhigh', 4.51],# was 4.55, changed 05/14/2021
+    ['*NWlow', 4.15], # was 4.32 09/29/22
+    ['*SWhigh', 4.72], # was 4.7, changed 05/14/2021
+    ['*SWlow', 4.55], # was 4.6 09/29/22 
     # Evaporation
     ['*MagEvapTime', 12.9],
     # Plug PZTs
@@ -22,16 +22,16 @@ variables_dict = [
     ['*PLUGP', 1.9],
     # B fields
     ['*QuadV0', -1.15],
-    ['*QUADV', -3.6], # was -3.6
+    ['*QUADV', -3.75], # was -3.6
     ['*QTRAP', 7.5],
     ['*QuadI2', 4.5], # was 3.8, was 4.0, was 5
     ['*QuadV2', -2.4], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*QuadVcmot', -1],
-    ['*BIASI', 0.0475], # was .04, 0.044
+    ['*BIASI', 0.0491], # was 0.0485 09/29/22
     ['*BIASV', -0.385],
-    ['*LowField', 0.46], # was 0.457 (11/2/21); was 0.465
+    ['*LowField', 0.46], # was 0.457 (11/2/21)
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
     ['*HighFieldV', -4.64], # was -4.65 (11/2/21); was -4.725, was -3.6 before moving stuff to back corridor
@@ -69,6 +69,8 @@ variables_dict = [
     ['*HOTFilter', 0.4],
     ['*HOTQuad', 0.5],
     ['*MARIALoad', -8.37], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
+    ['*LattLoad', -10], #for HLatt alignment
+    ['*LattFinal', -0.4],
     ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', -0.9765], # was 0.5
     ['*MARIAFinal2', -0.9765],
@@ -103,6 +105,7 @@ variables_dict = [
     ['*?MARIA', 1],
     ['*?VLATT', 1],
     ['*?LSL', 1],
+    ['*?Latt1', 1],
     ['*?Blackman', 0],
     ['*?RFpulse', 0],
     ['*?stirap', 1],
