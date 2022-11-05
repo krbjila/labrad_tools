@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 import warnings
 from typing import List, Optional
 from json import dumps, JSONEncoder
+from dataclasses import dataclass
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 16384
@@ -42,6 +43,7 @@ class SequenceState():
         self.triggers = triggers
         self.syncpoints = syncpoints
 
+@dataclass
 class RFBlock():
     """
     A base class for elements of a sequence for a synthesizer channel.
