@@ -1144,7 +1144,7 @@
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
             "servername": "krbg2_okfpga",
-            "address": "KRbtest1",
+            "address": "KRbtest2",
             "bitfile": "KRbAnlgNew.bit",
             "clk": 657895,
             "channels": [
@@ -1202,7 +1202,7 @@
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
             "servername": "krbg2_okfpga",
-            "address": "KRbtest1",
+            "address": "KRbtest3",
             "bitfile": "KRbAnlgNew.bit",
             "clk": 657895,
             "channels": [
