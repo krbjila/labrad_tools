@@ -918,7 +918,9 @@
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
             "servername": "krbjila_okfpga",
-            "address": "KRbAnlg01",
+            "address": "KRbAnlg04",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 526315.7894736842,
             "channels": [
                 {
                     "loc": 0, 
@@ -974,7 +976,9 @@
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
             "servername": "krbjila_okfpga",
-            "address": "KRbAnlg02",
+            "address": "KRbAnlg05",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 526315.7894736842,
             "channels": [
                 {
                     "loc": 0, 
@@ -1026,11 +1030,13 @@
             ]
         },
         "K": {
-
+            
             "device_type": "AnalogBoard",
             "connection_type": "OKFPGA",
             "servername": "krbjila_okfpga",
-            "address": "KRbAnlg03",
+            "address": "KRbAnlg06",
+            "bitfile": "KRbAnlgNew.bit",
+            "clk": 526315.7894736842,
             "channels": [
                 {
                     "loc": 0, 
