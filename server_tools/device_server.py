@@ -6,7 +6,7 @@ import os
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
 
-from decorators import quickSetting
+from .decorators import quickSetting
 
 
 def underscore(name):
