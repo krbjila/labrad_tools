@@ -163,7 +163,7 @@ class AnalogBoard(DeviceWrapper):
         take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
         """
         
-        sorted_ramps = self.make_sequence_ramps(self, sequence)
+        sorted_ramps = self.make_sequence_ramps(sequence)
 
         # ints to bytes
         byte_array = []
