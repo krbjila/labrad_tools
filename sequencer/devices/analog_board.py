@@ -95,12 +95,12 @@ class AnalogBoard(DeviceWrapper):
         # self.clk = 12e6 / (8.*4. + 2.)
         self.mode = 'idle'
 
-        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name}) for i in range(8)]
-
         """ non-defaults"""
         for key, value in config.items():
             setattr(self, key, value)
-        
+
+        channel_wrappers = [AnalogChannel({'loc': i, 'board_name': self.name}) for i in range(len(self.channels))]
+
         for c in self.channels:
             c['board_name'] = self.name
             wrapper = AnalogChannel(c)
@@ -138,28 +138,32 @@ class AnalogBoard(DeviceWrapper):
     def start_sequence(self):
         yield self.set_mode('run')
 
-    def make_sequence_bytes(self, sequence):
+    def make_sequence_ramps(self, sequence):
         """ 
-        take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
+        take readable {channel: [{}]} to list of ramps [(T, loc, [ramp_rate, duration])]
         """
-
-        # ramp to zero at end
-        for c in self.channels:
-            sequence[c.key].append({'dt': 10e-3, 'type': 'lin', 'vf': 0})
-            sequence[c.key].append({'dt': 10, 'type': 'lin', 'vf': 0})
-
-        # break into smaller pieces [(T, loc, {dt, dv})]
         unsorted_ramps = []
         for c in self.channels:
             ramps = RampMaker(sequence[c.key]).get_programmable()
             T = 0
             for r in ramps:
-                r['dt'] = time_to_ticks(self.clk, r['dt'])
-                unsorted_ramps.append((T, c.loc, r))
+                # extend previous ramp if both it and the new ramp have dv = 0
+                if r['dv'] == 0 and len(unsorted_ramps) > 0 and unsorted_ramps[-1][1] == c.loc and unsorted_ramps[-1][2]['dv'] == 0:
+                    unsorted_ramps[-1][2]['dt'] += time_to_ticks(self.clk, r['dt'])
+                else:
+                    r['dt'] = time_to_ticks(self.clk, r['dt'])
+                    unsorted_ramps.append((T, c.loc, r))
                 T += r['dt']
 
-        # order ramps by when the happen, then physical location on board
-        sorted_ramps = sorted(unsorted_ramps)
+        # order ramps by when they happen, then physical location on board
+        return sorted(unsorted_ramps)
+
+    def make_sequence_bytes(self, sequence):
+        """ 
+        take readable {channel: [{}]} to programmable [ramp_rate[16], duration[32]]
+        """
+        
+        sorted_ramps = self.make_sequence_ramps(sequence)
 
         # ints to bytes
         byte_array = []

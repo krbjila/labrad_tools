@@ -88,7 +88,7 @@ def scurve_ramp(p, ret_seq=False):
 class SRamp(object):
     required_parameters = [
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
     default_values = {}
     def __init__(self, p=None):
@@ -102,12 +102,12 @@ class SRamp(object):
         to list of linear ramps [{dt, dv}]
         """
         p = self.p
-        return [{'dt': 1e-6, 'dv': p['vf'] - p['_vi']}, {'dt': p['dt']-1e-6, 'dv': 0}]
+        return [{'dt': 1e-4, 'dv': p['vf'] - p['_vi']}, {'dt': p['dt']-1e-4, 'dv': 0}]
 
 class LinRamp(object):
     required_parameters = [
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
     default_values = {}
     def __init__(self, p=None):
@@ -126,7 +126,7 @@ class SLinRamp(object):
     required_parameters = [
         ('vi', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
         ('vf', ([-10, 10], [(0, 'V'), (-3, 'mV')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ]
     default_values = {
         'vi': 0,
@@ -142,12 +142,12 @@ class SLinRamp(object):
         to list of linear ramps [{dt, dv}]
         """
         p = self.p
-        return [{'dt': 1e-6, 'dv': p['vi'] - p['_vi']}, {'dt': p['dt']-1e-6, 'dv': p['vf']-p['vi']}]
+        return [{'dt': 1e-4, 'dv': p['vi'] - p['_vi']}, {'dt': p['dt']-1e-4, 'dv': p['vf']-p['vi']}]
 
 class ExpRamp(object):
     required_parameters = [
         ('vf', ([-10, 10], [(0, 'V')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ('tau', ([-1e2, 1e2], [(0, 's'), (-3, 'ms'), (-6, 'us'), (-9, 'ns')], 1)),
         ('pts', ([1, 10], [(0, 'na')], 0)),
         ]
@@ -172,7 +172,7 @@ class SExpRamp(object):
     required_parameters = [
         ('vi', ([-10, 10], [(0, 'V')], 3)),
         ('vf', ([-10, 10], [(0, 'V')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ('tau', ([-1e2, 1e2], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)),
         ('pts', ([1, 20], [(0, 'na')], 0)),
         ]
@@ -192,14 +192,14 @@ class SExpRamp(object):
         """
         p = self.p
         seq = exp_ramp(p, ret_seq=True)
-        return [{'dt': 1e-6, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
+        return [{'dt': 1e-4, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
 
 
 class SCurveRamp(object):
     required_parameters = [
         ('vi', ([-10, 10], [(0, 'V')], 3)),
         ('vf', ([-10, 10], [(0, 'V')], 3)),
-        ('dt', ([1e-6, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
+        ('dt', ([1e-4, 50], [(0, 's'), (-3, 'ms'), (-6, 'us')], 1)), 
         ('k', ([0, 10], [(0, '')], 1)),
         ('pts', ([1, 20], [(0, 'na')], 0)),
         ]
@@ -219,7 +219,7 @@ class SCurveRamp(object):
         """
         p = self.p
         seq = scurve_ramp(p, ret_seq=True)
-        return [{'dt': 1e-6, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
+        return [{'dt': 1e-4, 'dv': p['vi']-p['_vi']}] + [{'dt': s['tf']-s['ti'], 'dv': s['vf']-s['vi']} for s in seq]
 
 
 class RampMaker(object):
@@ -244,7 +244,7 @@ class RampMaker(object):
         for i in range(len(sequence)-1):
             sequence[i+1]['_vi'] = sequence[i]['vf']
         for i in range(len(sequence)):
-            if not sequence[i].has_key('vi'):
+            if not 'vi' in sequence[i]:
                 sequence[i]['vi'] = sequence[i]['_vi']
     
         for i, s in enumerate(sequence):
