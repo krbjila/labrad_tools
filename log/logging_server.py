@@ -60,7 +60,8 @@ class LoggingServer(LabradServer):
             self.wavemetercall = LoopingCall(self.log_frequency)
             self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
         except Exception as e:
-            print("Could not connect to wavemeter")
+            self.labjack = None
+            print("Could not connect to wavemeter:")
             print(e)
 
         try:
@@ -235,19 +236,22 @@ class LoggingServer(LabradServer):
 
         Records the current wavemeter frequencies (and the frequency for the K trap lock in the last column.)
         """
-        d = yield self.wavemeter.get_wavelengths()
-        if len(d) > 0:
-            data = json.loads(json.loads(d))
-            freqs = [299792.458/float(i) if i > 0 else 0 for i in data["wavelengths"]]
-            freqs.append(data["freq"])
-            time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
-            if(self.shot is None and self.opentime.date() != time.date()):
-                self.set_save_location()
-            logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
-            self.freqfile.write(logmessage)
-            self.freqfile.flush()
-        else:
-            print("No response received from wavemeter!")
+        try:
+            d = yield self.wavemeter.get_wavelengths()
+            if len(d) > 0:
+                data = json.loads(json.loads(d))
+                freqs = [299792.458/float(i) if i > 0 else 0 for i in data["wavelengths"]]
+                freqs.append(data["freq"])
+                time = datetime.strptime(data["time"], "%m/%d/%Y, %H:%M:%S.%f")
+                if(self.shot is None and self.opentime.date() != time.date()):
+                    self.set_save_location()
+                logmessage = "%s: %s\n" % (time.strftime('%Y-%m-%d %H:%M:%S.%f'), str(freqs).strip('[]'))
+                self.freqfile.write(logmessage)
+                self.freqfile.flush()
+            else:
+                print("No response received from wavemeter!")
+        except Exception as e:
+            print("Couldn't log wavelengths: {}".format(e))
 
 if __name__ == '__main__':
     from labrad import util

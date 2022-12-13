@@ -6,14 +6,14 @@ variables_dict = [
     ['*RbProbeI', -4.4],
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
-    ['*KMOT', 5.5], # was 5.1
-    ['*RbMOT', 4.0], # was 3.5
+    ['*KMOT', 3.0], # was 5.1
+    ['*RbMOT', 2.0], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
-    ['*NWhigh', 4.7],# was 4.3, changed 11/21/2021
-    ['*NWlow', 4.3], # was 4.47 12/14/21
-    ['*SWhigh', 4.7], # was 4.83, changed 11/21/2021
-    ['*SWlow',4.6], # was 4.55 12/14/21 # 4.645
+    ['*NWhigh', 4.51],# was 4.55, changed 05/14/2021
+    ['*NWlow', 4.15], # was 4.32 09/29/22
+    ['*SWhigh', 4.72], # was 4.7, changed 05/14/2021
+    ['*SWlow', 4.55], # was 4.6 09/29/22 
     # Evaporation
     ['*MagEvapTime', 12.9],
     # Plug PZTs
@@ -21,16 +21,17 @@ variables_dict = [
     # Plug Power
     ['*PLUGP', 1.9],
     # B fields
-    ['*QuadV0', -1.0],
-    ['*QUADV', -3.6], # was -3.6
+    ['*QuadV0', -1.15],
+    ['*QUADV', -3.75], # was -3.6
     ['*QTRAP', 7.5],
     ['*QuadI2', 4.5], # was 3.8, was 4.0, was 5
     ['*QuadV2', -2.4], # was -2.5 on 9/17/2020
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
-    ['*BIASI', 0.0485], # was .04, 0.044
-    ['*BIASV', -0.38],
-    ['*LowField', 0.46], # was 0.457 (11/2/21); was 0.465
+    ['*QuadVcmot', -1],
+    ['*BIASI', 0.0491], # was 0.0485 09/29/22
+    ['*BIASV', -0.385],
+    ['*LowField', 0.46], # was 0.457 (11/2/21)
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
     ['*HighFieldV', -4.64], # was -4.65 (11/2/21); was -4.725, was -3.6 before moving stuff to back corridor
@@ -43,6 +44,11 @@ variables_dict = [
     ['*RFpulse2', 0.001],
     ['*RFpulse20', 0.001],
     ['*RecoveryPulse', 0.001],
+    ['*RFlayer', 0.001],
+    ['*RFpi', 4.8],
+    ['*Echo10', 0.001],
+    ['*Echo1m1', 0.001],
+    ['*FlipTime', 0.001],
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
@@ -63,6 +69,8 @@ variables_dict = [
     ['*HOTFilter', 0.4],
     ['*HOTQuad', 0.5],
     ['*MARIALoad', -8.37], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
+    ['*LattLoad', -10], #for HLatt alignment
+    ['*LattFinal', -0.4],
     ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', -0.9765], # was 0.5
     ['*MARIAFinal2', -0.9765],
@@ -76,22 +84,39 @@ variables_dict = [
     ['*LSLFinal', 0.03],
       # Micellaneous
     ['*time', 0.1],
+    ['*time2', 0.2],
+    ['*phase', 0],
     ['*X', 0.005],
     ['*Tau', -3],
     ['*FillTime', 5.0],
     ['*BlastTime', 20e-6],
+    ['*end1', 1e-06],
+    ['*mid1', 1e-06],
+    ['*end2', 1e-06],
+    ['*mid2', 1e-06],
+    ['*tpi1', 1e-06],
+    ['*tpi2', 1e-06],
+    ['*TOF', 1e-03],
+    ['*RFShelve', 1e-06],
+    ['*SwapTime', 1e-06],
+    ['*NoRFTime', 1e-06],
     # Digital variables
     ['*?HOT', 1],
     ['*?MARIA', 1],
     ['*?VLATT', 1],
     ['*?LSL', 1],
+    ['*?Latt1', 1],
     ['*?Blackman', 0],
     ['*?RFpulse', 0],
     ['*?stirap', 1],
+    ['*?layerBlast', 0],
     ['*?Blast', 0],
     ['*?Pulse1', 0],
     ['*?Pulse2', 0],
     ['*?Pulse3', 0],
+    ['*?layerPulse1', 0],
+    ['*?layerPulse2', 0],
+    ['*?layerPulse3', 0],
     ['*?Sandwich', 0],
     ['*?BigFlip',0],
     ['*?BigARP',0],
@@ -102,8 +127,12 @@ variables_dict = [
     ['*?!poo', 1],
     ['*?20Pulse', 0],
     ['*?!20Pulse', 1],
+    ['*?Shelve', 0],
+    ['*?ExtraTip', 0],
+
     # Utility variables
     ['*poo', 0],
+    ['*howdy', 100],
     ['*LowerPlateZero', 0],
     ['*UpperPlateZero', 0],
     ['*LWRodZero', 0],
