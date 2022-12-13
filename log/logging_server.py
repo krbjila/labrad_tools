@@ -55,9 +55,13 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def initServer(self):
-        self.wavemeter = yield self.client.servers['wavemeterlaptop_wavemeter']
-        self.wavemetercall = LoopingCall(self.log_frequency)
-        self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
+        try:
+            self.wavemeter = yield self.client.servers['wavemeterlaptop_wavemeter']
+            self.wavemetercall = LoopingCall(self.log_frequency)
+            self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
+        except Exception as e:
+            print("Could not connect to wavemeter")
+            print(e)
 
         try:
             self.labjack = yield self.client.servers['polarkrb_labjack']
