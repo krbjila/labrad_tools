@@ -523,7 +523,7 @@ class SequencerControl(QtGui.QWidget):
         # get the total sequence time
         for k, d in sequence.items():
             for step in d:
-            	seq_time += step['dt']
+                seq_time += step['dt']
             break
 
         # if the sequence is longer than MIN_SEQ_TIME, run the sequence
@@ -643,6 +643,8 @@ class SequencerControl(QtGui.QWidget):
                 for key in self.electrode_channels}
 
         # Make sure the durations in metadata['electrodes'] are updated!
+        # if not self.metadata.has_key('electrodes'):
+        #         self.metadata['electrodes'] = [zero_sequence(x) for x in durations]
         for i, data in enumerate(self.metadata['electrodes']):
             data.update({'dt': durations[i]})
         sequence = dict(digital_sequence.items() + analog_sequence.items() + electrode_sequence.items())

@@ -144,9 +144,9 @@ class AnalogBoard(DeviceWrapper):
         """
 
         # ramp to zero at end
-        for c in self.channels:
-            sequence[c.key].append({'dt': 10e-3, 'type': 'lin', 'vf': 0})
-            sequence[c.key].append({'dt': 10, 'type': 'lin', 'vf': 0})
+        # for c in self.channels:
+        #     sequence[c.key].append({'dt': 10e-3, 'type': 'lin', 'vf': 0})
+        #     sequence[c.key].append({'dt': 10, 'type': 'lin', 'vf': 0})
 
         # break into smaller pieces [(T, loc, {dt, dv})]
         unsorted_ramps = []
