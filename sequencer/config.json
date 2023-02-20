@@ -1266,6 +1266,7 @@
             "connection_type": "OKFPGA",
             "servername": "imaging_okfpga",
             "address": "KRbStable01",
+            "bitfile": "ad5791_new.bit",
             "channels": [
                 {
                     "loc": 0,
