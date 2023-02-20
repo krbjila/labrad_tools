@@ -6,7 +6,7 @@ servername = 'krbg2_dds'
 sequence = {
 	'3xAD9959_0' : [
 		{'name' : 'Up Leg Double Pass', 'address' : [0,0], 'frequency' : 141.0},
-		{'name' : 'Up Leg Experiment', 'address' : [0,1], 'frequency' : 73.0},
+		{'name' : 'Up Leg Experiment', 'address' : [0,1], 'frequency' : 43.0},
 		{'name' : 'Down Leg After Cavity', 'address' : [0,2], 'frequency' : 78.6},
 		{'name' : 'Down Leg Experiment', 'address' : [0,3], 'frequency' : 80.0}, # Drives Down Leg Expt, Master-Slave beat
 		{'name' : 'Vertical Lattice', 'address' : [1,0], 'frequency' : 90.0},
