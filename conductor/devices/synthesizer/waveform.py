@@ -16,7 +16,7 @@ class Waveform(ConductorParameter):
 
     Conductor parameter for controlling the waveform output by the RF synthesizer.
     """
-    priority = 1
+    priority = 99
     value_type = 'list'
 
     def __init__(self, config={}):
@@ -32,9 +32,13 @@ class Waveform(ConductorParameter):
     def update(self):
         if self.value:
             try:
-                seq = ss.compile_sequence(self.value)
+                seq, durations = ss.compile_sequence(self.value)
                 yield self.synthesizer.reset()
                 for i, channel in enumerate(seq):
                     yield self.synthesizer.write_timestamps(channel, i)
+                # Set *RF1, *RF2, *RF3, *RF4 to the durations of the first four blocks of the first channel
+                for i in range(1, min(4, len(durations[0]))):
+                    if durations[0][i] > 0:
+                        yield self.cxn.conductor.set_parameter_values(json.dumps({'sequencer': {'*RF{}'.format(i+1): durations[0][i]}}))
             except Exception as e:
                 print(e)

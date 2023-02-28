@@ -49,6 +49,10 @@ variables_dict = [
     ['*Echo10', 0.001],
     ['*Echo1m1', 0.001],
     ['*FlipTime', 0.001],
+    ['*RF1', 0.001],
+    ['*RF2', 0.001],
+    ['*RF3', 0.001],
+    ['*RF4', 0.001],
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
