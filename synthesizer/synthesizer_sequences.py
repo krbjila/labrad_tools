@@ -3,9 +3,8 @@ Classes and functions for generating sequences for the RF synthesizer
 
 To do:
     * Design functions for maintaining phase on frequency switching
-    * Finish implementing SyncPoints and WaitForTrigger
-    * Develop a graphical tool for visualizing RF sequences
-    * Implement a conductor parameter for compiling RF sequences, exporting their durations as variables that can be used in sequencer, and programming the synthesizer
+    * Finish implementing SyncPoints
+    * Finish developing a graphical tool for visualizing RF sequences
 """
 from __future__ import annotations
 from copy import copy, deepcopy
@@ -15,6 +14,10 @@ import warnings
 from typing import List, Optional
 from json import dumps, JSONEncoder
 from dataclasses import dataclass
+from itertools import chain
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 16384
@@ -31,8 +34,8 @@ class SequenceState():
             phase (float): The phase of the channel. Defaults to 0.
             frequency (float): The frequency of the channel. Defaults to 1E6.
             transition (:class:`Transition`): The selected transition, as set by :class:`SetTransition`. Defaults to None.
-            time (float): The time since the start or the last :class:`WaitForTrigger`. Defaults to 0.
-            triggers (int): The number of :class:`WaitForTrigger` blocks so far. Defaults to 0.
+            time (float): The time since the start or the last trigger. Defaults to 0.
+            triggers (int): The number of triggers required so far. Defaults to 0.
             syncpoints (list of str): The ordered list of :class:`SyncPoint` so far. Defaults to :code:`[]`.
         """
         self.amplitude = amplitude
@@ -69,7 +72,7 @@ class RFBlock():
         return self
 
     def __repr__(self) -> str:
-        raise ValueError("Please implement me in subclasses.")
+        raise NotImplementedError("Please implement me in subclasses.")
 
 class RFPulse(RFBlock):
     """
@@ -113,9 +116,9 @@ class RFPulse(RFBlock):
         raise NotImplementedError("Please implement me in each subclass!")
 
     def compile(self, state:SequenceState = None) -> RFBlock | List[RFBlock]:
-        raise("Please implement me in each subclass!")
+        raise NotImplementedError("Please implement me in each subclass!")
 
-def validate_parameters(duration: Optional[float] = None, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None) -> None:
+def validate_parameters(duration=None, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None) -> None:
     """
     validate_parameters(duration=None, amplitude=None, phase=None, frequency=None)
 
@@ -130,14 +133,14 @@ def validate_parameters(duration: Optional[float] = None, amplitude: Optional[fl
     Raises:
         ValueError: If any of the parameters are not None and outside their valid range.
     """
-    if duration is not None and duration < 0:
-        raise ValueError("Duration {} must be non-negative.".format(duration))
+    if duration is not None and (duration < 0 or duration > MAX_DURATION):
+        raise ValueError("Duration {} must be between zero and {}.".format(duration, MAX_DURATION))
     if amplitude is not None and (amplitude < 0 or amplitude > 1):
         raise ValueError("Amplitude {} must be between zero and one.".format(amplitude))
     if phase is not None and not np.isreal(phase):
         raise ValueError("Phase {} must be a real number.".format(phase))
     if frequency is not None and (frequency < 0 or frequency > MAX_FREQUENCY):
-        raise ValueError("Frequency {} must be a real number.".format(frequency))
+        raise ValueError("Frequency {} must be between 0 and {}.".format(frequency, MAX_FREQUENCY))
 
 class Timestamp(RFBlock):
     """
@@ -146,19 +149,21 @@ class Timestamp(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None) -> None:
+    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, wait_for_trigger: Optional[bool] = False) -> None:
         """
         Args:
             duration (float): The duration of the timestamp. If the duration is zero, the parameters override ommited parameters in the next Timestamp.
             amplitude (float, optional): The amplitude of the tone relative to full scale. Defaults to None, in which case the previous amplitude is maintained.
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase is maintained.
             frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency is maintained.
+            wait_for_trigger (bool, optional): Whether to wait for a trigger to start the timestamp. Defaults to False.
         """
         self.duration = duration
         self.amplitude = amplitude
         self.phase = phase
         self.frequency = frequency
-        self.phase_update = True if self.phase is not None else False
+        self.phase_update = self.phase is not None
+        self.wait_for_trigger = wait_for_trigger
 
     def __repr__(self) -> str:
         val = "Timestamp({}".format(self.duration)
@@ -179,6 +184,9 @@ class Timestamp(RFBlock):
             state.phase = self.phase
         if self.frequency is not None:
             state.frequency = self.frequency
+        if self.wait_for_trigger:
+            state.triggers += 1
+            state.time = 0
         return super().compile(state)
 
 class Wait(Timestamp):
@@ -192,27 +200,9 @@ class Wait(Timestamp):
         """
         super().__init__(duration)
 
-class WaitForTrigger(RFBlock):
-    """
-    Waits for the synthesizer to receive a software or hardware trigger.
-    """
-
-    atomic = True
-
-    def __init__(self) -> None:
-        pass
-
-    def __repr__(self) -> str:
-        return "WaitForTrigger()"
-
-    def compile(self, state: SequenceState) -> WaitForTrigger:
-        state.triggers += 1
-        state.time = 0
-        return super().compile(state)
-
 class SyncPoint(RFBlock):
     """
-    Allows different channels to be synchronized. If SyncPoints with the same name appear in different channels, an appropriate sequence of :class:`WaitForTrigger` and :class:`Wait` blocks are inserted into the channels for which it would occur earlier such that all channels reach the SyncPoint at the same time.
+    Allows different channels to be synchronized. If SyncPoints with the same name appear in different channels, an appropriate sequence of :class:`Wait` blocks are inserted into the channels for which it would occur earlier such that all channels reach the SyncPoint at the same time.
 
     Throws an error upon compilation if multiple SyncPoints with the same name occur in one channel's sequence or in an order such that they cannot be applied.
     """
@@ -321,7 +311,7 @@ class BlackmanPulse(RFPulse):
 
         Keyword Args:
             steps (int, optional): The number of steps to approximate the pulse. Should be at least 7. Defaults to 20.
-            exact (bool, optional): Whether to use exact parameters for the window, as described `here <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_.
+            exact (bool, optional): Whether to use exact parameters for the window, as described `here <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_. Defaults to False.
         """
         self.duration = duration
         self.amplitude = amplitude
@@ -560,8 +550,14 @@ class Transition():
         if default_amplitude is None:
             default_amplitude = amplitudes[0]
         self.default_amplitude = default_amplitude
+        
         self.frequency_offset = frequency_offset
-        self.interp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
+        if len(self.amplitudes) > 1:
+            self.interp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
+            self.default_Rabi_frequency = interp(self.default_amplitude)
+        else:
+            self.interp = None
+            self.default_Rabi_frequency = Rabi_frequencies[0]
 
     def __repr__(self) -> str:
         return "Transition({}, {}, {}, default_amplitude={}, frequency_offset={})".format(self.frequency, self.amplitudes, self.Rabi_frequencies, self.default_amplitude, self.frequency_offset)
@@ -582,7 +578,10 @@ class Transition():
             amplitude = self.default_amplitude
         if amplitude <= 0 or amplitude > 1:
             raise ValueError("Amplitude {} must be > 0 and <= 1".format(amplitude))
-        return self.interp(amplitude)
+        if self.interp is not None:
+            return self.interp(amplitude)
+        else:
+            return self.default_Rabi_frequency
 
 class SetTransition(RFBlock):
     """
@@ -804,8 +803,7 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
         return new_pulse
     tau = duration/20.0
     def KDDphi(phi):
-        return [
-            Wait(tau/2.0),
+        return [Wait(tau/2.0),
             phased_pulse(np.pi/6 + phi),
             Wait(tau),
             phased_pulse(phi),
@@ -815,9 +813,9 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
             phased_pulse(phi),
             Wait(tau),
             phased_pulse(np.pi/6 + phi),
-            Wait(tau/2.0)
-        ]
-    return (KDDphi(0) + KDDphi(np.pi/2))*2
+            Wait(tau/2.0)]
+        
+    return KDDphi(0) + KDDphi(np.pi/2) + KDDphi(0) + KDDphi(np.pi/2)
 
 def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
     """
@@ -866,7 +864,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
     Compilation steps:
         * Compiles instance of :class:`RFBlock` with :code:`compile` functions
         * Updates durations based on :class:`AdjustPrevDuration` and :class:`AdjustNextDuration`
-        * Replaces :class:`SyncPoint` blocks with  :class:`Wait` and :class:`WaitForTrigger` blocks.
+        * Replaces :class:`SyncPoint` blocks with  :class:`Wait` blocks.
         * Converts timestamps from relative to absolute time
         * Computes durations of each section of the sequence
         * Outputs the sequence in a list of serializable dictionaries that can be sent to the synthesizer server.
@@ -876,7 +874,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         output_json (bool): Outputs a JSON-formatted string of timestamos that can be sent to :class:`synthesizer.synthesizer_server` if True, or a list of :class:`RFBlock` if False. Defaults to True.
 
     Returns
-        (List[RFBlock] | str): The compiled sequence
+        ((List[RFBlock] | str), List[List[float]]): A tuple containing the compiled sequence and a list of lists the durations of the sequences for each channel
     """
 
     if len(sequence) == 0:
@@ -886,23 +884,19 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         sequence = [sequence]
         multichannel = False
     compiled = []
+    all_durations = []
 
     sequence = deepcopy(sequence)
     for channel, stack in enumerate(sequence):
         stack.reverse()
         state = SequenceState()
-        compiled_channel = [Timestamp(0, amplitude=state.amplitude, phase=state.phase, frequency=state.frequency)]
+        compiled_channel = [] #[Timestamp(0, amplitude=state.amplitude, phase=state.phase, frequency=state.frequency)]
         while len(stack) > 0:
             head = stack.pop()
-            if head.atomic:
+            if hasattr(head, "atomic") and head.atomic:
                 block = head.compile(state)
                 if len(compiled_channel) > 0 and isinstance(compiled_channel[-1], AdjustNextDuration) and not isinstance(block, Timestamp):
-                    print(compiled_channel[-1])
-                    print(block)
                     raise TypeError("{} must be followed by a Timestamp, but is followed by {}".format(compiled_channel[-1], block))
-                if isinstance(block, WaitForTrigger):
-                    warnings.warn("Synthesizer does not yet support multiple triggers. WaitForTrigger will be ignored.")
-                    # TODO: Make this do something.
                 if isinstance(block, SyncPoint):
                     if multichannel:
                         pass
@@ -931,10 +925,13 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         block.amplitude = state.amplitude
                     if block.phase is None:
                         block.phase = state.phase
+                        block.phase_update = False
                     if block.frequency is None:
                         block.frequency = state.frequency
                     if block.duration > 0:
                         compiled_channel.append(block)
+                    if block.wait_for_trigger is None:
+                        block.wait_for_trigger = False
                 elif isinstance(block, AdjustNextDuration):
                     compiled_channel.append(block)
                 else:
@@ -947,20 +944,23 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         duration = 0
         for block in compiled_channel:
             if isinstance(block, Timestamp):
+                if block.wait_for_trigger:
+                    durations.append(duration)
+                    duration = 0
                 block.duration, duration = duration, block.duration + duration
-            if isinstance(block, WaitForTrigger):
-                durations.append(duration)
-                duration = 0
             if duration > MAX_DURATION:
                 raise ValueError("The duration {} s of channel {}'s sequence exceeds the maximum duration of {} s after {}".format(duration, channel, MAX_DURATION, block))
+        durations.append(duration)
         if len(compiled_channel) > 0 and compiled_channel[-1].duration != duration:
             compiled_channel.append(Timestamp(duration, amplitude=state.amplitude, phase=state.phase,frequency=state.frequency))
-        compiled_channel.append(Timestamp(0, 0, 0, 0))
+        terminator = Timestamp(0, 0, 0, 0)
+        terminator.phase_update = False
+        compiled_channel.append(terminator)
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
         compiled.append(compiled_channel)
+        all_durations.append(durations)
     if output_json:
-
         class RFBlockEncoder(JSONEncoder):
             def default(self, obj):
                 if isinstance(obj, Timestamp):
@@ -969,11 +969,41 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         "phase_update": obj.phase_update,
                         "phase": obj.phase,
                         "amplitude": obj.amplitude,
-                        "frequency": obj.frequency
+                        "frequency": obj.frequency,
+                        "wait_for_trigger": obj.wait_for_trigger
                     }
                 return JSONEncoder.default(self, obj)
 
-        return dumps(compiled, cls=RFBlockEncoder)
+        return dumps(compiled, cls=RFBlockEncoder), all_durations
     else:
-        return compiled
+        return compiled, all_durations
     
+def plot_sequence(seq):
+    compiled = compile_sequence(seq, output_json=False)[0]
+    plot_data = {}
+    for (channel, seq_channel) in enumerate(compiled):
+        times = []
+        ampls = []
+        phases = []
+        freqs = []
+        for (i, block) in enumerate(seq_channel[:-1]):
+            times.append(block.duration)
+            ampls.append(block.amplitude)
+            phases.append(block.phase)
+            freqs.append(block.frequency)
+        plot_data[channel] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
+        
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
+
+
+    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["amplitude"], line_shape="hv", name="Amplitude", fill='tozeroy'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["phase"], line_shape="hv", name="Phase", fill='tozeroy'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["frequency"], line_shape="hv", name="Frequency"), row=3, col=1)
+
+    fig.update_xaxes(title_text="Time (s)", row=3, col=1)
+    fig.update_yaxes(title_text="Amplitude", row=1, col=1)
+    fig.update_yaxes(title_text="Phase (rad)", row=2, col=1)
+    fig.update_yaxes(title_text="Frequency (Hz)", row=3, col=1)
+    fig.update_layout(showlegend=False)
+
+    fig.show()
