@@ -980,30 +980,39 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
     
 def plot_sequence(seq):
     compiled = compile_sequence(seq, output_json=False)[0]
+
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
+
     plot_data = {}
     for (channel, seq_channel) in enumerate(compiled):
         times = []
         ampls = []
         phases = []
         freqs = []
-        for (i, block) in enumerate(seq_channel[:-1]):
+        i = 0
+        for block in seq_channel[:-1]:
+            if block.wait_for_trigger:
+                plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
+                times = []
+                ampls = []
+                phases = []
+                freqs = []
+                i += 1
             times.append(block.duration)
             ampls.append(block.amplitude)
             phases.append(block.phase)
             freqs.append(block.frequency)
-        plot_data[channel] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
-        
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
+        plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
 
-
-    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["amplitude"], line_shape="hv", name="Amplitude", fill='tozeroy'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["phase"], line_shape="hv", name="Phase", fill='tozeroy'), row=2, col=1)
-    fig.add_trace(go.Scatter(x=plot_data[0]["time"], y=plot_data[0]["frequency"], line_shape="hv", name="Frequency"), row=3, col=1)
+    for k, pd in plot_data.items():
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["amplitude"], line_shape="hv", name="Amplitude {}".format(k), fill='tozeroy', legendgroup = k), row=1, col=1)
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["phase"], line_shape="hv", name="Phase {}".format(k), fill='tozeroy', legendgroup = k), row=2, col=1)
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["frequency"], line_shape="hv", name="Frequency {}".format(k), legendgroup = k), row=3, col=1)
 
     fig.update_xaxes(title_text="Time (s)", row=3, col=1)
     fig.update_yaxes(title_text="Amplitude", row=1, col=1)
     fig.update_yaxes(title_text="Phase (rad)", row=2, col=1)
     fig.update_yaxes(title_text="Frequency (Hz)", row=3, col=1)
-    fig.update_layout(showlegend=False)
+    fig.update_layout(legend={'traceorder':'grouped'})
 
     fig.show()
