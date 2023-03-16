@@ -2,9 +2,16 @@
 Classes and functions for generating sequences for the RF synthesizer
 
 To do:
+    * Finish implementing digital outputs
+        * Determine which timestamps control digital outputs (emailed Felix)
+        * Add digital outputs to compiler
+        * Add digital outputs to plots
+    * Fix setting the phase in the compiler to use the relative phase
     * Design functions for maintaining phase on frequency switching
     * Finish implementing SyncPoints
-    * Finish developing a graphical tool for visualizing RF sequences
+    * Add VS Code task to plot RF sequence on key press (or maybe when file is saved). See here: https://code.visualstudio.com/docs/editor/tasks
+    * Test synthesizer server
+    * Test synthesizer conductor device
 """
 from __future__ import annotations
 from copy import copy, deepcopy
@@ -149,7 +156,7 @@ class Timestamp(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, wait_for_trigger: Optional[bool] = False) -> None:
+    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, wait_for_trigger: Optional[bool] = False, digital_out: Optional[dict] = {}) -> None:
         """
         Args:
             duration (float): The duration of the timestamp. If the duration is zero, the parameters override ommited parameters in the next Timestamp.
@@ -157,6 +164,7 @@ class Timestamp(RFBlock):
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase is maintained.
             frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency is maintained.
             wait_for_trigger (bool, optional): Whether to wait for a trigger to start the timestamp. Defaults to False.
+            digital_out ({int: bool}): A dictionary with keys (integers between 0 and 6) corresponding to the indices of digital outputs to set and boolean values corresponding to the desired state of the output. If a key is not present, the corresponding output is unchanged. Defaults to {}.
         """
         self.duration = duration
         self.amplitude = amplitude
