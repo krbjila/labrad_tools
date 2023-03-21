@@ -24,17 +24,19 @@ from dataclasses import dataclass
 from itertools import chain
 
 import plotly.graph_objects as go
+import plotly.express as px
 from plotly.subplots import make_subplots
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 16384
 MAX_DURATION = 27.962 # seconds
+N_DIGITAL = 7
 
 class SequenceState():
     """
     Records the state of a synthesizer channel at any point in the sequence. Used by :func:`compile_sequence` and the :meth:`RFBlock.compile`.
     """
-    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 1E6, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = []) -> None:
+    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 1E6, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = [], digital_out: List[bool] = [False]*N_DIGITAL) -> None:
         """
         Args:
             amplitude (float): The amplitude of the channel. Defaults to 0.
@@ -44,6 +46,7 @@ class SequenceState():
             time (float): The time since the start or the last trigger. Defaults to 0.
             triggers (int): The number of triggers required so far. Defaults to 0.
             syncpoints (list of str): The ordered list of :class:`SyncPoint` so far. Defaults to :code:`[]`.
+            digital_out (list of bool): The state of the digital outputs. Defaults to :code:`[False]*N_DIGITAL`.
         """
         self.amplitude = amplitude
         self.phase = phase
@@ -52,6 +55,7 @@ class SequenceState():
         self.time = time
         self.triggers = triggers
         self.syncpoints = syncpoints
+        self.digital_out = digital_out
 
 @dataclass
 class RFBlock():
@@ -164,14 +168,15 @@ class Timestamp(RFBlock):
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase is maintained.
             frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency is maintained.
             wait_for_trigger (bool, optional): Whether to wait for a trigger to start the timestamp. Defaults to False.
-            digital_out ({int: bool}): A dictionary with keys (integers between 0 and 6) corresponding to the indices of digital outputs to set and boolean values corresponding to the desired state of the output. If a key is not present, the corresponding output is unchanged. Defaults to {}.
+            digital_out ({int: bool}): A dictionary with keys (integers between 0 and 6) corresponding to the indices of digital outputs to set and boolean values corresponding to the desired state of the output. If a key is not present, the corresponding output is unchanged. Only used for the first channel. Defaults to {}.
         """
         self.duration = duration
         self.amplitude = amplitude
         self.phase = phase
         self.frequency = frequency
-        self.phase_update = self.phase is not None
         self.wait_for_trigger = wait_for_trigger
+        self.digital_out = digital_out
+        self.phase_update = False
 
     def __repr__(self) -> str:
         val = "Timestamp({}".format(self.duration)
@@ -181,6 +186,10 @@ class Timestamp(RFBlock):
             val += ", phase={}".format(self.phase)
         if self.frequency is not None:
             val += ", frequency={}".format(self.frequency)
+        if self.wait_for_trigger:
+            val += ", wait_for_trigger={}".format(self.wait_for_trigger)
+        if len(self.digital_out) > 0:
+            val += ", digital_out={}".format(self.digital_out)
         return val + ")"
 
     def compile(self, state: Optional[SequenceState] = None) -> Timestamp:
@@ -188,13 +197,17 @@ class Timestamp(RFBlock):
         state.time += self.duration
         if self.amplitude is not None:
             state.amplitude = self.amplitude
-        if self.phase is not None:
+        if self.phase is not None and self.phase != state.phase:
+            self.phase_update = True
             state.phase = self.phase
         if self.frequency is not None:
             state.frequency = self.frequency
         if self.wait_for_trigger:
             state.triggers += 1
             state.time = 0
+        state.digital_out = copy(state.digital_out)
+        for c, v in self.digital_out.items():
+            state.digital_out[c] = v
         return super().compile(state)
 
 class Wait(Timestamp):
@@ -933,13 +946,11 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         block.amplitude = state.amplitude
                     if block.phase is None:
                         block.phase = state.phase
-                        block.phase_update = False
                     if block.frequency is None:
                         block.frequency = state.frequency
                     if block.duration > 0:
                         compiled_channel.append(block)
-                    if block.wait_for_trigger is None:
-                        block.wait_for_trigger = False
+                    block.digital_out = state.digital_out
                 elif isinstance(block, AdjustNextDuration):
                     compiled_channel.append(block)
                 else:
@@ -960,8 +971,8 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                 raise ValueError("The duration {} s of channel {}'s sequence exceeds the maximum duration of {} s after {}".format(duration, channel, MAX_DURATION, block))
         durations.append(duration)
         if len(compiled_channel) > 0 and compiled_channel[-1].duration != duration:
-            compiled_channel.append(Timestamp(duration, amplitude=state.amplitude, phase=state.phase,frequency=state.frequency))
-        terminator = Timestamp(0, 0, 0, 0)
+            compiled_channel.append(Timestamp(duration, amplitude=state.amplitude, phase=state.phase,frequency=state.frequency, digital_out=state.digital_out))
+        terminator = Timestamp(0, 0, 0, 0, digital_out=[False]*N_DIGITAL)
         terminator.phase_update = False
         compiled_channel.append(terminator)
         if len(compiled_channel) > MAX_LENGTH:
@@ -978,18 +989,26 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         "phase": obj.phase,
                         "amplitude": obj.amplitude,
                         "frequency": obj.frequency,
-                        "wait_for_trigger": obj.wait_for_trigger
+                        "wait_for_trigger": obj.wait_for_trigger,
+                        "digital_out": obj.digital_out
                     }
                 return JSONEncoder.default(self, obj)
-
         return dumps(compiled, cls=RFBlockEncoder), all_durations
     else:
         return compiled, all_durations
     
-def plot_sequence(seq):
+def plot_sequence(seq: List[RFBlock]):
+    """
+    plot_sequence(seq)
+
+    Plots a sequence using Plotly.
+
+    Args:
+        seq ([RFBlock]): The sequence to plot
+    """
     compiled = compile_sequence(seq, output_json=False)[0]
 
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.02)
+    fig = make_subplots(rows=3+N_DIGITAL, cols=1, shared_xaxes=True, vertical_spacing=0.015, row_heights=[0.25, 0.25, 0.25] + [0.2/N_DIGITAL]*N_DIGITAL)
 
     plot_data = {}
     for (channel, seq_channel) in enumerate(compiled):
@@ -997,6 +1016,7 @@ def plot_sequence(seq):
         ampls = []
         phases = []
         freqs = []
+        digital = [[] for i in range(N_DIGITAL)]
         i = 0
         for block in seq_channel[:-1]:
             if block.wait_for_trigger:
@@ -1005,22 +1025,33 @@ def plot_sequence(seq):
                 ampls = []
                 phases = []
                 freqs = []
+                digital = [[] for i in range(N_DIGITAL)]
                 i += 1
             times.append(block.duration)
             ampls.append(block.amplitude)
             phases.append(block.phase)
             freqs.append(block.frequency)
-        plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
+            for j, b in enumerate(block.digital_out):
+                digital[j].append(1 if b else 0)
+        plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs, "digital":digital}
 
+    color_i = 0
+    colors = px.colors.qualitative.Plotly
     for k, pd in plot_data.items():
-        fig.add_trace(go.Scatter(x=pd["time"], y=pd["amplitude"], line_shape="hv", name="Amplitude {}".format(k), fill='tozeroy', legendgroup = k), row=1, col=1)
-        fig.add_trace(go.Scatter(x=pd["time"], y=pd["phase"], line_shape="hv", name="Phase {}".format(k), fill='tozeroy', legendgroup = k), row=2, col=1)
-        fig.add_trace(go.Scatter(x=pd["time"], y=pd["frequency"], line_shape="hv", name="Frequency {}".format(k), legendgroup = k), row=3, col=1)
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["amplitude"], line_shape="hv", name="{}".format(k), fill='tozeroy', legendgroup = k, line_color=colors[color_i], mode="lines"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["phase"], line_shape="hv", name="Phase {}".format(k), fill='tozeroy', legendgroup = k, line_color=colors[color_i], showlegend=False, mode="lines"), row=2, col=1)
+        fig.add_trace(go.Scatter(x=pd["time"], y=pd["frequency"], line_shape="hv", name="Frequency {}".format(k), legendgroup = k, line_color=colors[color_i], showlegend=False, mode="lines"), row=3, col=1)
+        if k[1] == '0':
+            for i in range(N_DIGITAL):
+                fig.add_trace(go.Scatter(x=pd["time"], y=pd["digital"][i], line_shape="hv", name="D{} {}".format(i, k), fill='tozeroy', legendgroup = k, line_color=colors[color_i], showlegend=False, mode="lines"), row=4+i, col=1)
+        color_i += 1
 
-    fig.update_xaxes(title_text="Time (s)", row=3, col=1)
-    fig.update_yaxes(title_text="Amplitude", row=1, col=1)
-    fig.update_yaxes(title_text="Phase (rad)", row=2, col=1)
+    fig.update_xaxes(title_text="Time (s)", row=3+N_DIGITAL, col=1, rangemode="tozero", side="bottom")
     fig.update_yaxes(title_text="Frequency (Hz)", row=3, col=1)
+    fig.update_yaxes(title_text="Amplitude", row=1, col=1, range=[0,1])
+    fig.update_yaxes(title_text="Phase (rad)", row=2, col=1)
+    for i in range(N_DIGITAL):
+        fig.update_yaxes(title_text="D{}".format(i), row=4+i, col=1, range=[0,1], showticklabels=False)
     fig.update_layout(legend={'traceorder':'grouped'})
 
     fig.show()
