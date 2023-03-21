@@ -176,7 +176,7 @@ class Timestamp(RFBlock):
         self.frequency = frequency
         self.wait_for_trigger = wait_for_trigger
         self.digital_out = digital_out
-        self.phase_update = False
+        self.phase_update = 0
 
     def __repr__(self) -> str:
         val = "Timestamp({}".format(self.duration)
@@ -198,7 +198,7 @@ class Timestamp(RFBlock):
         if self.amplitude is not None:
             state.amplitude = self.amplitude
         if self.phase is not None and self.phase != state.phase:
-            self.phase_update = True
+            self.phase_update = self.phase - state.phase
             state.phase = self.phase
         if self.frequency is not None:
             state.frequency = self.frequency
@@ -973,7 +973,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         if len(compiled_channel) > 0 and compiled_channel[-1].duration != duration:
             compiled_channel.append(Timestamp(duration, amplitude=state.amplitude, phase=state.phase,frequency=state.frequency, digital_out=state.digital_out))
         terminator = Timestamp(0, 0, 0, 0, digital_out=[False]*N_DIGITAL)
-        terminator.phase_update = False
+        terminator.phase_update = 0
         compiled_channel.append(terminator)
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))

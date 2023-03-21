@@ -161,10 +161,13 @@ class SynthesizerServer(LabradServer):
         N_ADDRESSES = 2**13
 
         if channel >= N_CHANNELS or channel < 0 or not isinstance(channel, int):
-                raise ValueError("Channel number {} must be an integer between 0 and {}.".format(channel, N_CHANNELS - 1))
+            raise ValueError("Channel number {} must be an integer between 0 and {}.".format(channel, N_CHANNELS - 1))
 
         if address >= N_ADDRESSES or address < 0 or not isinstance(address, int):
-                raise ValueError("Address {} must be an integer between 0 and {}.".format(channel, N_ADDRESSES - 1))
+            raise ValueError("Address {} must be an integer between 0 and {}.".format(address, N_ADDRESSES - 1))
+
+        if phase_update != 0 and phase_update != 1 and phase_update != 2:
+            raise ValueError("phase_update {} must be 0, 1, or 2.".format(phase_update))
 
         buffers = []
         for i in range(4):
@@ -243,8 +246,7 @@ class SynthesizerServer(LabradServer):
         Args:
             timestamps (list of dictionaries): Each timestamp must contain fields:
                 *timestamp: The time in seconds before the update
-                *phase_update: A boolean whether the phase is set or not
-                *phase: The phase (between 0 and 2 pi) to set. Only used if phase_update is True.
+                *phase_update: The amount to increment the phase in radians.
                 *amplitude: The amplitude (between 0 and 1) relative to full scale
                 *frequency: The frequency (between 0 and 307.2 MHz) in Hz
             channel (int): An integer between 0 and 3 determining the channel to program
@@ -254,12 +256,11 @@ class SynthesizerServer(LabradServer):
             timestamp = s["timestamp"]
             phase_update = s["phase_update"]
             address = i
-            phase = s["phase"]
             amplitude = s["amplitude"]
             frequency = s["frequency"]
             wait_for_trigger = bool(s["wait_for_trigger"])
             digital_out = s["digital_out"]
-            buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, phase_update, phase, amplitude, frequency, wait_for_trigger, digital_out)
+            buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, 0 if phase_update == 0 else 2, phase_update, amplitude, frequency, wait_for_trigger, digital_out)
         print("Channel {}:".format(channel))
         for b in buffers:
             print(b.hex())
@@ -278,7 +279,7 @@ class SynthesizerServer(LabradServer):
         """
         timestamps = loads(timestamps)
         self.reset(None)
-        sleep(0.2)
+        sleep(0.2) #TODO: Try removing this line.
         for channel, ts in enumerate(timestamps):
             self._write_timestamps(ts, channel)
 
