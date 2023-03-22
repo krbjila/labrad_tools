@@ -28,8 +28,8 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 MAX_FREQUENCY = 307.2E6 # Hertz
-MAX_LENGTH = 16384
-MAX_DURATION = 27.962 # seconds
+MAX_LENGTH = 8192
+MAX_DURATION = 2**48*(1/153.6E6) # seconds
 N_DIGITAL = 7
 
 class SequenceState():
@@ -1032,6 +1032,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         terminator = Timestamp(0, 0, 0, 0, digital_out=[False]*N_DIGITAL)
         terminator.phase_update = 0
         compiled_channel.append(terminator)
+        print(len(compiled_channel))
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
         compiled.append(compiled_channel)
