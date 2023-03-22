@@ -261,8 +261,7 @@ class SynthesizerServer(LabradServer):
             wait_for_trigger = bool(s["wait_for_trigger"])
             digital_out = s["digital_out"]
             buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, phase_update, phase, amplitude, frequency, wait_for_trigger, digital_out)
-        if verbose:
-            print("Channel {}:".format(channel))
+        print("Writing Channel {}.".format(channel))
         for b in buffers:
             if verbose:
                 print(b.hex())
