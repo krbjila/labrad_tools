@@ -159,6 +159,7 @@ class SynthesizerServer(LabradServer):
 
         N_CHANNELS = 4
         N_ADDRESSES = 2**13
+        N_DIGITAL = 7
 
         if channel >= N_CHANNELS or channel < 0 or not isinstance(channel, int):
             raise ValueError("Channel number {} must be an integer between 0 and {}.".format(channel, N_CHANNELS - 1))
@@ -177,20 +178,16 @@ class SynthesizerServer(LabradServer):
             b[2:4] = address.to_bytes(2, "big")
             buffers.append(b)
 
-        # Timestamp
-        ttw = SynthesizerServer.t_to_timestamp(timestamp).to_bytes(8, "big")
+        # Timestamp & digital outputs
+        ttw = SynthesizerServer.t_to_timestamp(timestamp)
+        for i in range(N_DIGITAL):
+            ttw += digital_out[i] * 2**(56+i)
+        ttw = ttw.to_bytes(8, "big")
+
+
         buffers[0][4:] = ttw[4:]
         buffers[1][4:] = ttw[:4]
         buffers[1][5] += wait_for_trigger
-
-        # Digital outputs
-        buffers[1][7] += digital_out[0] * 2**0
-        buffers[1][7] += digital_out[1] * 2**3
-        buffers[1][7] += digital_out[2] * 2**1
-        buffers[1][7] += digital_out[3] * 2**4
-        buffers[1][7] += digital_out[4] * 2**2
-        buffers[1][7] += digital_out[5] * 2**5
-        buffers[1][7] += digital_out[6] * 2**6
 
         # Frequency
         ftw = SynthesizerServer.f_to_ftw(frequency)
@@ -237,39 +234,44 @@ class SynthesizerServer(LabradServer):
         buffer = bytearray.fromhex(f"A300")
         self.sock.sendto(buffer, self.dest)
 
-    def _write_timestamps(self, timestamps, channel):
+    def _write_timestamps(self, timestamps, channel, verbose=False):
         """
-            _write_timestamps(self, timestamps)
+            _write_timestamps(self, timestamps, channel, verbose=False)
 
             Programs the synthesizer with a list of timestamps.
 
         Args:
             timestamps (list of dictionaries): Each timestamp must contain fields:
                 *timestamp: The time in seconds before the update
-                *phase_update: The amount to increment the phase in radians.
+                *phase_update: 0 to preserve phase, 1 to set absolute phase, 2 to set relative phase
+                *phase: The phase in radians
                 *amplitude: The amplitude (between 0 and 1) relative to full scale
                 *frequency: The frequency (between 0 and 307.2 MHz) in Hz
             channel (int): An integer between 0 and 3 determining the channel to program
+            verbose (bool, optional): Whether to print the timestamps. Defaults to False.
         """
         buffers = []
         for i, s in enumerate(timestamps):
             timestamp = s["timestamp"]
             phase_update = s["phase_update"]
+            phase = s["phase"]
             address = i
             amplitude = s["amplitude"]
             frequency = s["frequency"]
             wait_for_trigger = bool(s["wait_for_trigger"])
             digital_out = s["digital_out"]
-            buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, 0 if phase_update == 0 else 2, phase_update, amplitude, frequency, wait_for_trigger, digital_out)
-        print("Channel {}:".format(channel))
+            buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, phase_update, phase, amplitude, frequency, wait_for_trigger, digital_out)
+        if verbose:
+            print("Channel {}:".format(channel))
         for b in buffers:
-            print(b.hex())
+            if verbose:
+                print(b.hex())
             self.sock.sendto(b, self.dest)
 
-    @setting(5, timestamps='s')
-    def write_timestamps(self, c, timestamps):
+    @setting(5, timestamps='s', verbose='b')
+    def write_timestamps(self, c, timestamps, verbose=False):
         """
-        write_timestamps(self, c, timestamps)
+        write_timestamps(self, c, timestamps, verbose=False)
 
         Writes timestamps from a JSON-formatted string. See :meth:`write_timestamps` for specification.
 
@@ -278,10 +280,8 @@ class SynthesizerServer(LabradServer):
             timestamps (str): A JSON-formatted string containing a list of lists of dictionaries, each of which is a timestamp.
         """
         timestamps = loads(timestamps)
-        self.reset(None)
-        sleep(0.2) #TODO: Try removing this line.
         for channel, ts in enumerate(timestamps):
-            self._write_timestamps(ts, channel)
+            self._write_timestamps(ts, channel, verbose)
 
 if __name__ == '__main__':
     from labrad import util

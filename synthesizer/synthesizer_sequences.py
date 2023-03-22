@@ -160,7 +160,7 @@ class Timestamp(RFBlock):
 
     atomic = True
 
-    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, wait_for_trigger: Optional[bool] = False, digital_out: Optional[dict] = {}) -> None:
+    def __init__(self, duration: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, wait_for_trigger: Optional[bool] = False, digital_out: Optional[dict] = {}, absolute_phase: Optional[bool] = False) -> None:
         """
         Args:
             duration (float): The duration of the timestamp. If the duration is zero, the parameters override ommited parameters in the next Timestamp.
@@ -168,7 +168,8 @@ class Timestamp(RFBlock):
             phase (float, optional): The phase of the tone in radians. Defaults to None, in which case the previous phase is maintained.
             frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency is maintained.
             wait_for_trigger (bool, optional): Whether to wait for a trigger to start the timestamp. Defaults to False.
-            digital_out ({int: bool}): A dictionary with keys (integers between 0 and 6) corresponding to the indices of digital outputs to set and boolean values corresponding to the desired state of the output. If a key is not present, the corresponding output is unchanged. Only used for the first channel. Defaults to {}.
+            digital_out ({int: bool}, optional): A dictionary with keys (integers between 0 and 6) corresponding to the indices of digital outputs to set and boolean values corresponding to the desired state of the output. If a key is not present, the corresponding output is unchanged. Only used for the first channel. Defaults to {}.
+            absolute_phase (bool, optional): If true, sets the phase to :code:`phase` radians at the beginning of the timestamp. Otherwise offsets the phase to :code:`phase` radians relative to a reference clock. If True, :code:`phase` must not be None. Defaults to False.
         """
         self.duration = duration
         self.amplitude = amplitude
@@ -176,6 +177,7 @@ class Timestamp(RFBlock):
         self.frequency = frequency
         self.wait_for_trigger = wait_for_trigger
         self.digital_out = digital_out
+        self.absolute_phase = absolute_phase
         self.phase_update = 0
 
     def __repr__(self) -> str:
@@ -194,11 +196,16 @@ class Timestamp(RFBlock):
 
     def compile(self, state: Optional[SequenceState] = None) -> Timestamp:
         validate_parameters(self.duration, self.amplitude, self.phase, self.frequency)
+        if self.absolute_phase and self.phase is None:
+            raise ValueError("Phase cannot be None if absolute_phase is True")
         state.time += self.duration
         if self.amplitude is not None:
             state.amplitude = self.amplitude
-        if self.phase is not None and self.phase != state.phase:
-            self.phase_update = self.phase - state.phase
+        if self.absolute_phase:
+            self.phase_update = 1
+            state.phase = self.phase
+        elif self.phase is not None and self.phase != state.phase:
+            self.phase_update = 2
             state.phase = self.phase
         if self.frequency is not None:
             state.frequency = self.frequency
@@ -535,6 +542,56 @@ class AmplitudeRamp(RFBlock):
             val += ", end_amplitude={}".format(self.end_amplitude)
         if self.phase is not None:
             val += ", phase={}".format(self.phase)
+        if self.frequency is not None:
+            val += ", frequency={}".format(self.frequency)
+        val += ", steps={})".format(self.steps)
+        return val
+        
+class PhaseRamp(RFBlock):
+    """
+    Linearly ramps the amplitude of the RF tone while maintaining constant frequency and phase.
+    """
+    def __init__(self, duration: float, amplitude: Optional[float] = None, start_phase: Optional[float] = None, end_phase: Optional[float] = None, frequency: Optional[float] = None, steps: int = 20):
+        """
+        Args:
+            duration (float): The duration of the ramp in seconds.
+            amplitude (float, optional): The amplitude of the tone relative to full scale. Defaults to None, in which case the previous ammplitude setting is maintained.
+            start_phase (float, optional): The initial phase in radians. Defaults to None, in which case the phase of the previous :class:`RFBlock` is used.
+            end_phase (float, optional): The final phase in radians. Defaults to None, in which case :code:`start_phase` is used.
+            frequency (float, optional): The frequency of the tone in Hertz. Defaults to None, in which case the previous frequency setting is maintained.
+            steps (int, optional): The number of amplitude steps to include in the ramp. Must be at least 2. Defaults to 20.
+        """
+        self.duration = duration
+        self.amplitude = amplitude
+        self.start_phase = start_phase
+        self.end_phase = end_phase
+        self.frequency = frequency
+        self.steps = steps
+
+    def compile(self, state:SequenceState) -> List[RFBlock]:
+        validate_parameters(self.duration, self.amplitude, self.start_phase, self.frequency)
+        validate_parameters(phase=self.end_phase)
+        if self.steps < 2 or self.steps != int(self.steps):
+            raise ValueError("The number of steps, {}, must be an integer >= 2")
+        if self.start_phase is None:
+            self.start_phase = state.phase
+        if self.end_phase is None:
+            self.end_phase = self.start_phase
+        step = self.duration/self.steps
+        phis = np.linspace(self.start_phase, self.end_phase, self.steps)
+        timestamps = [Timestamp(step, phase=phi) for phi in phis]
+        timestamps[0].amplitude = self.amplitude
+        timestamps[0].frequency = self.frequency
+        return timestamps
+
+    def __repr__(self) -> str:
+        val = "PhaseRamp({}".format(self.duration)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.start_phase is not None:
+            val += ", start_phase={}".format(self.start_phase)
+        if self.end_phase is not None:
+            val += ", end_phase={}".format(self.end_phase)
         if self.frequency is not None:
             val += ", frequency={}".format(self.frequency)
         val += ", steps={})".format(self.steps)
