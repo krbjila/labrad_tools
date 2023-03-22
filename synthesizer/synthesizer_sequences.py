@@ -1032,7 +1032,6 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         terminator = Timestamp(0, 0, 0, 0, digital_out=[False]*N_DIGITAL)
         terminator.phase_update = 0
         compiled_channel.append(terminator)
-        print(len(compiled_channel))
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
         compiled.append(compiled_channel)
