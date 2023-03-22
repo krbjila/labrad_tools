@@ -219,6 +219,7 @@ class SynthesizerServer(LabradServer):
         """
         buffer = bytearray.fromhex(f"A200")
         self.sock.sendto(buffer, self.dest)
+        print("Synthesizer triggered.")
 
 
     @setting(4)
@@ -233,6 +234,7 @@ class SynthesizerServer(LabradServer):
         """
         buffer = bytearray.fromhex(f"A300")
         self.sock.sendto(buffer, self.dest)
+        print("Synthesizer reset.")
 
     def _write_timestamps(self, timestamps, channel, verbose=False):
         """
@@ -248,7 +250,7 @@ class SynthesizerServer(LabradServer):
                 *amplitude: The amplitude (between 0 and 1) relative to full scale
                 *frequency: The frequency (between 0 and 307.2 MHz) in Hz
             channel (int): An integer between 0 and 3 determining the channel to program
-            verbose (bool, optional): Whether to print the timestamps. Defaults to False.
+            verbose (bool, optional): Whether to print the messages sent to the synthesizer. Defaults to False.
         """
         buffers = []
         for i, s in enumerate(timestamps):
