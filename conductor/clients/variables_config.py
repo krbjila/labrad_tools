@@ -6,14 +6,14 @@ variables_dict = [
     ['*RbProbeI', -4.4],
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
-    ['*KMOT', 3.0], # was 5.1
-    ['*RbMOT', 2.0], # was 3.5
+    ['*KMOT', 3.6], # was 5.1
+    ['*RbMOT', 1.3], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
-    ['*NWhigh', 4.51],# was 4.55, changed 05/14/2021
-    ['*NWlow', 4.15], # was 4.32 09/29/22
-    ['*SWhigh', 4.72], # was 4.7, changed 05/14/2021
-    ['*SWlow', 4.55], # was 4.6 09/29/22 
+    ['*NWhigh', 4.27],# 03/14/2023 was 4.51 was 4.55, changed 05/14/2021
+    ['*NWlow', 3.8], # 03/14/23 was 4.12 was 4.32 09/29/22, 4.14 11/28/2022
+    ['*SWhigh', 4.74], # 03/14/23 was 4.73 was 4.7, changed 05/14/2021, 4.72 11/23/2022
+    ['*SWlow', 4.59], # 03/14/23 was 4.55 was 4.6 09/29/22, 4.55 11/28/2022
     # Evaporation
     ['*MagEvapTime', 12.9],
     # Plug PZTs
@@ -29,15 +29,15 @@ variables_dict = [
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*QuadVcmot', -1],
-    ['*BIASI', 0.0491], # was 0.0485 09/29/22
+    ['*BIASI', 0.0464], # was 0.0491 11/30/22
     ['*BIASV', -0.385],
-    ['*LowField', 0.46], # was 0.457 (11/2/21)
+    ['*LowField', 0.461], # was 0.457 (11/2/21)
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
-    ['*HighFieldV', -4.64], # was -4.65 (11/2/21); was -4.725, was -3.6 before moving stuff to back corridor
+    ['*HighFieldV', -4.8], # was -4.64 (11/30/22) before changing DACs; was -4.725, was -3.6 before moving stuff to back corridor
     ['*BiasSub', -8.45],
     ['*StableBias', -0.1], # was 0.45
-    ['*FeshBias', -5.245],
+    ['*FeshBias', -5.3],
     ['*ToeBias', -5.01],
     # RF
     ['*RFpulse', 0.001],
