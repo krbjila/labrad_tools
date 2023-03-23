@@ -207,6 +207,7 @@ class SynthesizerServer(LabradServer):
 
         return buffers
 
+    @inlineCallbacks
     @setting(3)
     def trigger(self, c):
         """
@@ -218,10 +219,11 @@ class SynthesizerServer(LabradServer):
             c: The LabRAD context.
         """
         buffer = bytearray.fromhex(f"A200")
-        self.sock.sendto(buffer, self.dest)
+        yield self.sock.sendto(buffer, self.dest)
         print("Synthesizer triggered.")
 
 
+    @inlineCallbacks
     @setting(4)
     def reset(self, c):
         """
@@ -233,7 +235,7 @@ class SynthesizerServer(LabradServer):
             c: The LabRAD context.
         """
         buffer = bytearray.fromhex(f"A300")
-        self.sock.sendto(buffer, self.dest)
+        yield self.sock.sendto(buffer, self.dest)
         print("Synthesizer reset.")
 
     def _write_timestamps(self, timestamps, channel, verbose=False):
@@ -269,6 +271,7 @@ class SynthesizerServer(LabradServer):
                 print(b.hex())
             self.sock.sendto(b, self.dest)
 
+    @inlineCallbacks
     @setting(5, timestamps='s', verbose='b')
     def write_timestamps(self, c, timestamps, verbose=False):
         """
@@ -282,7 +285,7 @@ class SynthesizerServer(LabradServer):
         """
         timestamps = loads(timestamps)
         for channel, ts in enumerate(timestamps):
-            self._write_timestamps(ts, channel, verbose)
+            yield self._write_timestamps(ts, channel, verbose)
 
 if __name__ == '__main__':
     from labrad import util
