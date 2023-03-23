@@ -9,6 +9,7 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 
 import synthesizer.synthesizer_sequences as ss
+import pickle, json
 
 class Waveform(ConductorParameter):
     """
@@ -26,13 +27,13 @@ class Waveform(ConductorParameter):
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        self.synthesizer = yield self.cxn.synthesizer
+        self.synthesizer = yield self.cxn.krbg2_synthesizer
 
     @inlineCallbacks
     def update(self):
         if self.value:
             try:
-                seq, durations = ss.compile_sequence(self.value)
+                seq, durations = ss.compile_sequence(pickle.loads(self.value))
                 yield self.synthesizer.reset()
                 for i, channel in enumerate(seq):
                     yield self.synthesizer.write_timestamps(channel, i)
