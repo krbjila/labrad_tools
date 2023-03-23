@@ -25,8 +25,13 @@ channels, in turn, has four memories:
 0) Low 32 bits of the time stamp.
 1) Upper 32 bits of the time stamp.
 2) The 32 bit frequency tuning word.
-3) Three unused bits | 1 bit to indicate phase updates
+3) Two unused bits | 2 bits to indicate phase updates
    | 12 bits of a phase word | 16 bit amplitude.
+
+The lower bit is for absolute phase updates. In this mode that phase
+accumulator gets set to the value provided in the PTW.
+The higher bit is for relative phase updates. In this mode that phase
+accumulator gets set to its current value plus the PTW.
 
 The FPGA fabric can hold 8192 entries for the sequencer table. This
 results in a 13 bit address space for these timestamps. We have 16 bits
@@ -45,10 +50,10 @@ change output at the trigger (time equals 0), with a phase update,
 zero phase (0x000), maximum aplitude (0xFFFF) and a frequency of
 268.8 MHz (0xDFFFFFF) at memory address 0000:
 
-A100000000000000
-A110000000000000
-A1200000DFFFFFFF
-A13000001000FFFF
+A1000000 00000000
+A1100000 00000000
+A1200000 DFFFFFFF
+A1300000 1000FFFF
 
 Calculating the frequency:
 The frequency f of the output tone is given by
@@ -62,17 +67,43 @@ the box will wait idle for the next trigger event to start the sequence
 from the beginning.
 For example, the below block puts the termination sequencer into memory
 slot 4 for the first channel:
-A100000400000000
-A110000400000000
-A120000400000000
-A130000400000000
+A1000004 00000000
+A1100004 00000000
+A1200004 00000000
+A1300004 00000000
 
 Should the sequencer ever get hung up, for instance due to a missing
 termination stamp or a timestamp that by error is too far (like a few
 hours or so) in the future, the sequencer can be reset by sending a
 message of 0xA300 over the network interface.
 
+GPIO outputs have been added to the sequencer. Since only two additional
+bits are available in the data section of timestamps, we map the 7 GPIO
+outputs to bits 62 - 56 of the timestamps for the first channel. Bits
+62 - 56 of the remaining three channels have no effect and are not used.
+For instance,
+A1000000 00000000
+A1100000 7F000000
+will turn on all GPIO outputs at time 0.
 
+Pins on J55 map as follows:
+GPIO bit J55 pin
+56       1
+57       3
+58       5
+59       2
+60       4
+61       6
+62       8
+
+Pin 7 is the trigger input.
+
+SD cards can be created following this tutorial:
+https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842385/How+to+format+SD+card+for+SD+boot
+The key points are that you want a bootable boot partition that is
+formatted as FAT file system and a root partition as ext4. Note that
+in this project we are only using the boot partition and the only file
+on it is our boot.bin file.
 
 2/27/2023 questions:
 
@@ -86,10 +117,10 @@ So 0000, 0001, 0010 and 0011 are meaningful while the other 12 options are curre
 
 3) Should "0xss cm aaaa xxxxxxxx" be "0xss mc aaaa xxxxxxxx"? For instance, in the example message chain,
 
-A100000000000000
-A110000000000000
-A1200000DFFFFFFF
-A13000001000FFFF
+A1000000 00000000
+A1100000 00000000
+A1200000 DFFFFFFF
+A1300000 1000FFFF
 
 it seems that you are selecting the memory entry before the channel (which is presumably the 0 channel)?
 
