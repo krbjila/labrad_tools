@@ -33,7 +33,7 @@ class Waveform(ConductorParameter):
     def update(self):
         if self.value:
             try:
-                seq, durations = ss.compile_sequence(pickle.loads(self.value))
+                seq, durations = ss.compile_sequence(pickle.loads(self.value.encode('latin1')))
                 yield self.synthesizer.reset()
                 for i, channel in enumerate(seq):
                     yield self.synthesizer.write_timestamps(channel, i)
