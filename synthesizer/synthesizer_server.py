@@ -27,9 +27,9 @@ sys.path.append("../client_tools")
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
 from labrad.util import getNodeName
-from time import sleep
-from json import loads
+from jsonpickle import loads
 import socket
+import synthesizer_sequences as ss
 
 class SynthesizerServer(LabradServer):
     """Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop."""
@@ -155,6 +155,9 @@ class SynthesizerServer(LabradServer):
             frequency (int): The frequency (in Hz) to set
             wait_for_trigger (bool): Whether to wait for a trigger. Defaults to False.
             digital_out ([bool]): A list of 7 booleans, corresponding to whether each channel should be turned on. Defaults to [False]*7, in which case the digital outputs are off.
+
+        Returns:
+            List[ByteArray]: The messages to send to the synthesizer that represent the timestamp.
         """
 
         N_CHANNELS = 4
@@ -272,10 +275,10 @@ class SynthesizerServer(LabradServer):
             self.sock.sendto(b, self.dest)
 
     @inlineCallbacks
-    @setting(5, timestamps='s', verbose='b')
-    def write_timestamps(self, c, timestamps, verbose=False):
+    @setting(5, timestamps='s', compile='b', verbose='b')
+    def write_timestamps(self, c, timestamps, compile=False, verbose=False):
         """
-        write_timestamps(self, c, timestamps, verbose=False)
+        write_timestamps(self, c, timestamps, compile=False, verbose=False)
 
         Writes timestamps from a JSON-formatted string. See :meth:`write_timestamps` for specification.
 
@@ -283,7 +286,12 @@ class SynthesizerServer(LabradServer):
             c: The LabRAD context. Not used.
             timestamps (str): A JSON-formatted string containing a list of lists of dictionaries, each of which is a timestamp.
         """
-        timestamps = loads(timestamps)
+        timestamps = loads(timestamps, keys=True)
+        if compile:
+            try:
+                timestamps = loads(ss.compile_sequence(timestamps)[0])
+            except Exception as e:
+                print("Could not compile sequence:\n{}".format(e))
         for channel, ts in enumerate(timestamps):
             yield self._write_timestamps(ts, channel, verbose)
 

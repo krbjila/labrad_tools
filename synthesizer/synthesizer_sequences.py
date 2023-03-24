@@ -2,14 +2,8 @@
 Classes and functions for generating sequences for the RF synthesizer
 
 To do:
-    * Finish implementing digital outputs
-        * Determine which timestamps control digital outputs (emailed Felix)
-        * Add digital outputs to compiler
-        * Add digital outputs to plots
-    * Fix setting the phase in the compiler to use the relative phase
     * Design functions for maintaining phase on frequency switching
     * Finish implementing SyncPoints
-    * Add VS Code task to plot RF sequence on key press (or maybe when file is saved). See here: https://code.visualstudio.com/docs/editor/tasks
     * Test synthesizer server
     * Test synthesizer conductor device
 """
@@ -21,7 +15,6 @@ import warnings
 from typing import List, Optional
 from json import dumps, JSONEncoder
 from dataclasses import dataclass
-from itertools import chain
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -1063,7 +1056,7 @@ def plot_sequence(seq: List[RFBlock]):
     Args:
         seq ([RFBlock]): The sequence to plot
     """
-    compiled = compile_sequence(seq, output_json=False)[0]
+    compiled, durations = compile_sequence(seq, output_json=False)
 
     fig = make_subplots(rows=3+N_DIGITAL, cols=1, shared_xaxes=True, vertical_spacing=0.015, row_heights=[0.25, 0.25, 0.25] + [0.2/N_DIGITAL]*N_DIGITAL)
 
@@ -1112,3 +1105,5 @@ def plot_sequence(seq: List[RFBlock]):
     fig.update_layout(legend={'traceorder':'grouped'})
 
     fig.show()
+
+    return (compiled, durations)
