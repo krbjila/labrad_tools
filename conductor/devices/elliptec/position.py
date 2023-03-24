@@ -48,9 +48,9 @@ class Position(ConductorParameter):
             interfaces = yield self.server.get_interface_list()
             interface = interfaces[0]
             yield self.server.select_interface(interface)
-            yield self.server.home()
-            sleep(2)
-            yield self.server.move_abs(self.default)
+            # yield self.server.home()
+            # sleep(2)
+            # yield self.server.move_abs(self.default)
         except Exception as e:
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
