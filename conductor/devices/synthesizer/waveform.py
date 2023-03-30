@@ -12,9 +12,6 @@ from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
 
-# import synthesizer_sequences as ss
-import pickle, json
-
 class Waveform(ConductorParameter):
     """
     Waveform(ConductorParameter)
@@ -38,13 +35,7 @@ class Waveform(ConductorParameter):
         if self.value:
             print("AAAAAAAA SYNTH UPDATED!!!! {}".format(self.value))
             try:
-            #     seq, durations = ss.compile_sequence(pickle.loads(self.value))
                 yield self.synthesizer.reset()
-            #     for i, channel in enumerate(seq):
-            #         yield self.synthesizer.write_timestamps(channel, i)
-            #     # Set *RF1, *RF2, *RF3, *RF4 to the durations of the first four blocks of the first channel
-            #     for i in range(1, min(4, len(durations[0]))):
-            #         if durations[0][i] > 0:
-            #             yield self.cxn.conductor.set_parameter_values(json.dumps({'sequencer': {'*RF{}'.format(i+1): durations[0][i]}}))
+                yield self.synthesizer.write_timestamps(self.value, True, False)
             except Exception as e:
                 print(e)
