@@ -87,7 +87,7 @@ class StirapServer(LabradServer):
             self.channels[channel]['last_freq'] = freqs[-1]
             yield self.server.select_device(self.channels[channel]['channel'])
             yield self.server.write_data(program, self.profiles)
-            # time.sleep(1)
+            time.sleep(1)
             yield self.server.force_trigger()
             time.sleep(0.002)
             yield self.server.force_trigger()
