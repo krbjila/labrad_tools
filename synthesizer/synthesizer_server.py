@@ -289,7 +289,7 @@ class SynthesizerServer(LabradServer):
         timestamps = loads(timestamps, keys=True)
         if compile:
             try:
-                timestamps = loads(ss.compile_sequence(timestamps)[0])
+                timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
             except Exception as e:
                 print("Could not compile sequence:\n{}".format(e))
         for channel, ts in enumerate(timestamps):

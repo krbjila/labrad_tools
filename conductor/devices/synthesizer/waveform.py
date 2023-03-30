@@ -33,7 +33,6 @@ class Waveform(ConductorParameter):
     @inlineCallbacks
     def update(self):
         if self.value:
-            print("AAAAAAAA SYNTH UPDATED!!!! {}".format(self.value))
             try:
                 yield self.synthesizer.reset()
                 yield self.synthesizer.write_timestamps(self.value, True, False)
