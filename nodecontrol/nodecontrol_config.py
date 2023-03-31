@@ -6,7 +6,7 @@ node_dicts = [
     {
         'node polarkrb': [
                 # start hardware interfaces first
-                # 'synthesizer',
+                'synthesizer',
                 'usb',
                 'serial',
                 # 'labjack',
@@ -24,7 +24,7 @@ node_dicts = [
             'okfpga',
             'usb',
             'serial',
-            'dg800',
+            # 'dg800',
             'elliptec',
             'ad9910', # needs serial server
             'logging'

@@ -82,6 +82,7 @@ variables_dict = [
     ['*MARIARecom', 0.4],
     ['*MARIAFilter', 0.4],
     ['*MARIAQuad', 0.7],
+    ['*MARIACDT', 0.7],
     ['*Latt1Load', 0],
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
