@@ -624,7 +624,7 @@ class Transition():
         self.frequency_offset = frequency_offset
         if len(self.amplitudes) > 1:
             self.interp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
-            self.default_Rabi_frequency = interp(self.default_amplitude)
+            self.default_Rabi_frequency = self.interp(self.default_amplitude)
         else:
             self.interp = None
             self.default_Rabi_frequency = Rabi_frequencies[0]
@@ -672,6 +672,7 @@ class SetTransition(RFBlock):
 
     def compile(self, state: SequenceState) -> RFBlock:
         state.transition = self.transition
+        state.frequency = self.transition.frequency - self.transition.frequency_offset
         return super().compile(state)
 
 def todB(amplitude_lin):
@@ -757,7 +758,7 @@ class AreaPulse(RFPulse):
             return [Wait(0)]
         Rabi_frequency = transition.Rabi_frequency(self.amplitude)
         rect_pulse_duration = self.pulse_area/Rabi_frequency
-        pulse = Pulse(1, self.amplitude, self.phase, transition.frequency, self.centered, self.window, **self.kwargs)
+        pulse = Pulse(1, self.amplitude, self.phase, transition.frequency - transition.frequency_offset, self.centered, self.window, **self.kwargs)
         pulse.duration = rect_pulse_duration/pulse.area
         return [pulse]
 
