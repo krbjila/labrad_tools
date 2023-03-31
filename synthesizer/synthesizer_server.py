@@ -284,12 +284,12 @@ class SynthesizerServer(LabradServer):
 
         Args:
             c: The LabRAD context. Not used.
-            timestamps (str): A JSON-formatted string containing a list of lists of dictionaries, each of which is a timestamp.
+            timestamps (str): A JSON-formatted string containing a dictionary (keys: channels, values: sequences) of lists of dictionaries, each of which is a timestamp.
         """
         timestamps = loads(timestamps, keys=True)
         if compile:
             timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
-        for channel, ts in enumerate(timestamps):
+        for channel, ts in timestamps.items():
             yield self._write_timestamps(ts, channel, verbose)
 
 if __name__ == '__main__':

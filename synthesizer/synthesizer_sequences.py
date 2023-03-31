@@ -942,24 +942,18 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         * Outputs the sequence in a list of serializable dictionaries that can be sent to the synthesizer server.
 
     Args:
-        sequence (list or list of lists of :class:`RFBlock`): The sequence to compile. If a list of lists is given, compiles multiple channels at once, handling :class:`SyncPoint` blocks. Otherwise, compiles a single channel's sequence, ignoring :class:`SyncPoint`.
+        sequence (dictionary of lists of :class:`RFBlock`): The sequence to compile. Keys should be channels, values should be list of :class:`RFBlock`.
         output_json (bool): Outputs a JSON-formatted string of timestamos that can be sent to :class:`synthesizer.synthesizer_server` if True, or a list of :class:`RFBlock` if False. Defaults to True.
 
     Returns
-        ((List[RFBlock] | str), List[List[float]]): A tuple containing the compiled sequence and a list of lists the durations of the sequences for each channel
+        ((List[RFBlock] | str), Dict[int : List[float]]): A tuple containing the compiled sequence and a list of lists the durations of the sequences for each channel
     """
 
-    if len(sequence) == 0:
-        return []
-    multichannel = True
-    if isinstance(sequence[0], RFBlock):
-        sequence = [sequence]
-        multichannel = False
-    compiled = []
-    all_durations = []
+    compiled = {}
+    all_durations = {}
 
     sequence = deepcopy(sequence)
-    for channel, stack in enumerate(sequence):
+    for channel, stack in sequence.items():
         stack.reverse()
         state = SequenceState()
         compiled_channel = [] #[Timestamp(0, amplitude=state.amplitude, phase=state.phase, frequency=state.frequency)]
@@ -970,11 +964,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                 if len(compiled_channel) > 0 and isinstance(compiled_channel[-1], AdjustNextDuration) and not isinstance(block, Timestamp):
                     raise TypeError("{} must be followed by a Timestamp, but is followed by {}".format(compiled_channel[-1], block))
                 if isinstance(block, SyncPoint):
-                    if multichannel:
-                        pass
-                        # TODO: Implement this
-                    else:
-                        warnings.warn("SyncPoints are ignored when a single channel is compiled.")
+                    raise(NotImplementedError())
                 elif isinstance(block, SetTransition):
                     pass
                 elif isinstance(block, AdjustPrevDuration):
@@ -1028,8 +1018,8 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         compiled_channel.append(terminator)
         if len(compiled_channel) > MAX_LENGTH:
             raise ValueError("The length {} of channel {}'s sequence exceeds the maximum length of {}".format(len(compiled_channel), channel, MAX_LENGTH))
-        compiled.append(compiled_channel)
-        all_durations.append(durations)
+        compiled[channel] = compiled_channel
+        all_durations[channel] = durations
     if output_json:
         class RFBlockEncoder(JSONEncoder):
             def default(self, obj):
@@ -1062,7 +1052,7 @@ def plot_sequence(seq: List[RFBlock]):
     fig = make_subplots(rows=3+N_DIGITAL, cols=1, shared_xaxes=True, vertical_spacing=0.015, row_heights=[0.25, 0.25, 0.25] + [0.2/N_DIGITAL]*N_DIGITAL)
 
     plot_data = {}
-    for (channel, seq_channel) in enumerate(compiled):
+    for channel, seq_channel in compiled.items():
         times = []
         ampls = []
         phases = []
@@ -1111,15 +1101,7 @@ def plot_sequence(seq: List[RFBlock]):
 
 def send_seq(seq):
     if isinstance(seq, List):
-        if len(seq) == 0:
-            return jsonpickle.dumps([[],[],[],[]])
-        elif isinstance(seq[0], RFBlock):
-            # Assume a sequence that is a single list is for channel 0.
-            return jsonpickle.dumps([seq], keys=True)
-        elif isinstance(seq[0], List):
-            # Assume a list of lists is for multiple channels.
-            return jsonpickle.dumps(seq, keys=True)
-        else:
-            raise(ValueError("Sequence {} must be a list of RFBlocks or lists.".format(seq)))
+        return [jsonpickle.dumps(s, keys=True) for s in seq]
     else:
-        raise(ValueError("Sequence {} must be a list or list of lists.".format(seq)))
+        return jsonpickle.dumps(seq, keys=True)
+    
