@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 import warnings
 from typing import List, Optional
 from json import dumps, JSONEncoder
+import jsonpickle
 from dataclasses import dataclass
 
 import plotly.graph_objects as go
@@ -1107,3 +1108,18 @@ def plot_sequence(seq: List[RFBlock]):
     fig.show()
 
     return (compiled, durations)
+
+def send_seq(seq):
+    if isinstance(seq, List):
+        if len(seq) == 0:
+            return jsonpickle.dumps([[],[],[],[]])
+        elif isinstance(seq[0], RFBlock):
+            # Assume a sequence that is a single list is for channel 0.
+            return jsonpickle.dumps([seq], keys=True)
+        elif isinstance(seq[0], List):
+            # Assume a list of lists is for multiple channels.
+            return jsonpickle.dumps(seq, keys=True)
+        else:
+            raise(ValueError("Sequence {} must be a list of RFBlocks or lists.".format(seq)))
+    else:
+        raise(ValueError("Sequence {} must be a list or list of lists.".format(seq)))

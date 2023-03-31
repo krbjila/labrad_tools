@@ -37,19 +37,9 @@
                 "default_amplitude": 1
             }
         },
-        "pulseShaperAWG": {
-            "blackman": {
-                "default_period": 100E-6,
-                "default_amplitude": 0.5
-            }
-        },
         "ad9910": {
             "update": {
-                "device": "N=1",
-                "default": 0
-            },
-            "shelver": {
-                "device": "N=2",
+                "device": "K",
                 "default": 0
             }
         },
@@ -100,7 +90,7 @@
         },
         "synthesizer": {
             "waveform": {
-                "default_waveform": [[], [], [], []]
+                "default_waveform": ""
             }
         }
     }

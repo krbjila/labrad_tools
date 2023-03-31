@@ -1,9 +1,6 @@
 import sys
 sys.path.append('../')
 
-LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
-sys.path.append(LABRAD_FOLDER + 'synthesizer/')
-
 from generic_device.generic_parameter import GenericParameter
 
 from twisted.internet.defer import inlineCallbacks, Deferred
@@ -19,22 +16,22 @@ class Waveform(ConductorParameter):
     Conductor parameter for controlling the waveform output by the RF synthesizer.
     """
     priority = 99
-    value_type = 'list'
+    value_type = 'single'
 
     def __init__(self, config={}):
         super(Waveform, self).__init__(config)
-        self.value = [self.default_waveform]
+        self.value = self.default_waveform
 
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
-        self.synthesizer = yield self.cxn.krbg2_synthesizer
+        self.synthesizer = yield self.cxn.polarkrb_synthesizer
 
     @inlineCallbacks
     def update(self):
-        if self.value:
+        if self.value and len(self.value) > 0:
             try:
                 yield self.synthesizer.reset()
-                yield self.synthesizer.write_timestamps(self.value, True, False)
+                yield self.synthesizer.write_timestamps(self.value, True)
             except Exception as e:
                 print(e)
