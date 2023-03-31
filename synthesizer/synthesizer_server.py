@@ -12,7 +12,7 @@ To do:
     description = server for the JILA 4-channel RF synthesizer
     instancename = %LABRADNODE%_synthesizer
     [startup]
-    cmdline = %PYTHON3% %FILE%
+    cmdline = %ANACONDA3% %FILE%
     timeout = 20
     [shutdown]
     message = 987654321
@@ -288,10 +288,7 @@ class SynthesizerServer(LabradServer):
         """
         timestamps = loads(timestamps, keys=True)
         if compile:
-            try:
-                timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
-            except Exception as e:
-                print("Could not compile sequence:\n{}".format(e))
+            timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
         for channel, ts in enumerate(timestamps):
             yield self._write_timestamps(ts, channel, verbose)
 
