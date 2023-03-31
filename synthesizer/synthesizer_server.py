@@ -290,7 +290,7 @@ class SynthesizerServer(LabradServer):
         if compile:
             timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
         for channel, ts in timestamps.items():
-            yield self._write_timestamps(ts, channel, verbose)
+            yield self._write_timestamps(ts, int(channel), verbose)
 
 if __name__ == '__main__':
     from labrad import util
