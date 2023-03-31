@@ -213,12 +213,13 @@ class Wait(Timestamp):
     """
     Waits for a fixed duration.
     """
-    def __init__(self, duration: float) -> None:
+    def __init__(self, duration: float, wait_for_trigger: bool = False) -> None:
         """
         Args:
             duration (float): The duration to wait in seconds.
+            wait_for_trigger (bool): Whether to wait for a trigger. Defaults to False.
         """
-        super().__init__(duration)
+        super().__init__(duration, wait_for_trigger=wait_for_trigger)
 
 class SyncPoint(RFBlock):
     """
@@ -757,7 +758,7 @@ class AreaPulse(RFPulse):
         if self.pulse_area == 0:
             return [Wait(0)]
         Rabi_frequency = transition.Rabi_frequency(self.amplitude)
-        rect_pulse_duration = self.pulse_area/Rabi_frequency
+        rect_pulse_duration = self.pulse_area/(2*np.pi*Rabi_frequency)
         pulse = Pulse(1, self.amplitude, self.phase, transition.frequency - transition.frequency_offset, self.centered, self.window, **self.kwargs)
         pulse.duration = rect_pulse_duration/pulse.area
         return [pulse]
