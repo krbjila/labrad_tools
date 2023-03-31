@@ -4,8 +4,6 @@ Classes and functions for generating sequences for the RF synthesizer
 To do:
     * Design functions for maintaining phase on frequency switching
     * Finish implementing SyncPoints
-    * Test synthesizer server
-    * Test synthesizer conductor device
 """
 from __future__ import annotations
 from copy import copy, deepcopy
