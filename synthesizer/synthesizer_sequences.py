@@ -28,7 +28,7 @@ class SequenceState():
     """
     Records the state of a synthesizer channel at any point in the sequence. Used by :func:`compile_sequence` and the :meth:`RFBlock.compile`.
     """
-    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 1E6, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = [], digital_out: List[bool] = [False]*N_DIGITAL) -> None:
+    def __init__(self, amplitude: float = 0, phase: float = 0, frequency: float = 1E6, transition:Transition = None, time: float = 0, triggers: int = 0, syncpoints: List[SyncPoint] = [], digital_out: List[bool] = [False]*7) -> None:
         """
         Args:
             amplitude (float): The amplitude of the channel. Defaults to 0.
@@ -38,7 +38,7 @@ class SequenceState():
             time (float): The time since the start or the last trigger. Defaults to 0.
             triggers (int): The number of triggers required so far. Defaults to 0.
             syncpoints (list of str): The ordered list of :class:`SyncPoint` so far. Defaults to :code:`[]`.
-            digital_out (list of bool): The state of the digital outputs. Defaults to :code:`[False]*N_DIGITAL`.
+            digital_out (list of bool): The state of the digital outputs. Defaults to :code:`[False]*7`.
         """
         self.amplitude = amplitude
         self.phase = phase
@@ -956,7 +956,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
     for channel, stack in sequence.items():
         stack.reverse()
         state = SequenceState()
-        compiled_channel = [] #[Timestamp(0, amplitude=state.amplitude, phase=state.phase, frequency=state.frequency)]
+        compiled_channel = []
         while len(stack) > 0:
             head = stack.pop()
             if hasattr(head, "atomic") and head.atomic:
@@ -989,7 +989,7 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         block.phase = state.phase
                     if block.frequency is None:
                         block.frequency = state.frequency
-                    if block.duration > 0:
+                    if block.duration > 0 or block.wait_for_trigger:
                         compiled_channel.append(block)
                     block.digital_out = state.digital_out
                 elif isinstance(block, AdjustNextDuration):
@@ -1061,7 +1061,7 @@ def plot_sequence(seq: List[RFBlock]):
         i = 0
         for block in seq_channel[:-1]:
             if block.wait_for_trigger:
-                plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs}
+                plot_data[str((channel, i))] = {"time": times, "amplitude": ampls, "phase": phases, "frequency": freqs, "digital": digital}
                 times = []
                 ampls = []
                 phases = []
