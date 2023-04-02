@@ -9,7 +9,6 @@ from __future__ import annotations
 from copy import copy, deepcopy
 import numpy as np
 from scipy.interpolate import interp1d
-import warnings
 from typing import List, Optional
 from json import dumps, JSONEncoder
 import jsonpickle
@@ -21,7 +20,8 @@ from plotly.subplots import make_subplots
 
 MAX_FREQUENCY = 307.2E6 # Hertz
 MAX_LENGTH = 8192
-MAX_DURATION = 2**48*(1/153.6E6) # seconds
+MIN_DURATION = 1/153.6E6
+MAX_DURATION = 2**48*MIN_DURATION # seconds
 N_DIGITAL = 7
 
 class SequenceState():
@@ -989,7 +989,14 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         block.phase = state.phase
                     if block.frequency is None:
                         block.frequency = state.frequency
-                    if block.duration > 0 or block.wait_for_trigger:
+                    if block.duration > 0:
+                        compiled_channel.append(block)
+                    elif block.wait_for_trigger:
+                        if block.duration == 0:
+                            block.duration = MIN_DURATION
+                        compiled_channel.append(block)
+                    elif block.duration == 0 and len(stack) > 0 and isinstance(stack[-1], Timestamp) and stack[-1].wait_for_trigger:
+                        block.duration = MIN_DURATION
                         compiled_channel.append(block)
                     block.digital_out = state.digital_out
                 elif isinstance(block, AdjustNextDuration):
