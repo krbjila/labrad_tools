@@ -332,7 +332,7 @@ class BlackmanPulse(RFPulse):
 
         Keyword Args:
             steps (int, optional): The number of steps to approximate the pulse. Should be at least 7. Defaults to 20.
-            exact (bool, optional): Whether to use exact parameters for the window, as described `here <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_. Defaults to False.
+            exact (bool, optional): Whether to use exact parameters for the window, as described `on Wikipedia <https://en.wikipedia.org/wiki/List_of_window_functions#Blackman_window>`_. Defaults to False.
         """
         self.duration = duration
         self.amplitude = amplitude
@@ -959,6 +959,10 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
         compiled_channel = []
         while len(stack) > 0:
             head = stack.pop()
+            if isinstance(head, List):
+                head.reverse()
+                stack += head
+                continue
             if hasattr(head, "atomic") and head.atomic:
                 block = head.compile(state)
                 if len(compiled_channel) > 0 and isinstance(compiled_channel[-1], AdjustNextDuration) and not isinstance(block, Timestamp):
