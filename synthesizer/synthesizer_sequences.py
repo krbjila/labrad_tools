@@ -624,10 +624,9 @@ class Transition():
         
         self.frequency_offset = frequency_offset
         if len(self.amplitudes) > 1:
-            self.interp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
-            self.default_Rabi_frequency = self.interp(self.default_amplitude)
+            itp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
+            self.default_Rabi_frequency = itp(self.default_amplitude)
         else:
-            self.interp = None
             self.default_Rabi_frequency = Rabi_frequencies[0]
 
     def __repr__(self) -> str:
@@ -649,8 +648,9 @@ class Transition():
             amplitude = self.default_amplitude
         if amplitude <= 0 or amplitude > 1:
             raise ValueError("Amplitude {} must be > 0 and <= 1".format(amplitude))
-        if self.interp is not None:
-            return self.interp(amplitude)
+        if len(self.amplitudes) > 1:
+            itp = interp1d(self.amplitudes, self.Rabi_frequencies, copy=False, fill_value="extrapolate")
+            return itp(amplitude)
         else:
             return self.default_Rabi_frequency
 
