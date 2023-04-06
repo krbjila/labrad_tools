@@ -24,7 +24,7 @@ docutils==0.16
 entrypoints==0.3
 enum34==1.1.6
 functools32==3.2.3.post2
-future==0.17.1
+future==0.18.3
 futures==3.2.0
 hyperlink==18.0.0
 idna==2.8
