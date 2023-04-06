@@ -42,7 +42,7 @@ jsonschema==3.0.1
 jupyter==1.0.0
 jupyter-client==5.2.4
 jupyter-console==5.2.0
-jupyter-core==4.5.0
+jupyter-core==4.11.2
 jupyterlab==0.33.12
 jupyterlab-launcher==0.11.2
 kiwisolver==1.0.1
