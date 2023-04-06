@@ -3,7 +3,7 @@ asn1crypto==0.24.0
 astroid==1.6.6
 attrs==21.2.0
 Automat==0.7.0
-Babel==2.9.0
+Babel==2.9.1
 backports-abc==0.5
 backports.functools-lru-cache==1.5
 backports.shutil-get-terminal-size==1.0.0
