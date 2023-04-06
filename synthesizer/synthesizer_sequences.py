@@ -79,7 +79,7 @@ class RFBlock():
 
 class RFPulse(RFBlock):
     """
-    An base class for RF pulses.
+    A base class for RF pulses.
     """
     @staticmethod
     def center(center: bool, sequence: List[RFBlock], duration: float):
