@@ -20,7 +20,7 @@ Provides direct access to USB-enabled hardware.
 """
 import sys
 
-import visa
+import pyvisa
 
 from labrad.server import LabradServer, setting
 
@@ -34,7 +34,7 @@ class GPIBServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         """ Fill self.interfaces with available connections using Python VISA """
-        rm = visa.ResourceManager('@py')
+        rm = pyvisa.ResourceManager('@py')
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)

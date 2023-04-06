@@ -127,28 +127,28 @@
                 },
                 {
                     "loc": ["B", 1],
-                    "name": "K/KRb RF MUX",
+                    "name": "Trigger RF",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 2],
-                    "name": "AD9910 PS0",
+                    "name": "TTL B02",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 3],
-                    "name": "AD9910 PS1",
+                    "name": "TTL B03",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 4],
-                    "name": "AD9910 PS2",
+                    "name": "TTL B04",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -190,14 +190,14 @@
                 },
                 {
                     "loc": ["B", 10],
-                    "name": "K/KRb RF Switch",
+                    "name": "K RF Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 11],
-                    "name": "K/KRb AD9910 Trig.",
+                    "name": "K AD9910 Trig.",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -274,14 +274,14 @@
                 },
                 {
                     "loc": ["C", 6],
-                    "name": "V. Latt. Phase Stab.",
+                    "name": "VLatt Phase Stab (inverted)",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["C", 7],
-                    "name": "|2,0> DDS Trig.",
+                    "name": "TTL C07",
                     "mode": "auto",
                     "manual_output": 1,
                     "invert": 0
@@ -330,7 +330,7 @@
                 },
                 {
                     "loc": ["C", 14],
-                    "name": "|2,0> RF Switch",
+                    "name": "LATT2 AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -443,7 +443,7 @@
                 },
                 {
                     "loc": ["D", 14],
-                    "name": "Blackman Switch",
+                    "name": "Advance STIRAP DDS",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1046,7 +1046,7 @@
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC17: K Probe Intensity", 
+                    "name": "DAC17:", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
@@ -1122,7 +1122,7 @@
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC28: Latt 1", 
+                    "name": "DAC28: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
@@ -1133,13 +1133,13 @@
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC30: Latt 2", 
+                    "name": "DAC30:", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC31: ", 
+                    "name": "DAC31: Latt 1", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1174,7 +1174,7 @@
                 },
                 {
                     "loc": 3, 
-                    "name": "DAC35: ", 
+                    "name": "DAC35: Latt 2", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
@@ -1185,7 +1185,7 @@
                     "manual_output": 0.0
                 },
                 {   "loc": 5, 
-                    "name": "DAC37: ", 
+                    "name": "DAC37: K Probe Detuning", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },

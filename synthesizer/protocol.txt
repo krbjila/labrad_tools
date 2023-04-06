@@ -1,0 +1,151 @@
+The sequencer unit in the design operates by comparing time stamps in a
+table to a timer unit. The timer is running at a frequency of 153.6
+MHz, resulting in a time increment of ~6.51 ns. A second, on the other
+hand corresponds to an increment of 153 600 000 or 0x927C000 in hex. To
+allow for long experiments to be timed without overflow, 48 bits are
+used to store these time stamps. This allows for experiments as long as
+21 days.
+In addition to the 48 bits used for time there is a special bit, bit 49,
+which is used to encode for "do this when the next high trigger is
+observed". Until then the sequencer will not continue on. Once the
+trigger is received the sequencer will start counting up again from a
+value of 0 such that subsequent times are referenced to the trigger
+event.
+
+The sequencer can be triggered from the hardware trigger input to the
+box. In addition, a software trigger is available to facilitate
+testing. To trigger the sequencer through the software trigger send a
+message of 0xA200 over the network interface.
+
+The message format for all remaining messages starts with a 0xA1 byte.
+It it then followed by 4 bits selecting the memory used and another 4
+bits that encode for the channel (i.e. 0,1,2,3). Each one of the
+channels, in turn, has four memories:
+
+0) Low 32 bits of the time stamp.
+1) Upper 32 bits of the time stamp.
+2) The 32 bit frequency tuning word.
+3) Two unused bits | 2 bits to indicate phase updates
+   | 12 bits of a phase word | 16 bit amplitude.
+
+The lower bit is for absolute phase updates. In this mode that phase
+accumulator gets set to the value provided in the PTW.
+The higher bit is for relative phase updates. In this mode that phase
+accumulator gets set to its current value plus the PTW.
+
+The FPGA fabric can hold 8192 entries for the sequencer table. This
+results in a 13 bit address space for these timestamps. We have 16 bits
+allocated in the messages, therefore the uppermost 3 bits are not used
+and can be set to 0.
+
+The messages will then be of the format
+0xss mc aaaa xxxxxxxx
+where ss is our fixed start bit (A1), m is the selected memory (0123),
+c is the selected channel (0123), aaaa is the address of the time stamp
+to be programmed and xxxxxxxx is the 32-bit word that will be stored in
+the memory.
+
+Below are four messages that can be send to program the sequencer to
+change output at the trigger (time equals 0), with a phase update,
+zero phase (0x000), maximum aplitude (0xFFFF) and a frequency of
+268.8 MHz (0xDFFFFFF) at memory address 0000:
+
+A1000000 00000000
+A1100000 00000000
+A1200000 DFFFFFFF
+A1300000 1000FFFF
+
+Calculating the frequency:
+The frequency f of the output tone is given by
+f = FTW*307.2 MHz / 2^32
+So the FTW is
+FTW = 2^32 * f / 307.2 MHz
+
+The final entry in each one of the sequencer tables should be all zeroes.
+When this special stamp is hit the sequencer run will terminate and
+the box will wait idle for the next trigger event to start the sequence
+from the beginning.
+For example, the below block puts the termination sequencer into memory
+slot 4 for the first channel:
+A1000004 00000000
+A1100004 00000000
+A1200004 00000000
+A1300004 00000000
+
+Should the sequencer ever get hung up, for instance due to a missing
+termination stamp or a timestamp that by error is too far (like a few
+hours or so) in the future, the sequencer can be reset by sending a
+message of 0xA300 over the network interface.
+
+GPIO outputs have been added to the sequencer. Since only two additional
+bits are available in the data section of timestamps, we map the 7 GPIO
+outputs to bits 62 - 56 of the timestamps for the first channel. Bits
+62 - 56 of the remaining three channels have no effect and are not used.
+For instance,
+A1000000 00000000
+A1100000 7F000000
+will turn on all GPIO outputs at time 0.
+
+Pins on J55 map as follows:
+GPIO bit J55 pin
+56       1
+57       3
+58       5
+59       2
+60       4
+61       6
+62       8
+
+Pin 7 is the trigger input.
+
+SD cards can be created following this tutorial:
+https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842385/How+to+format+SD+card+for+SD+boot
+The key points are that you want a bootable boot partition that is
+formatted as FAT file system and a root partition as ext4. Note that
+in this project we are only using the boot partition and the only file
+on it is our boot.bin file.
+
+2/27/2023 questions:
+
+1) How do you use 4 bits to encode the channel selection?
+Four bits means this field can hold values from 0 to 15 (0000 to 1111) where only the first 4 values are used.
+So 0000, 0001, 0010 and 0011 are meaningful while the other 12 options are currently ignored.
+
+2) How do you use 4 bits to encode the memory selection for each channel?
+Four bits means this field can hold values from 0 to 15 (0000 to 1111) where only the first 4 values are used.
+So 0000, 0001, 0010 and 0011 are meaningful while the other 12 options are currently ignored.
+
+3) Should "0xss cm aaaa xxxxxxxx" be "0xss mc aaaa xxxxxxxx"? For instance, in the example message chain,
+
+A1000000 00000000
+A1100000 00000000
+A1200000 DFFFFFFF
+A1300000 1000FFFF
+
+it seems that you are selecting the memory entry before the channel (which is presumably the 0 channel)?
+
+Yes, thank you for pointing that out. I have corrected the file accordingly.
+
+4) How do you encode the wait for trigger? Is it the low time bit that gets set to 1 in the "A100000200010000" message that is in your test Python script that you shared?
+
+Yes, exactly. I have added a paragraph describing this above.
+
+5) As we started discussing together, what is the expected behavior of the awg if it receives a trigger when it is not in the wait for trigger mode?
+
+Currently trigger events when the box is not actively waiting for a trigger are simply ignored. We can modify this behavior to make the box behave in
+whatever way best suits your experiment. I am wondering about how these wait events are being handles between channels and in situations where
+for instance channels 0,1 and 3 are already waiting for a trigger but channel 2 has not gotten to that point yet. Just let me know what behavior
+will be best for you and we'll implement the triggering accordingly.
+
+6) How does the program terminate/what message or string of messages do we need to send to terminate the sequence?
+
+I have added a paragraph above to describe the current termination. Again, we can modify this behavior if something other than the default
+better suits your requirements.
+
+7) In your description, you mention that there are 8192 entries for the sequencer. Is this the total number of messages that we can write, or the total number that we can write to each channel, or something else?
+
+Each one of the channels has 8192 entries. The four memories are completely independent of each other, so there is no way to give unused memory from one channel to another one.
+
+8) Is there a way to interrupt the sequence when it is running? For instance, as Cal mentioned in his email about trying the updated FPGA code, we had an issue where the sequence did not seem to terminate, and when we tried to rewrite to it, it actively refused the connection
+
+I have added this for you, please see above.

@@ -12,7 +12,7 @@ import synthesizer_sequences as ss
 # }
 
 seq = {
-    0: [ss.SetTransition(ss.Transition(10E6, [.1, 1], [1, 10])), ss.PiPulse(0.5)]
+    0: [ss.Pulse(1, 1, 0, 1E6), ss.Wait(0, wait_for_trigger=True), ss.Pulse(1, 0.5, 0, 1E6)]
 }
 
 compiled, durations = ss.compile_sequence(seq, False)

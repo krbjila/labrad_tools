@@ -19,7 +19,7 @@ Provides direct access to USB-enabled hardware.
     ### END NODE INFO
 """
 import sys
-import visa
+import pyvisa
 from labrad.server import LabradServer, setting
 sys.path.append('../')
 from server_tools.hardware_interface_server import HardwareInterfaceServer
@@ -31,7 +31,7 @@ class USBServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         """ Fill self.interfaces with available connections using Python VISA """
-        rm = visa.ResourceManager()
+        rm = pyvisa.ResourceManager()
         addresses = rm.list_resources()
         additions = set(addresses) - set(self.interfaces.keys())
         deletions = set(self.interfaces.keys()) - set(addresses)
@@ -136,6 +136,24 @@ class USBServer(HardwareInterfaceServer):
             interface.read_termination = read
         return (interface.write_termination, interface.read_termination)
 
+    @setting(8, baud_rate='i', returns='i')
+    def baud_rate(self, c, baud_rate=None):
+        """
+        baudrate(self, c, baud_rate=None)
+
+        Sets or gets the baudrate
+
+        Args:
+            c: The LabRAD context
+            baud_rate (int, optional): The baud rate to set. Defaults to None, in which case the baud rate is not set.
+
+        Returns:
+            (int): The current baud rate
+        """
+        interface = self.get_interface(c)
+        if baud_rate  is not None:
+            interface.baud_rate  = baud_rate 
+        return interface.baud_rate 
 
 if __name__ == '__main__':
     from labrad import util

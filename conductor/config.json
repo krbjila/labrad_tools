@@ -37,19 +37,9 @@
                 "default_amplitude": 1
             }
         },
-        "pulseShaperAWG": {
-            "blackman": {
-                "default_period": 100E-6,
-                "default_amplitude": 0.5
-            }
-        },
         "ad9910": {
             "update": {
-                "device": "N=1",
-                "default": 0
-            },
-            "shelver": {
-                "device": "N=2",
+                "device": "K",
                 "default": 0
             }
         },
@@ -59,26 +49,6 @@
             },
             "down": {
                 "default_freq": [157.05]
-            }
-        },
-        "dg800": {
-            "sin": {
-                "default_sin" : {
-                    "freq1": 0,
-                    "amplitude1": 0,
-                    "phase1": 0,
-                    "offset1": 0,
-                    "output1": 0,
-                    "ncycles1": 1,
-                    "gated1": 1,
-                    "freq2": 0,
-                    "amplitude2": 0,
-                    "phase2": 0,
-                    "offset2": 0,
-                    "output2": 0,
-                    "ncycles2": 1,
-                    "gated2": 1
-                }
             }
         },
         "highFieldRbARP": {
@@ -96,6 +66,11 @@
             "update": {
                 "default": {
                 }
+            }
+        },
+        "synthesizer": {
+            "waveform": {
+                "default_waveform": ""
             }
         }
     }

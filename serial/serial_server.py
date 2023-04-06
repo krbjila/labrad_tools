@@ -168,6 +168,11 @@ class SerialServer(HardwareInterfaceServer):
     @setting(9, buffer='s')
     def flush(self, c, buffer=None):
         """
+        Flushes the selected device's input or output buffer.
+
+        Args:
+            c: The LabRAD context
+            buffer (str, optional): "input" or "output" to select the buffer. Defaults to None.
         """
         interface = self.get_interface(c)
         if buffer == 'input':
@@ -178,6 +183,16 @@ class SerialServer(HardwareInterfaceServer):
     @setting(10, baud='w', returns='w')
     def baud_rate(self, c, baud=None):
         """
+        baud_rate(self, c, baud=None)
+
+        Sets the baud rate of the selected device if baud is not None. Returns the baud rate.
+
+        Args:
+            c: The LabRAD context
+            baud (int, optional): The baud rate to set. Defaults to None.
+
+        Returns:
+            int: The device's current baud rate
         """
         interface = self.get_interface(c)
         if baud is not None:
