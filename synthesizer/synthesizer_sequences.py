@@ -54,7 +54,7 @@ class RFBlock():
     """
     A base class for elements of a sequence for a synthesizer channel.
 
-    Attributes:
+    Parameters:
         atomic (bool): Whether the block is handled directly by the compiler (True) or returns a sequence of blocks which need to be compiled (False). Defaults to False.
     """
 

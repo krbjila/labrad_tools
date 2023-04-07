@@ -29,7 +29,7 @@ from twisted.internet import reactor
 from labrad.util import getNodeName
 from jsonpickle import loads
 import socket
-import synthesizer_sequences as ss
+from . import synthesizer_sequences as ss
 
 class SynthesizerServer(LabradServer):
     """Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop."""

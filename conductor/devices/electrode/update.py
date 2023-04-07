@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
-from lib.helpers import *
+from .lib.helpers import *
 
 LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
 

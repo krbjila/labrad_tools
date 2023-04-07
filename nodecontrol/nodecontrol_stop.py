@@ -3,7 +3,7 @@ A script which stops the LabRAD servers listed in :mod:`nodecontrol.nodecontrol_
 """
 
 import labrad
-from nodecontrol_config import node_dicts
+from .nodecontrol_config import node_dicts
 
 if __name__ == "__main__":
     try:

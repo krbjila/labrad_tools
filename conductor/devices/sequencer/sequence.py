@@ -1,12 +1,10 @@
-import sys
 import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
-from lib.helpers import *
-from datetime import datetime
+from .lib.helpers import *
 
 class Sequence(ConductorParameter):
     """
