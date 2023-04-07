@@ -1,8 +1,8 @@
-import visa
+import pyvisa
 from time import sleep, time
 from evaporate import evaporation
 
-rm = visa.ResourceManager('@py')
+rm = pyvisa.ResourceManager('@py')
 
 
 def do_evap(evap, device):
