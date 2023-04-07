@@ -791,6 +791,37 @@ def PiOver2Pulse(amplitude: Optional[float] = None, phase: Optional[float] = Non
     """
     return AreaPulse(np.pi/2, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
 
+class BB1(AreaPulse):
+    """
+    Generates a `BB1 <https://doi.org/10.1006/jmra.1994.1159>`_ robust composite pulse.
+    """
+    # def __init__(self, *args, **kwargs):
+    #     super(BB1, self).__init__(*args, **kwargs)
+
+    def compile(self, state: SequenceState) -> List[RFPulse]:
+        if self.phase is None:
+            self.phase = state.phase
+        phi1 = np.arccos(-self.pulse_area / (2*np.pi))
+        phi2 = 3*phi1
+        return [
+            PiPulse(self.amplitude, self.phase + phi1, self.centered, self.window, **self.kwargs),
+            AreaPulse(2*np.pi, self.amplitude, self.phase + phi1, self.centered, self.window, **self.kwargs),
+            PiPulse(self.amplitude, self.phase + phi2, self.centered, self.window, **self.kwargs),
+            AreaPulse(self.pulse_area, self.amplitude, self.phase, self.centered, self.window, **self.kwargs)
+        ]
+
+    def __repr__(self) -> str:
+        val = "BB1({}".format(self.pulse_area)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        val += ", centered={}, window={}".format(self.centered, self.window)
+        if len(self.kwargs) > 0:
+            val += ", {}".format(self.kwargs)
+        val += ")"
+        return val
+
 def SpinEcho(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     """
     SpinEcho(duration, pulse=None)
