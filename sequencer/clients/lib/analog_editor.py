@@ -289,7 +289,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
             ramp_type = s['type']
             c.show()
             c.ramp_select.setCurrentIndex(c.ramp_select.findText(ramp_type))
-	    for k in c.parameter_widgets[ramp_type].pboxes.keys():
+            for k in c.parameter_widgets[ramp_type].pboxes.keys():
                 c.parameter_widgets[ramp_type].pboxes[k].display(s[k])
                 
         self.loading = False
@@ -298,7 +298,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
     def add_column(self, i):
         def ac():
             sequence = self.get_sequence()
-	    for c in sequence.keys():
+            for c in sequence.keys():
                 sequence[c].insert(i, sequence[c][i])
 
             scroll_position = self.ramp_scroll.horizontalScrollBar().value()
@@ -309,7 +309,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
     def dlt_column(self, i):
         def dc():
             sequence = self.get_sequence()
-	    for c in sequence.keys():
+            for c in sequence.keys():
                 sequence[c].pop(i)
 
             scroll_position = self.ramp_scroll.horizontalScrollBar().value()
@@ -346,7 +346,7 @@ class AnalogVoltageEditor(QtGui.QDialog):
             sequence = self.get_sequence()
             if i < len(sequence[self.channel]) - 1:
                 dt = sequence[self.channel][i]['dt']
-		sequence[self.channel][i] = deepcopy(sequence[self.channel][i+1])
+                sequence[self.channel][i] = deepcopy(sequence[self.channel][i+1])
                 sequence[self.channel][i]['dt'] = dt
 
             scroll_position = self.ramp_scroll.horizontalScrollBar().value()
