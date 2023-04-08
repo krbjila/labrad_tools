@@ -795,20 +795,22 @@ class BB1(AreaPulse):
     """
     Generates a `BB1 <https://doi.org/10.1006/jmra.1994.1159>`_ robust composite pulse.
     """
-    # def __init__(self, *args, **kwargs):
-    #     super(BB1, self).__init__(*args, **kwargs)
 
     def compile(self, state: SequenceState) -> List[RFPulse]:
         if self.phase is None:
             self.phase = state.phase
         phi1 = np.arccos(-self.pulse_area / (2*np.pi))
         phi2 = 3*phi1
-        return [
+        pulses =  [
             PiPulse(self.amplitude, self.phase + phi1, self.centered, self.window, **self.kwargs),
             AreaPulse(2*np.pi, self.amplitude, self.phase + phi2, self.centered, self.window, **self.kwargs),
             PiPulse(self.amplitude, self.phase + phi1, self.centered, self.window, **self.kwargs),
             AreaPulse(self.pulse_area, self.amplitude, self.phase, self.centered, self.window, **self.kwargs)
         ]
+        self.duration = 0
+        for p in pulses: 
+            self.duration += deepcopy(p).compile(deepcopy(state))[0].duration
+        return AreaPulse.center(self.center, pulses, self.duration)
 
     def __repr__(self) -> str:
         val = "BB1({}".format(self.pulse_area)
@@ -1044,12 +1046,12 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                 stack.extend(blocks)
         durations = []
         duration = 0
+        compiled_channel = [b for b in compiled_channel if isinstance(b, Timestamp)]
         for block in compiled_channel:
-            if isinstance(block, Timestamp):
-                if block.wait_for_trigger:
-                    durations.append(duration)
-                    duration = 0
-                block.duration, duration = duration, block.duration + duration
+            if block.wait_for_trigger:
+                durations.append(duration)
+                duration = 0
+            block.duration, duration = duration, block.duration + duration
             if duration > MAX_DURATION:
                 raise ValueError("The duration {} s of channel {}'s sequence exceeds the maximum duration of {} s after {}".format(duration, channel, MAX_DURATION, block))
         durations.append(duration)
