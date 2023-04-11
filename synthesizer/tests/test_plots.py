@@ -7,7 +7,7 @@ sys.path.append(parent)
 import synthesizer_sequences as ss
 
 seq = {
-    0: [ss.SetTransition(ss.Transition(2E6, [0.5], [1000])), ss.BB1(pi)],
+    0: [ss.SetTransition(ss.Transition(2E6, [0.5], [1000])), ss.CORPSE(pi/2, phase=pi/2)],
 }
 
 compiled, durations = ss.compile_sequence(seq, False)
@@ -15,4 +15,5 @@ for s in compiled[0][0:-1]:
     print(s)
 print("durations: {}".format(durations))
 
-ss.plot_sequence(seq)
+compiled, durations, fig = ss.plot_sequence(seq)
+# fig.write_html("fig.html")

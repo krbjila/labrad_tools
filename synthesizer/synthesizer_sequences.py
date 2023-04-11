@@ -823,6 +823,41 @@ class BB1(AreaPulse):
             val += ", {}".format(self.kwargs)
         val += ")"
         return val
+    
+class CORPSE(AreaPulse):
+    """
+    Generates a `CORPSE <https://doi.org/10.1103/PhysRevA.67.042308>`_ robust composite pulse.
+    """
+
+    def compile(self, state: SequenceState) -> List[RFPulse]:
+        if self.phase is None:
+            self.phase = state.phase
+        theta = self.pulse_area
+        theta1 = 2*np.pi + theta/2.0 - np.arcsin(np.sin(theta/2.0)/2.0)
+        theta2 = 2*np.pi - 2*np.arcsin(np.sin(theta/2.0)/2.0)
+        theta3 = theta/2.0 - np.arcsin(np.sin(theta/2.0)/2.0)
+        print(theta1*180/np.pi, theta2*180/np.pi, theta3*180/np.pi)
+        pulses =  [
+            AreaPulse(theta1, self.amplitude, self.phase, self.centered, self.window, **self.kwargs),
+            AreaPulse(theta2, self.amplitude, self.phase + np.pi, self.centered, self.window, **self.kwargs),
+            AreaPulse(theta3, self.amplitude, self.phase, self.centered, self.window, **self.kwargs)
+        ]
+        self.duration = 0
+        for p in pulses: 
+            self.duration += deepcopy(p).compile(deepcopy(state))[0].duration
+        return AreaPulse.center(self.center, pulses, self.duration)
+
+    def __repr__(self) -> str:
+        val = "CORPSE({}".format(self.pulse_area)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        val += ", centered={}, window={}".format(self.centered, self.window)
+        if len(self.kwargs) > 0:
+            val += ", {}".format(self.kwargs)
+        val += ")"
+        return val
 
 def SpinEcho(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     """
@@ -1141,7 +1176,7 @@ def plot_sequence(seq: List[RFBlock]):
 
     fig.show()
 
-    return (compiled, durations)
+    return (compiled, durations, fig)
 
 def send_seq(seq):
     if isinstance(seq, List):
