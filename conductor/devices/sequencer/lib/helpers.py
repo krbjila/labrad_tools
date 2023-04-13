@@ -156,7 +156,12 @@ def substitute_sequence_parameters(x, parameter_values):
     elif type(x).__name__ == 'list':
         return [substitute_sequence_parameters(xx, parameter_values) for xx in x]
     elif type(x).__name__ == 'dict':
-        return {k: substitute_sequence_parameters(v, parameter_values) for k, v in x.items()}
+        out = {}
+        for k, v in x.items():
+            out[k] = substitute_sequence_parameters(v, parameter_values)
+            if k == "dt" and out[k] <= 0:
+                raise ValueError("Time {} is {} but must be positive! Sad!".format(v, out[k]))
+        return out
     else:
         return x
 

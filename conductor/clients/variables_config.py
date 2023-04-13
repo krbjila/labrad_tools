@@ -73,8 +73,10 @@ variables_dict = [
     ['*HOTFilter', 0.4],
     ['*HOTQuad', 0.5],
     ['*MARIALoad', -8.37], # was 5 (10/09/20); was 4.5 (9/23/20); was 2.34 (11/27/19); was 2.6
-    ['*LattLoad', -10], #for HLatt alignment
-    ['*LattFinal', -0.4],
+    ['*Latt1Load', -10], #for HLatt alignment
+    ['*Latt2Load', -10], #for HLatt alignment
+    ['*Latt1Final', -0.4],
+    ['*Latt2Final', -0.4],
     ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', -0.9765], # was 0.5
     ['*MARIAFinal2', -0.9765],
