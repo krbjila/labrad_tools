@@ -594,15 +594,22 @@ class Transition():
     """
     Describes the calibrated frequency and Rabi frequencies for a transition. Used in :class:`SetTransition` to set parameters for :func:`AreaPulse`.
     """
-    def __init__(self, frequency: float, amplitudes: List[float], Rabi_frequencies: List[float], default_amplitude:Optional[float] = None, frequency_offset: float = 0) -> None:
+    def __init__(self, frequency: float, amplitudes, Rabi_frequencies=None, default_amplitude:Optional[float] = None, frequency_offset: float = 0) -> None:
         """
         Args:
             frequency (float): The frequency of the transition in Hertz.
-            amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. 
-            Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes`.
+            amplitudes (dict or list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. Can also take a dictionary with amplitude keys and Rabi frequency values, in which case Rabi_frequencies is ignored.
+            Rabi_frequencies (list of float, optional): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes` if lists are used. Defaults to None.
             default_amplitude (float, optional): The default amplitude for pulses on the transition. Defaults to None, in which case the first element of amplitudes is used.
             frequency_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is :code:`frequency - frequency_offset`. Defaults to 0.
         """
+        if isinstance(amplitudes, dict):
+            amplitudes_list=[]
+            Rabi_frequencies=[]
+            for k, v in amplitudes.items():
+                amplitudes_list.append(k)
+                Rabi_frequencies.append(v)
+            amplitudes = amplitudes_list
         if len(amplitudes) == 0 or len(Rabi_frequencies) != len(amplitudes):
             raise ValueError("amplitudes and Rabi_frequencies must be non-empty arrays of the same length.")
         for a in amplitudes:
