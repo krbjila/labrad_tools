@@ -4,7 +4,11 @@ A script which starts the LabRAD servers listed in :mod:`nodecontrol.nodecontrol
 
 import labrad 
 import numpy as np
-from .nodecontrol_config import node_dicts
+
+import sys, os  
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+from nodecontrol_config import node_dicts
 
 
 if __name__ == "__main__":

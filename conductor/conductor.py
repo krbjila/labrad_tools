@@ -66,7 +66,8 @@ Parameters can be registered on-the-fly, but we typically enable them by includi
 """
 
 import json
-import os, errno
+import os, errno, sys
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from collections import deque
 from copy import deepcopy
@@ -82,14 +83,14 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.defer import returnValue
 from twisted.internet.threads import deferToThread
 
-from .lib.helpers import import_parameter
-from .lib.helpers import remaining_points
-from .lib.exceptions import ParameterAlreadyRegistered
-from .lib.exceptions import ParameterNotImported
-from .lib.exceptions import ParameterNotRegistered
-from .lib.exceptions import ParameterNotInitialized
+from lib.helpers import import_parameter
+from lib.helpers import remaining_points
+from lib.exceptions import ParameterAlreadyRegistered
+from lib.exceptions import ParameterNotImported
+from lib.exceptions import ParameterNotRegistered
+from lib.exceptions import ParameterNotInitialized
 
-from .clients import variables_config
+from clients import variables_config
 
 FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
 

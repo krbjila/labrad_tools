@@ -1,10 +1,13 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
 import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
 
 from conductor_device.conductor_parameter import ConductorParameter
-from .lib.helpers import *
+from lib.helpers import *
 
 class Sequence(ConductorParameter):
     """

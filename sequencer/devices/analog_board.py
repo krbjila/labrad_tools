@@ -4,7 +4,11 @@ import json
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
-from .lib.analog_ramps import RampMaker
+
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+from lib.analog_ramps import RampMaker
 
 VOLTAGE_RANGE = (-10., 10.)
 DAC_BITS = 16

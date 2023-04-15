@@ -21,7 +21,7 @@ To do:
 """
 
 from math import pi
-import sys
+import sys, os
 from labrad.server import LabradServer, setting
 sys.path.append("../client_tools")
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -29,7 +29,11 @@ from twisted.internet import reactor
 from labrad.util import getNodeName
 from jsonpickle import loads
 import socket
-from . import synthesizer_sequences as ss
+
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
+import synthesizer_sequences as ss
 
 class SynthesizerServer(LabradServer):
     """Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop."""

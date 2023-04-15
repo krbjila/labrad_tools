@@ -1,11 +1,13 @@
-import numpy as np
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
 import json
 import math
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 from server_tools.device_server import DeviceWrapper
-from .lib.ad5791_ramps import RampMaker
+from lib.ad5791_ramps import RampMaker
 
 (VREFN, VREFP) = (-5., 5.)
 (VMIN, VMAX) = (-2.6, 2.6)
