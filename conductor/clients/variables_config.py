@@ -7,7 +7,7 @@ variables_dict = [
     ['*KProbeI', -4.4],
     ['*KHFBlast', 0.385],
     ['*KMOT', 3.6], # was 5.1
-    ['*RbMOT', 1.3], # was 3.5
+    ['*RbMOT', 1.7], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
     ['*NWhigh', 4.27],# 03/14/2023 was 4.51 was 4.55, changed 05/14/2021
@@ -85,7 +85,6 @@ variables_dict = [
     ['*MARIAFilter', 0.4],
     ['*MARIAQuad', 0.7],
     ['*MARIACDT', 0.7],
-    ['*Latt1Load', 0],
     ['*LSLLoad', 0],
     ['*LSLFilter', 0],
     ['*LSLFinal', 0.03],

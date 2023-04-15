@@ -1040,13 +1040,13 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC16: K Probe Detuning", 
+                    "name": "DAC16:", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
                 {
                     "loc": 1, 
-                    "name": "DAC17:", 
+                    "name": "DAC17: K Probe Intensity", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
