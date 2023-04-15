@@ -6,6 +6,9 @@ import os
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
 
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
 from decorators import quickSetting
 
 

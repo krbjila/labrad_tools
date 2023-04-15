@@ -228,7 +228,7 @@ class Ui_MainWindow(object):
         backup_folder = relative_backup_path + folder_s
         backup_file = backup_folder + file_s
         if not os.path.exists(backup_folder):
-			os.makedirs(backup_folder)
+            os.makedirs(backup_folder)
         with open(backup_file, 'w') as outfile:
             json.dump(x,outfile)
 
@@ -243,20 +243,20 @@ class Ui_MainWindow(object):
             x = exponential(self.A['start'][k],self.A['stop'][k],self.A['asymp'][k],self.A['tau'][k])
             F = np.append(F,x)
         T = np.arange(len(F))*dT
-	self.MaxTime = T[-1]
-	print(self.MaxTime)
+        self.MaxTime = T[-1]
+        print(self.MaxTime)
         self.graph.axes.clear()
         self.graph.axes.plot(T,F)
-	print(F[-1])
+        print(F[-1])
         fick = "Evap. Time: {0:.2f} s".format(self.MaxTime)
-	self.graph.axes.set_title(fick)
+        self.graph.axes.set_title(fick)
         self.graph.draw()
 
     def delrow(self):
         self.table.removeRow(self.table.rowCount()-1)
-	for k in range(5):
-		self.A[self.headers[k]] = self.A[self.headers[k]][0:-1]
-	self.updategraph()
+        for k in range(5):
+            self.A[self.headers[k]] = self.A[self.headers[k]][0:-1]
+        self.updategraph()
         return True
 
     def addrow(self):

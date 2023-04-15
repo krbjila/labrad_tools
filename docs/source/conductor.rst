@@ -77,7 +77,7 @@ TODO: Document this more, including how to write a conductor device
    conductor.devices.ad9910 module
    ----------------------------------------------------------
    
-   Conductor device for controlling AD9910 DDS, using :mod:`ad9910.ad9910_server`. We currently have two units, each controlled by a conductor parameter, :mod:`conductor.devices.ad9910.update` for controlling the \|0,0\> to \|1,0\> and K RF, and :mod:`conductor.devices.ad9910.shelver` for controlling the \|1,0\> to \|2,0\> RF.
+   Conductor device for controlling AD9910 DDS, using :mod:`ad9910.ad9910_server`. We currently have two units, each controlled by a conductor parameter, :mod:`conductor.devices.ad9910.update` for controlling the K RF.
 
    .. automodule:: conductor.devices.ad9910
       :members:
@@ -89,15 +89,6 @@ TODO: Document this more, including how to write a conductor device
       ----------------------------------------------------------
       
       .. automodule:: conductor.devices.ad9910.helpers
-         :members:
-         :undoc-members:
-         :show-inheritance:
-         :exclude-members: call_if_available, cam_info
-
-      conductor.devices.ad9910.shelver module
-      ----------------------------------------------------------
-      
-      .. automodule:: conductor.devices.ad9910.shelver
          :members:
          :undoc-members:
          :show-inheritance:

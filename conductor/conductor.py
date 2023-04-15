@@ -66,7 +66,8 @@ Parameters can be registered on-the-fly, but we typically enable them by includi
 """
 
 import json
-import os, errno
+import os, errno, sys
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from collections import deque
 from copy import deepcopy
