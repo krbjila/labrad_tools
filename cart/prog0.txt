@@ -1,97 +1,57 @@
-' Trigger channel
-#DEFINE Trigger BIT6
-#DEFINE AuxIn BIT2
-
-' Control bits for homing
-#DEFINE HomeBackupEnable 16152
-#DEFINE HomeNegativeEdgeSel 16153
-#DEFINE HomeNegativeEdgeDir 16154
-
-' Status bits for homing
-#DEFINE HomeSuccessful BIT16134
-#DEFINE HomeFailed BIT16135
-
-' Status bits for motion
-#DEFINE JogActive BIT792
-#DEFINE AxisEnable BIT8465
-#DEFINE InMotion BIT516
-#DEFINE NotInPosition BIT516
-
-' Positions
-#DEFINE CurrentPosition P12288
-#DEFINE TicksPerMm P12375
-#DEFINE JogOffset P12297
-
-PROG0
-PROGRAM
-
-    HLIM X3
-    JOG ACC X250
-    JOG DEC X250
-    JOG VEL X50
-    JOG HOMVF X25
-    PGAIN X 0.032
-    DGAIN X 0.0001
-    LOPASS X0
-    SET HomeBackupEnable
-    SET HomeNegativeEdgeSel
-    SET HomeNegativeEdgeDir
-    CLR HomeSuccessful
-    CLR HomeFailed
-    SLIM X0
-    
-    DRIVE ON X
-    INH AxisEnable(0.5)
-    DWL 0.2
-    JOG HOME X-1
-    PRINT "Homing..."
-    DWL 0.2
-    WHILE ((NOT HomeSuccessful) AND (NOT HomeFailed))
-    WEND      
-    JOG OFF X
-    INH -JogActive
-    SLIM X3
-    IF (HomeSuccessful) THEN PRINT "Homed!"
-    IF (HomeFailed)
-        PRINT "Homing failed. Aborting..."
-        END
-    ENDIF
-    WHILE (-1)
-     PRINT "Moving to MOT"
-     
-     JOG ACC X200
-     JOG DEC X200
-     JOG VEL X200
-     
-     JOG ABS X-180.2
-     ' JOG ABS X-182.5
-     
-     INH Trigger
-        
-     PRINT "Moving to cell"
-     
-     JOG ACC X300
-     JOG DEC X150
-     JOG VEL X135
-     LOPASS X0
-     
-     ' JOG ABS X430
-     JOG ABS X609.927
-     
-     DWL 2.45
-     JOG VEL X100
-     
-     'Disable drive once jog is done
-     DWL 0.2
-     INH -JogActive
-     DRIVE OFF X
-     
-     'Re-enable drive on trigger and move to MOT
-        INH -Trigger
-        DRIVE ON X
-        DWL 0.2
-        LOPASS X200
-        JOG REN X
-    WEND
-    DRIVE OFF X
-ENDP
+ PROGRAM 
+ HLIM X3 
+ JOG ACC X250 
+ JOG DEC X250 
+ JOG VEL X50 
+ JOG HOMVF X25 
+ PGAIN X0.032 
+ DGAIN X0.0001 
+ LOPASS X0 
+ SET 16152 
+ SET 16153 
+ SET 16154 
+ CLR HomeSuccessful
+ CLR HomeFailed
+ SLIM X0 
+ DRIVE ON X 
+ INH AxisEnable(0.5) 
+ DWL 0.2 
+ JOG HOME X-1 
+ PRINT "Homing..." 
+ DWL 0.2 
+ WHILE  ((NOT HomeSuccessful) AND (NOT HomeFailed)) 
+ WEND  
+ JOG OFF X 
+ INH -JogActive
+ SLIM X3 
+ IF  (HomeSuccessful) THEN PRINT "Homed!" 
+  IF  (HomeFailed) 
+   PRINT "Homing failed. Aborting..." 
+   END 
+  ENDIF  
+  WHILE  (-1) 
+   PRINT "Moving to MOT" 
+   JOG ACC X300 
+   JOG DEC X300 
+   JOG VEL X200 
+   JOG ABS X-180.2
+   INH Trigger
+   PRINT "Moving to cell" 
+   JOG ACC X350 
+   JOG DEC X150 
+   JOG VEL X150 
+   LOPASS X0 
+   JOG ABS X608.827 
+   DWL 1.214
+   JOG VEL X110 
+   DWL 0.2 
+   INH -JogActive
+   DRIVE OFF X 
+   INH -Trigger
+   DRIVE ON X 
+   DWL 0.2 
+   LOPASS X200 
+   JOG REN X 
+  WEND  
+  DRIVE OFF X 
+  ENDP 
