@@ -1,7 +1,7 @@
 {
     "wavemeter": {
         "channels": [
-            { "i": 0, "label": "Up Leg (6.5kV)", "max_freq": 309.6028, "min_freq": 309.6026},
+            { "i": 0, "label": "Up Leg (6.5kV)", "max_freq": 309.6028, "min_freq": 309.6026, "comment": "DO NOT (MIS)USE ME"},
             { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
             { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01617},
             { "i": 4, "label": "Down Leg (6.5kV)", "max_freq": 434.9232, "min_freq": 434.9228},

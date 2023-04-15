@@ -1,6 +1,7 @@
 import json
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtWidgets import QMenu, QAction
 import pycurl
 from io import BytesIO
 from functools import partial
@@ -21,13 +22,82 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.url = 'http://192.168.141.125:8000/wavemeter/api/'
         self.engine = pyttsx3.init()
         self.engine.startLoop(False)
+        self._createMenuBar()
+
+    def _createMenuBar(self):
+        menuBar = self.menuBar()
+        eFieldMenu = menuBar.addMenu("&Field")
+
+
+        # for i in [0,1]:
+        #     self.set0Field = QAction("asdf", self)
+        #     self.set0Field.setStatusTip("&0field")
+        #     self.set0Field.triggered.connect(lambda checked, index=i: self.updateStirapField(index))
+
+        #     eFieldMenu.addAction(self.set0Field)
+   
+        actions = []
+        filenames = range(0,len(self.stirap))
+        for filename in filenames:
+            action = QAction(str(self.stirap[filename]['i']), self)
+            action.triggered.connect(lambda checked, index=filename: self.updateStirapField(index))
+            actions.append(action)
+
+        # Step 3. Add the actions to the menu
+        eFieldMenu.addActions(actions)
+
+    def updateStirapField(self, i):
+        ## update label
+        self.buttons[0].setText("UpLeg " + str(self.stirap[i]['i'])+" kV/cm")
+        self.buttons[3].setText("DownLeg " + str(self.stirap[i]['i'])+" kV/cm")
+        
+        ## update max/min 
+        xDet = 0.0001  ## frequency range
+
+        self.lasers[0].update({"label": "UpLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fUpLeg"]+xDet, "min_freq": self.stirap[i]["fUpLeg"]-xDet})
+        self.lasers[3].update({"label": "DownLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fDownLeg"]+xDet, "min_freq": self.stirap[i]["fDownLeg"]-xDet})
+        self.update()
+        # print(self.stirap[i]["fUpLeg"])
+
+        
+
 
     def initialize(self):
         """
-        Loads the config file ``logging_config.json`` and lays out buttons and labels in the window per the channels listed in the config file.
+       lays out buttons and labels in the window per the channels listed in the config file.
         """
-        with open("logging_config.json", 'r') as f:
-            config = json.load(f)
+        # with open("logging_config.json", 'r') as f:
+            # config = json.load(f)
+
+        config={"wavemeter": 
+            {
+                "channels":
+                [
+                    { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026},
+                    { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
+                    { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01617},
+                    { "i": 4, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
+                    { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},
+                    { "i": 6, "label": "Rb Repump", "max_freq": 384.23482, "min_freq": 384.23472},
+                    { "i": 9, "label": "K Trap", "max_freq": 1370, "min_freq": 400}
+                ]
+            }
+        }
+        stirapFields={"fields":[
+                    { "i": 0,      "fUpLeg":309.60298,  "fDownLeg":434.92273},
+                    { "i": 1,      "fUpLeg":309.60303,  "fDownLeg":434.92283},
+                    { "i": 1.5,    "fUpLeg":309.60305,  "fDownLeg":434.92284},
+                    { "i": 2.7,    "fUpLeg":309.60306,  "fDownLeg":434.92293},
+                    { "i": 3.5,    "fUpLeg":309.60303,  "fDownLeg":434.92296},
+                    { "i": 4.6,    "fUpLeg":309.60297,  "fDownLeg":434.92289},
+                    { "i": 5.5,    "fUpLeg":309.60275,  "fDownLeg":434.92298},
+                    { "i": 6.5,    "fUpLeg":309.60280,  "fDownLeg":434.92300},
+                    { "i": 9.0,    "fUpLeg":309.60246,  "fDownLeg":434.92296},
+                    { "i": 12.7,   "fUpLeg":309.60163,  "fDownLeg":434.92287}
+                ]
+        }
+
+
 
         main = QtWidgets.QGridLayout()
         sizepolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -37,26 +107,29 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.t_good = []
         i = 0
         self.lasers = config['wavemeter']['channels']
+        self.stirap = stirapFields["fields"]
         for laser in self.lasers:
-            button = QtWidgets.QPushButton()
-            button.setText(laser['label'])
-            button.setSizePolicy(sizepolicy)
-            button.setFont(QtGui.QFont('Comic Sans', 24))
-            button.pressed.connect(partial(self.pressed, button, i))
+            if True:
+                button = QtWidgets.QPushButton()
+                button.setText(laser['label'])
+                button.setSizePolicy(sizepolicy)
+                button.setFont(QtGui.QFont('Comic Sans', 24))
+                button.pressed.connect(partial(self.pressed, button, i))
 
-            label = QtWidgets.QLabel()
-            label.setText('0.00000 THz')
-            label.setSizePolicy(sizepolicy)
-            label.setFont(QtGui.QFont('Comic Sans', 24))
-            label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-            main.addWidget(button, i, 0)
-            main.addWidget(label, i, 1)
-            self.buttons.append(button)
-            self.labels.append(label)
-            self.broken.append(False)
-            self.t_good.append(time())
-            i += 1
+                label = QtWidgets.QLabel()
+                label.setText('0.00000 THz')
+                label.setSizePolicy(sizepolicy)
+                label.setFont(QtGui.QFont('Comic Sans', 24))
+                label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+                main.addWidget(button, i, 0)
+                main.addWidget(label, i, 1)
+                self.buttons.append(button)
+                self.labels.append(label)
+                self.broken.append(False)
+                self.t_good.append(time())
         
+            i += 1
+            
         mainWidget = QtWidgets.QWidget()
         mainWidget.setLayout(main)
         self.setCentralWidget(mainWidget)
@@ -77,6 +150,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
             self.data = json.loads(body.decode('iso-8859-1'))
             play = False
             names = []
+
             for (i, l) in enumerate(self.lasers):
                 if l['i'] < 8:
                     wl = 299792.458/self.data["wavelengths"][l['i']]

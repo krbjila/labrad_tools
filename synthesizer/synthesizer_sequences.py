@@ -594,15 +594,22 @@ class Transition():
     """
     Describes the calibrated frequency and Rabi frequencies for a transition. Used in :class:`SetTransition` to set parameters for :func:`AreaPulse`.
     """
-    def __init__(self, frequency: float, amplitudes: List[float], Rabi_frequencies: List[float], default_amplitude:Optional[float] = None, frequency_offset: float = 0) -> None:
+    def __init__(self, frequency: float, amplitudes, Rabi_frequencies=None, default_amplitude:Optional[float] = None, frequency_offset: float = 0) -> None:
         """
         Args:
             frequency (float): The frequency of the transition in Hertz.
-            amplitudes (list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. 
-            Rabi_frequencies (list of float): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes`.
+            amplitudes (dict or list of float): A list of amplitudes (relative to full scale) for which the Rabi frequencies are calibrated. Linearly interpolates and extrapolates relative to specified amplitudes. Can also take a dictionary with amplitude keys and Rabi frequency values, in which case Rabi_frequencies is ignored.
+            Rabi_frequencies (list of float, optional): A list of Rabi frequencies (in Hertz) corresponding to :code:`amplitudes`. Must be the same length as :code:`amplitudes` if lists are used. Defaults to None.
             default_amplitude (float, optional): The default amplitude for pulses on the transition. Defaults to None, in which case the first element of amplitudes is used.
             frequency_offset (float, optional): The frequency (in Hertz) of the tone that is mixed with the synthesizer output. The actual output frequency of the synthesizer is :code:`frequency - frequency_offset`. Defaults to 0.
         """
+        if isinstance(amplitudes, dict):
+            amplitudes_list=[]
+            Rabi_frequencies=[]
+            for k, v in amplitudes.items():
+                amplitudes_list.append(k)
+                Rabi_frequencies.append(v)
+            amplitudes = amplitudes_list
         if len(amplitudes) == 0 or len(Rabi_frequencies) != len(amplitudes):
             raise ValueError("amplitudes and Rabi_frequencies must be non-empty arrays of the same length.")
         for a in amplitudes:
@@ -747,7 +754,9 @@ class AreaPulse(RFPulse):
         self.kwargs = kwargs
 
     def compile(self, state: SequenceState) -> List[RFPulse]:
-        transition: Transition = state.transition
+        if issubclass(self.window, AreaPulse):
+            return self.window(self.pulse_area, self.amplitude, self.phase, self.centered, **self.kwargs).compile(state)
+        transition = state.transition
         if self.amplitude is None:
             self.amplitude = transition.default_amplitude
         if self.amplitude <= 0 or self.amplitude > 1:
@@ -791,6 +800,73 @@ def PiOver2Pulse(amplitude: Optional[float] = None, phase: Optional[float] = Non
     """
     return AreaPulse(np.pi/2, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
 
+class BB1(AreaPulse):
+    """
+    Generates a `BB1 <https://doi.org/10.1006/jmra.1994.1159>`_ robust composite pulse.
+    """
+
+    def compile(self, state: SequenceState) -> List[RFPulse]:
+        if self.phase is None:
+            self.phase = state.phase
+        phi1 = np.arccos(-self.pulse_area / (2*np.pi))
+        phi2 = 3*phi1
+        pulses =  [
+            PiPulse(self.amplitude, self.phase + phi1, False, self.window, **self.kwargs),
+            AreaPulse(2*np.pi, self.amplitude, self.phase + phi2, False, self.window, **self.kwargs),
+            PiPulse(self.amplitude, self.phase + phi1, False, self.window, **self.kwargs),
+            AreaPulse(self.pulse_area, self.amplitude, self.phase, False, self.window, **self.kwargs)
+        ]
+        self.duration = 0
+        for p in pulses: 
+            self.duration += deepcopy(p).compile(deepcopy(state))[0].duration
+        return AreaPulse.center(self.centered, pulses, self.duration)
+
+    def __repr__(self) -> str:
+        val = "BB1({}".format(self.pulse_area)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        val += ", centered={}, window={}".format(self.centered, self.window)
+        if len(self.kwargs) > 0:
+            val += ", {}".format(self.kwargs)
+        val += ")"
+        return val
+    
+class CORPSE(AreaPulse):
+    """
+    Generates a `CORPSE <https://doi.org/10.1103/PhysRevA.67.042308>`_ robust composite pulse.
+    """
+
+    def compile(self, state: SequenceState) -> List[RFPulse]:
+        if self.phase is None:
+            self.phase = state.phase
+        theta = self.pulse_area
+        theta1 = 2*np.pi + theta/2.0 - np.arcsin(np.sin(theta/2.0)/2.0)
+        theta2 = 2*np.pi - 2*np.arcsin(np.sin(theta/2.0)/2.0)
+        theta3 = theta/2.0 - np.arcsin(np.sin(theta/2.0)/2.0)
+        pulses =  [
+            AreaPulse(theta1, self.amplitude, self.phase, self.centered, self.window, **self.kwargs),
+            AreaPulse(theta2, self.amplitude, self.phase + np.pi, self.centered, self.window, **self.kwargs),
+            AreaPulse(theta3, self.amplitude, self.phase, self.centered, self.window, **self.kwargs)
+        ]
+        self.duration = 0
+        for p in pulses: 
+            self.duration += deepcopy(p).compile(deepcopy(state))[0].duration
+        return AreaPulse.center(self.centered, pulses, self.duration)
+
+    def __repr__(self) -> str:
+        val = "CORPSE({}".format(self.pulse_area)
+        if self.amplitude is not None:
+            val += ", amplitude={}".format(self.amplitude)
+        if self.phase is not None:
+            val += ", phase={}".format(self.phase)
+        val += ", centered={}, window={}".format(self.centered, self.window)
+        if len(self.kwargs) > 0:
+            val += ", {}".format(self.kwargs)
+        val += ")"
+        return val
+
 def SpinEcho(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     """
     SpinEcho(duration, pulse=None)
@@ -799,13 +875,15 @@ def SpinEcho(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
 
     Args:
         duration (float): The duration of the decoupling sequence in seconds.
-        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulse is overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse` or be a subclass of :class:`RFPulse`. The phase of the pulse is overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
 
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a spin echo decoupling sequence.
     """
     if pulse is None:
         pulse = PiPulse(phase=0, centered=True)
+    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
+        pulse = PiPulse(window=pulse, centered=True)
     else:
         pulse.phase = 0
     return [Wait(duration/2), pulse, Wait(duration/2)]
@@ -818,13 +896,15 @@ def XY8(duration: float, pulse: RFPulse = None) -> List[RFBlock]:
 
     Args:
         duration (float): The duration of the decoupling sequence in seconds.
-        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse` or be a subclass of :class:`RFPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
 
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing an XY8 decoupling sequence.
     """
     if pulse is None:
         pulse = PiPulse(phase=0, centered=True)
+    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
+        pulse = PiPulse(window=pulse, centered=True)
     def phased_pulse(phase):
         new_pulse = copy(pulse)
         new_pulse.phase = phase
@@ -840,13 +920,15 @@ def XY16(duration: float, pulse:Optional[RFPulse] = None) -> List[RFBlock]:
 
     Args:
         duration (float): The duration of the decoupling sequence in seconds.
-        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse` or be a subclass of :class:`RFPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
 
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing an XY16 decoupling sequence.
     """
     if pulse is None:
         pulse = PiPulse(phase=0, centered=True)
+    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
+        pulse = PiPulse(window=pulse, centered=True)
     def phased_pulse(phase):
         new_pulse = copy(pulse)
         new_pulse.phase = phase
@@ -862,13 +944,16 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
 
     Args:
         duration (float): The duration of the decoupling sequence in seconds.
-        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        pulse (RFPulse, optional): The pulse to use for the pi pulses in the decoupling sequence. Should normally be generated by :func:`PiPulse` or be a subclass of :class:`RFPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
 
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a KDD decoupling sequence.
     """
     if pulse is None:
         pulse = PiPulse(phase=0, centered=True)
+    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
+        pulse = PiPulse(window=pulse, centered=True)
+
     def phased_pulse(phase):
         new_pulse = copy(pulse)
         new_pulse.phase = phase
@@ -898,7 +983,7 @@ def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling:
     Args:
         duration (float): The dark time (in seconds) for the Ramsey sequence.
         phase (float, optional): The phase of the final pulse. Defaults to 0.
-        pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
+        pulse (RFPulse, optional): The pulse to use for the pi/2 pulses in the Ramsey sequence. Should normally be generated by :func:`PiOver2Pulse` or be a subclass of :class:`RFPulse`. The phase of the pulses are overridden in the sequence. Defaults to None, in which case a :class:`RectangularPulse` with the default amplitude and frequency for the selected :class:`Transition` is used.
         decoupling (list of :class:`RFBlock`, optional): A decoupling sequence (generated by :func:`XY8`, for example) to insert during the dark time. The duration of :class:`Wait` commands is adjusted to make the total length equal to :code:`duration`. Must only contain :class:`RFPulse` and :class:`Wait` blocks. Defaults to None.
          
     Returns:
@@ -921,6 +1006,8 @@ def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling:
                 b.duration *= duration/decoupling_duration
     if pulse is None:
         pulse = PiOver2Pulse()
+    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
+        pulse = PiPulse(window=pulse, centered=True)
     else:
         pulse.phase = 0
     end_pulse = copy(pulse)
@@ -1013,12 +1100,12 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                 stack.extend(blocks)
         durations = []
         duration = 0
+        compiled_channel = [b for b in compiled_channel if isinstance(b, Timestamp)]
         for block in compiled_channel:
-            if isinstance(block, Timestamp):
-                if block.wait_for_trigger:
-                    durations.append(duration)
-                    duration = 0
-                block.duration, duration = duration, block.duration + duration
+            if block.wait_for_trigger:
+                durations.append(duration)
+                duration = 0
+            block.duration, duration = duration, block.duration + duration
             if duration > MAX_DURATION:
                 raise ValueError("The duration {} s of channel {}'s sequence exceeds the maximum duration of {} s after {}".format(duration, channel, MAX_DURATION, block))
         durations.append(duration)
@@ -1108,7 +1195,7 @@ def plot_sequence(seq: List[RFBlock]):
 
     fig.show()
 
-    return (compiled, durations)
+    return (compiled, durations, fig)
 
 def send_seq(seq):
     if isinstance(seq, List):
