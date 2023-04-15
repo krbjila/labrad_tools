@@ -35,7 +35,7 @@ class evaporation():
         self.amps = A
         self.time = np.arange(len(F))*self.dt
         self.totaltime = max(self.time)
-    self.points = len(self.time)
+        self.points = len(self.time)
          
     def exponential(self,fi,fs,fa,tau):
         if fi <= fa or fs <= fa:
