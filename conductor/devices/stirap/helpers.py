@@ -24,7 +24,11 @@ class STIRAPDevice(ConductorParameter):
     def __init__(self, channel, config={}):
         super(STIRAPDevice, self).__init__(config)
         self.channel = channel
-        self.value = self.default_freq
+        try:
+            self.value = self.default_freq
+        except Exception as e:
+            print("No default STIRAP frequency set.")
+            self.value = None
 
     @inlineCallbacks
     def initialize(self):
