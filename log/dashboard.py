@@ -49,13 +49,13 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
     def updateStirapField(self, i):
         ## update label
         self.buttons[0].setText("UpLeg " + str(self.stirap[i]['i'])+" kV/cm")
-        self.buttons[3].setText("DownLeg " + str(self.stirap[i]['i'])+" kV/cm")
+        self.buttons[4].setText("DownLeg " + str(self.stirap[i]['i'])+" kV/cm")
         
         ## update max/min 
         xDet = 0.0001  ## frequency range
 
         self.lasers[0].update({"label": "UpLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fUpLeg"]+xDet, "min_freq": self.stirap[i]["fUpLeg"]-xDet})
-        self.lasers[3].update({"label": "DownLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fDownLeg"]+xDet, "min_freq": self.stirap[i]["fDownLeg"]-xDet})
+        self.lasers[4].update({"label": "DownLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fDownLeg"]+xDet, "min_freq": self.stirap[i]["fDownLeg"]-xDet})
         self.update()
         # print(self.stirap[i]["fUpLeg"])
 
@@ -74,6 +74,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                 "channels":
                 [
                     { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026},
+                    { "i": 1, "label": "1030", "max_freq": 1E3, "min_freq": 1},
                     { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
                     { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01617},
                     { "i": 4, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
