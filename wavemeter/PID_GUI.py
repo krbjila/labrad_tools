@@ -17,11 +17,11 @@ import adafruit_mcp4728
 class PID_GUI(QtWidgets.QWidget):
 
     default_piezo_kP = 0
-    default_piezo_kI = 0.01
+    default_piezo_kI = -1000
     default_piezo_kD = 0
 
     default_current_kP = 0
-    default_current_kI = 0.01
+    default_current_kI = 0
     default_current_kD = 0
 
     default_setpoint = round(299792.458 / 1028.7397, 6) # THz
@@ -40,6 +40,14 @@ class PID_GUI(QtWidgets.QWidget):
         # Initialize the GUI
         self.initUI()
 
+        # Initialize the DAC board
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        self.dac = adafruit_mcp4728.MCP4728(self.i2c)
+        self.dac.channel_a.vref = adafruit_mcp4728.Vref.INTERNAL
+        self.dac.channel_a.gain = 2
+        self.dac.channel_b.vref = adafruit_mcp4728.Vref.INTERNAL
+        self.dac.channel_b.gain = 2
+
         # Initialize the PID controllers for the piezo and current
         self.piezo_output = PID_GUI.default_piezo
         self.current_output = PID_GUI.default_current
@@ -50,12 +58,12 @@ class PID_GUI(QtWidgets.QWidget):
 
         self.setpoint = PID_GUI.default_setpoint
         self.piezo_pid = PID(PID_GUI.default_piezo_kP, PID_GUI.default_piezo_kI, PID_GUI.default_piezo_kD, setpoint=self.setpoint)
-        self.piezo_pid.output_limits = (0, 4.096)
+        self.piezo_pid.output_limits = (0, 4.095)
         self.piezo_pid.auto_mode = False
         self.piezo_pid.proportional_on_measurement = True
 
         self.current_pid = PID(PID_GUI.default_current_kP, PID_GUI.default_current_kI, PID_GUI.default_current_kD, setpoint=self.setpoint)
-        self.current_pid.output_limits = (0, 4.096)
+        self.current_pid.output_limits = (0, 4.095)
         self.current_pid.auto_mode = False
         self.current_pid.proportional_on_measurement = True
 
@@ -76,14 +84,6 @@ class PID_GUI(QtWidgets.QWidget):
         self.piezo_output_curve.setPen(pg.mkPen(color=(255, 0, 0), width=2))
         self.current_output_curve.setPen(pg.mkPen(color=(0, 0, 255), width=2))
 
-        # Initialize the DAC board
-        self.i2c = busio.I2C(board.SCL, board.SDA)
-        self.dac = adafruit_mcp4728.MCP4728(self.i2c)
-        self.dac.channel_a.vref = adafruit_mcp4728.Vref.INTERNAL
-        self.dac.channel_a.gain = 2
-        self.dac.channel_b.vref = adafruit_mcp4728.Vref.INTERNAL
-        self.dac.channel_b.gain = 2
-
         # Connect the buttons to their functions
         self.start.clicked.connect(self.start_PID)
         self.stop.clicked.connect(self.stop_PID)
@@ -101,7 +101,7 @@ class PID_GUI(QtWidgets.QWidget):
 
         # Start the PID loop
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(PID_GUI.default_dt * 1000)
+        self.timer.setInterval(int(PID_GUI.default_dt * 1000))
         self.timer.timeout.connect(self.run_PID)
         self.timer.start()
 
@@ -246,7 +246,7 @@ class PID_GUI(QtWidgets.QWidget):
         self.piezo_output_label.setAlignment(QtCore.Qt.AlignRight)
         self.piezo_output_display = QtWidgets.QLineEdit("0")
         self.piezo_output_display.setDisabled(False)
-        self.piezo_output_display.setValidator(QtGui.QDoubleValidator(0, 4.096, 5))
+        self.piezo_output_display.setValidator(QtGui.QDoubleValidator(0, 4.095, 5))
         self.piezo_output_display.editingFinished.connect(self.piezo_output_changed)
         controls_layout.addWidget(self.piezo_output_label, 10, 0)
         controls_layout.addWidget(self.piezo_output_display, 10, 1)
@@ -255,7 +255,7 @@ class PID_GUI(QtWidgets.QWidget):
         self.current_output_label.setAlignment(QtCore.Qt.AlignRight)
         self.current_output_display = QtWidgets.QLineEdit("0")
         self.current_output_display.setDisabled(False)
-        self.current_output_display.setValidator(QtGui.QDoubleValidator(0, 4.096, 5))
+        self.current_output_display.setValidator(QtGui.QDoubleValidator(0, 4.095, 5))
         self.current_output_display.editingFinished.connect(self.current_output_changed)
         controls_layout.addWidget(self.current_output_label, 10, 2)
         controls_layout.addWidget(self.current_output_display, 10, 3)
@@ -294,6 +294,8 @@ class PID_GUI(QtWidgets.QWidget):
     def update_setpoint(self):
         # Update the setpoint
         self.setpoint = float(self.setpoint_display.text())
+        self.piezo_pid.setpoint = self.setpoint
+        self.current_pid.setpoint = self.setpoint
 
     def update_gains(self):
         # Update the gains
@@ -323,12 +325,12 @@ class PID_GUI(QtWidgets.QWidget):
         self.set_current(self.current_output)
 
         # Set the output display background to red when the output is saturated
-        if self.piezo_output == 4.096 or self.piezo_output == 0:
+        if self.piezo_output == 4.095 or self.piezo_output == 0:
             self.piezo_output_display.setStyleSheet("background-color: red")
         else:
             self.piezo_output_display.setStyleSheet("background-color: white")
 
-        if self.current_output == 4.096 or self.current_output == 0:
+        if self.current_output == 4.095 or self.current_output == 0:
             self.current_output_display.setStyleSheet("background-color: red")
         else:
             self.current_output_display.setStyleSheet("background-color: white")
@@ -368,10 +370,10 @@ class PID_GUI(QtWidgets.QWidget):
         self.current_output_data = deque(maxlen=self.plot_array_length)
     
     def set_piezo(self, output):
-        self.dac.channel_a.value = int(self.piezo_output * 4095 / 4.096)
+        self.dac.channel_a.value = int(self.piezo_output * 65536 / 4.096)
 
     def set_current(self, output):
-        self.dac.channel_b.value = int(self.piezo_output * 4095 / 4.096)
+        self.dac.channel_b.value = int(self.piezo_output * 65536 / 4.096)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
