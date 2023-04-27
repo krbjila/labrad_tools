@@ -208,6 +208,11 @@ class PID_GUI(QtWidgets.QWidget):
         self.channel_label = QtWidgets.QLabel("Channel")
         controls_layout.addWidget(self.channel_label, 6, 2)
 
+        # Add a checkbox to select whether to use the wavemeter setpoint
+        self.select_setpoint = QtWidgets.QCheckBox("LabRAD setpoint?")
+        self.select_setpoint.setChecked(True)
+        controls_layout.addWidget(self.select_setpoint, 6, 4)
+
         # Create the button to start the PID
         self.start = QtWidgets.QPushButton("Start")
         controls_layout.addWidget(self.start, 7, 1)
@@ -307,6 +312,12 @@ class PID_GUI(QtWidgets.QWidget):
         self.current_pid.Kd = float(self.Kd_current.text())
 
     def run_PID(self):
+        # Update setpoint
+        wavemeter_setpoint = self.wavemeter.get_setpoint()
+        if wavemeter_setpoint != self.setpoint and self.select_setpoint.isChecked():
+            self.setpoint_display.setText(str(wavemeter_setpoint))
+            self.update_setpoint()
+
         # Run the PID
         frequency = self.get_frequency(self.channel.currentIndex())
         error = self.setpoint - frequency

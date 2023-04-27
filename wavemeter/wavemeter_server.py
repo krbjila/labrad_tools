@@ -33,11 +33,12 @@ class WavemeterServer(LabradServer):
     name = '%LABRADNODE%_wavemeter'
     url = 'http://localhost:8000/wavemeter/api/'
 
-    onSetSetpoint = Signal(314159, 'signal: set setpoint', 'd')
+    
 
     def __init__(self):
         self.name = '{}_wavemeter'.format(getNodeName())
         self.data = ''
+        self.setpoint = round(299792.458 / 1028.7397, 6) # THz
         super(WavemeterServer, self).__init__()
 
     def update(self):
@@ -75,7 +76,6 @@ class WavemeterServer(LabradServer):
         yield self.update()
         returnValue(self.data)
 
-    @inlineCallbacks
     @setting(6, returns='d')
     def set_setpoint(self, c, setpoint):
         """
@@ -89,8 +89,22 @@ class WavemeterServer(LabradServer):
         Yields:
             Returns the setpoint
         """
-        self.onSetSetpoint(setpoint)
-        returnValue(setpoint)
+        self.setpoint = setpoint
+        return self.setpoint
+    
+    @setting(7, returns='d')
+    def get_setpoint(self, c):
+        """
+        get_setpoint(self, c)
+
+        Gets the wavemeter lock setpoint
+
+        Args:
+            c: A LabRAD context (not used)
+        Yields:
+            Returns the setpoint
+        """
+        return self.setpoint
         
 
 if __name__ == '__main__':
