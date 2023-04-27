@@ -70,6 +70,11 @@
             "waveform": {
                 "default_waveform": ""
             }
+        },
+        "wavemeterLock": {
+            "frequency": {
+                "default_frequency": 291.417215
+            }
         }
     }
 }
