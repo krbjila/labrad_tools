@@ -76,7 +76,7 @@ class WavemeterServer(LabradServer):
         yield self.update()
         returnValue(self.data)
 
-    @setting(6, returns='d')
+    @setting(6, returns='v')
     def set_setpoint(self, c, setpoint):
         """
         set_setpoint(self, c, setpoint)
@@ -92,7 +92,7 @@ class WavemeterServer(LabradServer):
         self.setpoint = setpoint
         return self.setpoint
     
-    @setting(7, returns='d')
+    @setting(7, returns='v')
     def get_setpoint(self, c):
         """
         get_setpoint(self, c)
