@@ -332,8 +332,10 @@ class PID_GUI(QtWidgets.QWidget):
             self.set_current(self.current_output)
         
         # Set the outputs
-        self.set_piezo(self.piezo_output)
-        self.set_current(self.current_output)
+         ## hh 10MHz do not update PID
+        if (self.setpoint - frequency) < 0.00001: 
+            self.set_piezo(self.piezo_output)
+            self.set_current(self.current_output)
 
         # Set the output display background to red when the output is saturated
         if self.piezo_output == 4.095 or self.piezo_output == 0:
