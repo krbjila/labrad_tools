@@ -17,7 +17,7 @@ import adafruit_mcp4728
 class PID_GUI(QtWidgets.QWidget):
 
     default_piezo_kP = 0
-    default_piezo_kI = -1000
+    default_piezo_kI = 125
     default_piezo_kD = 0
 
     default_current_kP = 0
@@ -332,11 +332,18 @@ class PID_GUI(QtWidgets.QWidget):
             self.set_current(self.current_output)
         
         # Set the outputs
-         ## hh 10MHz do not update PID
-        if (self.setpoint - frequency) < 0.00001: 
-            self.set_piezo(self.piezo_output)
-            self.set_current(self.current_output)
+         ## hh 10MHz do not update PID do instead set I to somethign low! 
+        if abs(self.setpoint - frequency) > 0.000002: 
+            self.piezo_pid.Ki = float(self.Ki_piezo.text())
+            
+            
+        else:
+            print ("locked")
+            self.piezo_pid.Ki = 50.0
 
+        self.set_piezo(self.piezo_output)
+        self.set_current(self.current_output)
+        
         # Set the output display background to red when the output is saturated
         if self.piezo_output == 4.095 or self.piezo_output == 0:
             self.piezo_output_display.setStyleSheet("background-color: red")
