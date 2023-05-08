@@ -207,6 +207,10 @@ class Timestamp(RFBlock):
         state.digital_out = copy(state.digital_out)
         for c, v in self.digital_out.items():
             state.digital_out[c] = v
+        
+        # Turn on the RF switch if the amplitude is non-zero
+        state.digital_out[0] = state.amplitude > 0
+
         return super().compile(state)
 
 class Wait(Timestamp):
