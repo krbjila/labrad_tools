@@ -974,6 +974,32 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
         
     return KDDphi(0) + KDDphi(np.pi/2) + KDDphi(0) + KDDphi(np.pi/2)
 
+def WAHUHA(duration: float, pulse: RFPulse = None):
+    if pulse is None:
+        pulse = PiOver2Pulse()
+    def phased_pulse(phase, area):
+        new_pulse = copy(pulse)
+        new_pulse.phase = phase
+        new_pulse.pulse_area = area
+        new_pulse.centered = True
+        return new_pulse
+
+    sequence = [
+        Wait(duration/8),
+        phased_pulse(np.pi, np.pi/2),
+        Wait(duration/4),
+        phased_pulse(0, np.pi/2),
+        Wait(duration/8),
+        phased_pulse(0, np.pi),
+        Wait(duration/8),
+        phased_pulse(np.pi, np.pi/2),
+        Wait(duration/4),
+        phased_pulse(0, np.pi/2),
+        Wait(duration/8)
+    ]
+
+    return sequence
+
 def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
     """
     Ramsey(duration, phase, pulse=None, decoupling=None)
