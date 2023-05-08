@@ -17,7 +17,7 @@ Provides access to Highfinesse WS-7 Wavemeter.
     ### END NODE INFO
 """
 import sys
-from labrad.server import LabradServer, setting
+from labrad.server import LabradServer, setting, Signal
 sys.path.append("../client_tools")
 # from connection import connection
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -33,9 +33,12 @@ class WavemeterServer(LabradServer):
     name = '%LABRADNODE%_wavemeter'
     url = 'http://localhost:8000/wavemeter/api/'
 
+    
+
     def __init__(self):
         self.name = '{}_wavemeter'.format(getNodeName())
         self.data = ''
+        self.setpoint = round(299792.458 / 1028.7397, 6) # THz
         super(WavemeterServer, self).__init__()
 
     def update(self):
@@ -72,6 +75,37 @@ class WavemeterServer(LabradServer):
         """
         yield self.update()
         returnValue(self.data)
+
+    @setting(6, returns='v')
+    def set_setpoint(self, c, setpoint):
+        """
+        set_setpoint(self, c, setpoint)
+
+        Sets the wavemeter lock setpoint
+
+        Args:
+            c: A LabRAD context (not used)
+            setpoint: The setpoint (THz)
+        Yields:
+            Returns the setpoint
+        """
+        self.setpoint = setpoint
+        return self.setpoint
+    
+    @setting(7, returns='v')
+    def get_setpoint(self, c):
+        """
+        get_setpoint(self, c)
+
+        Gets the wavemeter lock setpoint
+
+        Args:
+            c: A LabRAD context (not used)
+        Yields:
+            Returns the setpoint
+        """
+        return self.setpoint
+        
 
 if __name__ == '__main__':
     from labrad import util

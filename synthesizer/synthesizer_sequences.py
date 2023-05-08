@@ -207,6 +207,10 @@ class Timestamp(RFBlock):
         state.digital_out = copy(state.digital_out)
         for c, v in self.digital_out.items():
             state.digital_out[c] = v
+        
+        # Turn on the RF switch if the amplitude is non-zero
+        state.digital_out[0] = state.amplitude > 0
+
         return super().compile(state)
 
 class Wait(Timestamp):
@@ -973,6 +977,32 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
             Wait(tau/2.0)]
         
     return KDDphi(0) + KDDphi(np.pi/2) + KDDphi(0) + KDDphi(np.pi/2)
+
+def WAHUHA(duration: float, pulse: RFPulse = None):
+    if pulse is None:
+        pulse = PiOver2Pulse()
+    def phased_pulse(phase, area):
+        new_pulse = copy(pulse)
+        new_pulse.phase = phase
+        new_pulse.pulse_area = area
+        new_pulse.centered = True
+        return new_pulse
+
+    sequence = [
+        Wait(duration/8),
+        phased_pulse(np.pi, np.pi/2),
+        Wait(duration/4),
+        phased_pulse(0, np.pi/2),
+        Wait(duration/8),
+        phased_pulse(0, np.pi),
+        Wait(duration/8),
+        phased_pulse(np.pi, np.pi/2),
+        Wait(duration/4),
+        phased_pulse(0, np.pi/2),
+        Wait(duration/8)
+    ]
+
+    return sequence
 
 def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
     """
