@@ -112,6 +112,7 @@ variables_dict = [
     ['*?VLATT', 1],
     ['*?LSL', 1],
     ['*?Latt1', 1],
+    ['*?Latt2', 1],
     ['*?Blackman', 0],
     ['*?RFpulse', 0],
     ['*?stirap', 1],
