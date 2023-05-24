@@ -274,10 +274,10 @@
                 },
                 {
                     "loc": ["C", 6],
-                    "name": "VLatt Phase Stab (inverted)",
+                    "name": "VLatt Phase Stab",
                     "mode": "auto",
                     "manual_output": 0,
-                    "invert": 0
+                    "invert": 1
                 },
                 {
                     "loc": ["C", 7],
@@ -563,7 +563,7 @@
                 },
                 {
                     "loc": ["E", 14],
-                    "name": "TTL E14",
+                    "name": "Magic AOM",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1006,7 +1006,7 @@
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC12: ", 
+                    "name": "DAC12: Magic Laser Power: ", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
