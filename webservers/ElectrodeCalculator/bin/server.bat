@@ -1,1 +1,1 @@
-"C:\Users\krbji\AppData\Local\Programs\Julia 1.5.3\bin\julia" --color=yes --depwarn=no -q -i -- ../bootstrap.jl s %*
+"C:\Users\krbji\AppData\Local\Programs\Julia-1.9.0\bin\julia" --color=yes --depwarn=no --project=@. -q -i -- "%~dp0..\bootstrap.jl" -s=true %*

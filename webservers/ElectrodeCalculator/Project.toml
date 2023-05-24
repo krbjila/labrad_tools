@@ -1,10 +1,17 @@
+name = "ElectrodeCalculator"
+uuid = "5aa4ad93-6801-4f74-b619-b60a09430c2a"
+authors = ["KRb JILA <krb.jila@gmail.com>"]
+version = "0.1.0"
+
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
+Inflector = "6d011eab-0732-4556-8808-e463c76bf3b6"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
-MbedTLS = "739be429-bea8-5141-9913-cc70e7f3736d"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

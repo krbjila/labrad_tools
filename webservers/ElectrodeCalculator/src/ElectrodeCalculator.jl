@@ -1,14 +1,12 @@
 module ElectrodeCalculator
 
-using Logging, LoggingExtras
+using Genie
+
+const up = Genie.up
+export up
 
 function main()
-  Base.eval(Main, :(const UserApp = ElectrodeCalculator))
-
-  include(joinpath("..", "genie.jl"))
-
-  Base.eval(Main, :(const Genie = ElectrodeCalculator.Genie))
-  Base.eval(Main, :(using Genie))
-end; main()
+  Genie.genie(; context = @__MODULE__)
+end
 
 end

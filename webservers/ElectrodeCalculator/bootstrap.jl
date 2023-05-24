@@ -1,7 +1,5 @@
-  cd(@__DIR__)
-  import Pkg
-  Pkg.activate(".")
+(pwd() != @__DIR__) && cd(@__DIR__) # allow starting app from bin/ dir
 
-  function main()
-    include(joinpath("src", "ElectrodeCalculator.jl"))
-  end; main()
+using ElectrodeCalculator
+const UserApp = ElectrodeCalculator
+ElectrodeCalculator.main()
