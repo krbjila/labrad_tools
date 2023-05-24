@@ -20,6 +20,12 @@ class PID_GUI(QtWidgets.QWidget):
     default_piezo_kI = 125
     default_piezo_kD = 0
 
+    default_piezo_kP_lock = 0
+    default_piezo_kI_lock = 50
+    default_piezo_kD_lock = 0
+
+    default_piezo_lock_range = 2 ##MHz
+
     default_current_kP = 0
     default_current_kI = 0
     default_current_kD = 0
@@ -158,6 +164,34 @@ class PID_GUI(QtWidgets.QWidget):
         controls_layout.addWidget(self.Kd_piezo_label, 4, 0)
         controls_layout.addWidget(self.Kd_piezo, 4, 1)
 
+        # hh add params for lock 
+        self.piezo_label = QtWidgets.QLabel("Piezo lock PID")
+        controls_layout.addWidget(self.piezo_label, 1, 2)
+
+        self.Kp_piezo_lock = QtWidgets.QLineEdit(str(PID_GUI.default_piezo_kP_lock))
+        self.Kp_piezo_lock.setValidator(QtGui.QDoubleValidator())
+        self.Kp_piezo_lock.editingFinished.connect(self.update_gains)
+        controls_layout.addWidget(self.Kp_piezo_lock, 2, 2)
+
+
+        self.Ki_piezo_lock = QtWidgets.QLineEdit(str(PID_GUI.default_piezo_kI_lock))
+        self.Ki_piezo_lock.setValidator(QtGui.QDoubleValidator())
+        self.Ki_piezo_lock.editingFinished.connect(self.update_gains)
+        controls_layout.addWidget(self.Ki_piezo_lock, 3, 2)
+
+        self.Kd_piezo_lock = QtWidgets.QLineEdit(str(PID_GUI.default_piezo_kD_lock))
+        self.Kd_piezo_lock.setValidator(QtGui.QDoubleValidator())
+        self.Kd_piezo_lock.editingFinished.connect(self.update_gains)
+        controls_layout.addWidget(self.Kd_piezo_lock, 4, 2)
+
+        self.piezo_label = QtWidgets.QLabel("Piezo lock range [MHz]")
+        controls_layout.addWidget(self.piezo_label, 1, 3)
+        self.piezo_lock_range = QtWidgets.QLineEdit(str(PID_GUI.default_piezo_lock_range))
+        self.piezo_lock_range.setValidator(QtGui.QDoubleValidator())
+        self.piezo_lock_range.editingFinished.connect(self.update_gains)
+        controls_layout.addWidget(self.piezo_lock_range, 2, 3)
+
+
         # Create labeled textboxes for the gains for the current PID
         self.current_label = QtWidgets.QLabel("Current PID")
         controls_layout.addWidget(self.current_label, 1, 4)
@@ -167,7 +201,7 @@ class PID_GUI(QtWidgets.QWidget):
         self.Kp_current.editingFinished.connect(self.update_gains)
         self.Kp_current_label = QtWidgets.QLabel("P")
         self.Kp_current_label.setAlignment(QtCore.Qt.AlignRight)
-        controls_layout.addWidget(self.Kp_current_label, 2, 3)
+        # controls_layout.addWidget(self.Kp_current_label, 2, 3)
         controls_layout.addWidget(self.Kp_current, 2, 4)
 
         self.Ki_current = QtWidgets.QLineEdit(str(PID_GUI.default_current_kI))
@@ -175,7 +209,7 @@ class PID_GUI(QtWidgets.QWidget):
         self.Ki_current.editingFinished.connect(self.update_gains)
         self.Ki_current_label = QtWidgets.QLabel("I")
         self.Ki_current_label.setAlignment(QtCore.Qt.AlignRight)
-        controls_layout.addWidget(self.Ki_current_label, 3, 3)
+        # controls_layout.addWidget(self.Ki_current_label, 3, 3)
         controls_layout.addWidget(self.Ki_current, 3, 4)
 
         self.Kd_current = QtWidgets.QLineEdit(str(PID_GUI.default_current_kD))
@@ -183,7 +217,7 @@ class PID_GUI(QtWidgets.QWidget):
         self.Kd_current.editingFinished.connect(self.update_gains)
         self.Kd_current_label = QtWidgets.QLabel("D")
         self.Kd_current_label.setAlignment(QtCore.Qt.AlignRight)
-        controls_layout.addWidget(self.Kd_current_label, 4, 3)
+        # controls_layout.addWidget(self.Kd_current_label, 4, 3)
         controls_layout.addWidget(self.Kd_current, 4, 4)
 
         # Add a horizontal line to separate the piezo and current PID controls
@@ -333,13 +367,16 @@ class PID_GUI(QtWidgets.QWidget):
         
         # Set the outputs
          ## hh 10MHz do not update PID do instead set I to somethign low! 
-        if abs(self.setpoint - frequency) > 0.000002: 
+        if abs(self.setpoint - frequency) > 0.000002: #float(self.piezo_lock_range.text())*1e-6: 
             self.piezo_pid.Ki = float(self.Ki_piezo.text())
             
-            
         else:
-            print ("locked")
-            self.piezo_pid.Ki = 50.0
+            # print ("locked")
+            ## hh make something green... 
+            # self.piezo_pid.Ki = 50.0
+            self.piezo_pid.Ki = 50 #self.Ki_piezo_lock
+            # self.piezo_pid.Kd = self.Kd_piezo_lock
+            # self.piezo_pid.Kp = self.Kp_piezo_lock
 
         self.set_piezo(self.piezo_output)
         self.set_current(self.current_output)
