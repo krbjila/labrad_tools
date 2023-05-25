@@ -87,8 +87,8 @@ class KinesisServer(DeviceServer):
         yield device.move_on_trigger(position)
 
     @inlineCallbacks
-    @setting(17, 'move_sequence', sequence='*v')
-    def move_sequence(self, c, sequence):
+    @setting(17, 'move_sequence', sequence='*v', immediate_move='b')
+    def move_sequence(self, c, sequence, immediate_move=True):
         """Move to a sequence of positions."""
         device = self.get_device(c)
 
@@ -101,7 +101,12 @@ class KinesisServer(DeviceServer):
                     task.deferLater(reactor, 0.05, move_sequence_async, positions[1:])
             else:
                 task.deferLater(reactor, 0.05, move_sequence_async, positions)
-        yield move_sequence_async(sequence)
+        if immediate_move:
+            yield self.move_to(c, sequence[0])
+            if len(sequence) > 1:
+                yield move_sequence_async(sequence[1:])
+        else:
+            yield move_sequence_async(sequence)
         
 
 if __name__ == "__main__":
