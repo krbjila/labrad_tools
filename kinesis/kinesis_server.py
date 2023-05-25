@@ -24,6 +24,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from server_tools.device_server import DeviceServer
 
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet import task
+from twisted.internet import reactor
 from labrad.server import setting 
 
 class KinesisServer(DeviceServer):
@@ -62,6 +64,44 @@ class KinesisServer(DeviceServer):
         device = self.get_device(c)
         position = yield device.get_position()
         returnValue(position)
+
+    @inlineCallbacks
+    @setting(14, 'enable')
+    def enable(self, c):
+        """Enable the stage."""
+        device = self.get_device(c)
+        yield device.enable()
+
+    @inlineCallbacks
+    @setting(15, 'disable')
+    def disable(self, c):
+        """Disable the stage."""
+        device = self.get_device(c)
+        yield device.disable()
+
+    @inlineCallbacks
+    @setting(16, 'move_on_trigger', position='v')
+    def move_on_trigger(self, c, position):
+        """Move to a position on a trigger."""
+        device = self.get_device(c)
+        yield device.move_on_trigger(position)
+
+    @inlineCallbacks
+    @setting(17, 'move_sequence', sequence='*v')
+    def move_sequence(self, c, sequence):
+        """Move to a sequence of positions."""
+        device = self.get_device(c)
+
+        @inlineCallbacks
+        def move_sequence_async(positions):
+            yield device.move_on_trigger(positions[0])
+            current_position = yield device.get_position()
+            if abs(current_position - positions[0]) < 0.01:
+                if len(positions) > 1:
+                    task.deferLater(reactor, 0.05, move_sequence_async, positions[1:])
+            else:
+                task.deferLater(reactor, 0.05, move_sequence_async, positions)
+        yield move_sequence_async(sequence)
         
 
 if __name__ == "__main__":

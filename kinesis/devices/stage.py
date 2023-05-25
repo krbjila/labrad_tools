@@ -4,17 +4,20 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..'))
 from server_tools.device_server import DeviceWrapper
 
-from pylablib.devices import Thorlabs
+import clr
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll.")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericMotorCLI.dll.")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.BrushlessMotorCLI.dll.")
 
+from Thorlabs.MotionControl.DeviceManagerCLI import *
+from Thorlabs.MotionControl.GenericMotorCLI import *
+from Thorlabs.MotionControl.GenericMotorCLI.Settings import KCubeTriggerConfigSettings
+from Thorlabs.MotionControl.KCube.BrushlessMotorCLI import *
+from System import Decimal
 
 class Stage(DeviceWrapper):
     def __init__(self, config):
 
-        # Default values
-        self.scale = 1.0 # steps per unit
-        self.connection_type = 'Kinesis'
-
-        # Non-default values
         for key, value in config.items():
             setattr(self, key, value)
 
@@ -23,30 +26,56 @@ class Stage(DeviceWrapper):
     
     @inlineCallbacks
     def initialize(self):
-        devices = yield Thorlabs.list_kinesis_devices()
-        self.stage = None
-        if self.serial in [d[0] for d in devices]:
-            self.stage = yield Thorlabs.KinesisMotor(self.serial, scale=self.scale)
-        else:
-            raise(LookupError('Device {} not found. Available devices are {}'.format(self.serial, devices)))
-        
-    # @inlineCallbacks
-    # def set_enabled(self, enabled):
-    #     yield self.stage.set_enabled(enabled)
+        yield DeviceManagerCLI.BuildDeviceList()
+        self.stage = yield KCubeBrushlessMotor.CreateKCubeBrushlessMotor(self.serial)
+        yield self.stage.Connect(self.serial)
+        yield self.stage.StartPolling(50)
+
+        if not self.stage.IsSettingsInitialized():
+            yield self.stage.WaitForSettingsInitialized(10000)  # 10 second timeout
+            assert self.stage.IsSettingsInitialized() is True
+
+        # Before homing or moving device, ensure the motors configuration is loaded
+        m_config = yield self.stage.LoadMotorConfiguration(self.serial, DeviceConfiguration.DeviceSettingsUseOptionType.UseDeviceSettings)
+
+    @inlineCallbacks
+    def enable(self):
+        yield self.stage.EnableDevice()
+
+    @inlineCallbacks
+    def disable(self):
+        yield self.stage.DisableDevice()
     
     @inlineCallbacks
-    def home(self):
-        yield self.stage.home()
+    def home(self, timeout=10.0):
+        """
+        home(self, timeout=10)
+
+        Homes the stage.
+
+        Args:
+            timeout (float, optional): The timeout in seconds. Defaults to 10.
+        """
+        yield self.stage.Home(round(timeout*1E3))
 
     @inlineCallbacks
-    def move_to(self, position):
-        yield self.stage.move_to(position)
-
+    def move_to(self, position, timeout=10.0):
+        yield self.stage.MoveTo(Decimal(position), round(timeout*1E3))
+    
     @inlineCallbacks
-    def move_by(self, displacement):
-        yield self.stage.move_by(displacement)
-
+    def move_by(self, displacement, timeout=10.0):
+        yield self.stage.MoveBy(Decimal(displacement), round(timeout*1E3))
+    
     @inlineCallbacks
     def get_position(self):
-        position = yield self.stage.get_position()
-        returnValue(position)
+        position = yield self.stage.get_DevicePosition()
+        returnValue(float(str(position)))
+
+    @inlineCallbacks
+    def move_on_trigger(self, position):
+        trigger_config_params = yield self.stage.GetTriggerConfigParams()
+        trigger_config_params.Trigger1Mode = KCubeTriggerConfigSettings.TriggerPortMode.TrigIN_AbsoluteMove
+        trigger_config_params.Trigger1Polarity = KCubeTriggerConfigSettings.TriggerPolarity.TriggerHigh
+        yield self.stage.SetTriggerConfigParams(trigger_config_params)
+
+        yield self.stage.SetMoveAbsolutePosition(Decimal(position))
