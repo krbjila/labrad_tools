@@ -80,10 +80,10 @@ module CalculatorController
       # Compute the electric field magnitude, direction and gradient
       bias = norm(Ev)
       angle = atan(Ev[1], Ev[2]) * 180/π
-      dEdx = dot(Ev, dEdxv)/bias
-      dEdy = dot(Ev, dEdyv)/bias
-      d2Edx2 = (dot(dEdxv, dEdxv) + dot(d2Edx2v, Ev) - dEdx^2)/bias
-      d2Edy2 = (dot(dEdyv, dEdyv) + dot(d2Edy2v, Ev) - dEdy^2)/bias
+      dEdx = bias != 0.0 ? dot(Ev, dEdxv)/bias : 0.0
+      dEdy = bias != 0.0 ? dot(Ev, dEdyv)/bias : 0.0
+      d2Edx2 = bias != 0.0 ? (dot(dEdxv, dEdxv) + dot(d2Edx2v, Ev) - dEdx^2)/bias : 0.0
+      d2Edy2 = bias != 0.0 ? (dot(dEdyv, dEdyv) + dot(d2Edy2v, Ev) - dEdy^2)/bias : 0.0
 
       # Evaluate the dipole moment at the bias field and its derivatives
       dipole = subs(Dpoly, E => bias)
@@ -91,9 +91,10 @@ module CalculatorController
       d2DdE2v = subs(d2DdE2poly, E => bias)
 
       # Compute the trap frequency
-      biaspoly = (-dipole/bias*0 + 2*dDdEv + bias*d2DdE2v)
-      kx = (dipole/bias + dDdEv) * dot(Ev, d2Edx2v) + dEdx^2 * biaspoly
-      ky = (dipole/bias + dDdEv) * dot(Ev, d2Edy2v) + dEdy^2 * biaspoly
+      dipoleoverbias = bias != 0.0 ? dipole/bias : 0.0
+      biaspoly = (-dipoleoverbias*0 + 2*dDdEv + bias*d2DdE2v)
+      kx = (dipoleoverbias + dDdEv) * dot(Ev, d2Edx2v) + dEdx^2 * biaspoly
+      ky = (dipoleoverbias + dDdEv) * dot(Ev, d2Edy2v) + dEdy^2 * biaspoly
       # TODO: Correct these formulae after testing program
       νx = -sign(kx)*sqrt(abs(100*DVcmToJ*kx) / (2 * π * m))
       νy = -sign(ky)*sqrt(abs(100*DVcmToJ*ky) / (2 * π * m))
@@ -197,7 +198,7 @@ route("/opt", method = POST) do
       result = CalculatorController.opt_json(p; V0=V0, w=w)
       last_result = [convert(Float64, result[v]) for v in CalculatorController.KEY_ORDER]
       last_weight = w
-      append!(out[mk], result)
+      push!(out[mk], result)
     end
   end
   return out |> json
