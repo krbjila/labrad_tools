@@ -3,7 +3,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
 import json
-from copy import deepcopy
+import requests
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
@@ -11,13 +11,9 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 from lib.helpers import *
 
-LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
-
-sys.path.append(LABRAD_FOLDER + 'electrode/')
-from calibrations import ZEROS
-
-sys.path.append(LABRAD_FOLDER + 'electrode/clients/lib/forms/')
-from gui_defaults_helpers import *
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../electrode'))
+from electrode.calibrations import ZEROS
+from electrode.clients.lib.forms.gui_defaults_helpers import *
 
 class Update(ConductorParameter):
     """
@@ -57,6 +53,7 @@ class Update(ConductorParameter):
         self.cxn = yield connectAsync()
         self.server = yield self.cxn.electrode
         self.zeros = yield self.get_zeros()
+        self.url = 'http://127.0.0.1:8000/opt'
 
     @inlineCallbacks
     def get_zeros(self):
@@ -73,13 +70,29 @@ class Update(ConductorParameter):
         if self.value:
             for k,v in self.value.items():
                 try:
-                    for (i,n) in enumerate(FORM_FIELDS['n']):
-                        min_val = FIELD_MIN['n'][i]
-                        max_val = FIELD_MAX['n'][i]
-                        if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
-                            raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
-                    v['volts'] = NormalModesToVs(v['normalModes'])
-                    v['values'] = VsToDACs(v['volts'])
+                    if 'optimize' in v:
+                        if 'guess' in v['optimize']:
+                            if isinstance(v['optimize']['guess'], int):
+                                guess = json.loads(self.server.get_presets())[v['optimize']['guess']]['normalModes']
+                            # otherwise, the guess is already a normal mode dict
+                            elif isinstance(v['optimize']['guess'], dict):
+                                guess = v['optimize']['guess']
+                        else:
+                            guess = json.loads(self.server.get_presets())[k]['normalModes']
+                        # query the optimizer with a POST request
+                        r = requests.post(self.url, json={'guess': guess})
+                        # update the electrode preset with the result
+                        v['normalModes'] = r.json()['result']
+                    elif 'normalModes' in v:
+                        for (i,n) in enumerate(FORM_FIELDS['n']):
+                            min_val = FIELD_MIN['n'][i]
+                            max_val = FIELD_MAX['n'][i]
+                            if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
+                                raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
+                        v['volts'] = NormalModesToVs(v['normalModes'])
+                        v['values'] = VsToDACs(v['volts'])
+                    else:
+                        raise ValueError("Could not determine how to set electrode preset {} to {}".format(k, v))
                 except Exception as e:
                     print("Could not set electrode preset {} to {}: {}".format(k, v, e))
             poo = yield self.server.soft_update(json.dumps(self.value))
