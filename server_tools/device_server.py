@@ -108,7 +108,7 @@ class DeviceServer(LabradServer):
 
     @setting(0, returns='*s')
     def get_device_list(self, c):
-        return self.devices.keys()
+        return list(self.devices.keys())
     
     @setting(1, name='s', returns=['s', ''])
     def select_device(self, c, name):
