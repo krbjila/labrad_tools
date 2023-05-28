@@ -150,7 +150,9 @@ class ElectrodeServer(LabradServer):
             self.webserver = subprocess.Popen(
                 cmd,
                 cwd=os.path.abspath("../webservers/ElectrodeCalculator"),
-                stdin=secondary
+                stdin=secondary,
+                shell=True,
+                preexec_fn=os.setsid
             )
             print("Web server started!")
         except Exception as e:
@@ -163,7 +165,7 @@ class ElectrodeServer(LabradServer):
         Stops the electrode calculator web server.
         """
         try:
-            self.webserver.kill()
+            os.killpg(os.getpgid(self.webserver.pid), 15)
             while self.webserver.poll == None:
                 sleep(0.1)
             print("Web server closed.")
