@@ -1,7 +1,6 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-
 import json
 import requests
 
@@ -11,9 +10,15 @@ from labrad.wrappers import connectAsync
 from conductor_device.conductor_parameter import ConductorParameter
 from lib.helpers import *
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../electrode'))
-from electrode.calibrations import ZEROS
-from electrode.clients.lib.forms.gui_defaults_helpers import *
+import traceback
+
+LABRAD_FOLDER = '/home/bialkali/labrad_tools/'
+
+sys.path.append(LABRAD_FOLDER + 'electrode/')
+from calibrations import ZEROS
+
+sys.path.append(LABRAD_FOLDER + 'electrode/clients/lib/forms/')
+from gui_defaults_helpers import *
 
 class Update(ConductorParameter):
     """
@@ -46,7 +51,10 @@ class Update(ConductorParameter):
 
     def __init__(self, config={}):
         super(Update, self).__init__(config)
-        self.value = self.default
+        try:
+            self.value = self.default
+        except Exception as e:
+            self.value = False
 
     @inlineCallbacks
     def initialize(self):
@@ -82,19 +90,28 @@ class Update(ConductorParameter):
                         if 'guess' in v['optimize']:
                             # if the guess is an int, it's a preset index
                             if isinstance(v['optimize']['guess'], int):
-                                guess = json.loads(self.server.get_presets())[v['optimize']['guess']]['normalModes']
+                                presets = yield self.server.get_presets()
+                                preset = [p for p in json.loads(presets) if p["id"] == v['optimize']['guess']][0]
+                                guess = preset['normalModes']
                         # otherwise, the guess is already a normal mode dict
                             elif isinstance(v['optimize']['guess'], dict):
                                 guess = v['optimize']['guess']
                         else:
-                            guess = json.loads(self.server.get_presets())[k]['normalModes']
-                        v["optimize"].update(NormalModesToVs(guess))                                
-                        r = requests.post(self.url, json=v['optimize'])
+                            presets = yield self.server.get_presets()
+                            preset = [p for p in json.loads(presets) if p["id"] == int(k)][0]
+                            guess = preset['normalModes']
+                        v["optimize"].update(NormalModesToVs(guess))
+                        r = requests.post(self.url, json={"p": [v['optimize']]})
+                        results = r.json()['p'][0]
                         if r.status_code == 200:
-                            v['volts'] = r.json()['V']
+                            v['normalModes'] = VsToNormalModes(results['V'], 0)
+                            # TODO: Do we actually want this? The offset would otherwise be set by (I think) minimizing the least squares voltage of the rods. Left in for now for consistency.
+                            v['normalModes']['GlobalOffset'] = 0
+                            v['volts'] = NormalModesToVs(v['normalModes'])
                             v['values'] = VsToDACs(v['volts'])
-                            v['normalModes'] = VsToNormalModes(v['volts'])
                             validate_normal_modes(v)
+                        else:
+                            raise(ValueError("Optimization server failed: {}".format(r.json())))
                     elif 'normalModes' in v:
                         validate_normal_modes(v)
                         v['volts'] = NormalModesToVs(v['normalModes'])
@@ -103,5 +120,6 @@ class Update(ConductorParameter):
                         raise ValueError("Could not determine how to set electrode preset {} to {}".format(k, v))
                 except Exception as e:
                     print("Could not set electrode preset {} to {}: {}".format(k, v, e))
+                    print(traceback.format_exc())
             poo = yield self.server.soft_update(json.dumps(self.value))
             print("soft_update for {} complete: result {}".format(k, poo))
