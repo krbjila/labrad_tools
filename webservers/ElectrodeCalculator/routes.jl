@@ -1,6 +1,7 @@
 using Genie.Router
 import Genie.Renderer.Json: json
 using Genie.Requests
+using StaticArrays
 
 module CalculatorController
   using JSON
@@ -106,9 +107,15 @@ module CalculatorController
   function barrier(x, xmin, xmax)
       return 1E0 .* (-log.(max.(x .- xmin, nextfloat(0.0))) -log.(max.(xmax .- x, nextfloat(0.0))))
   end
+
   # Compute the least squares error
   function err(p, V, w)
       return dot(w, (get_params(V) .- p).^2) + sum(barrier(V, Vmin, Vmax))
+  end
+
+  # Compute the least squares error without the barrier
+  function err_nobarrier(p, V, w)
+      return dot(w, (get_params(V) .- p).^2)
   end
 
   # Optimize electrode potentials for parameters p
@@ -138,8 +145,13 @@ module CalculatorController
     p2 = get_params(bestV)
     Vdict = Dict(k => bestV[i] for (i, k) in enumerate(KEY_ORDER))
     pdict = Dict(k => p2[i] for (i, k) in enumerate(PARAM_ORDER))
-    edict = Dict("err" => err(p, bestV, w), "iter" => iter, "barrier" => sum(barrier(bestV, Vmin, Vmax)))
-    return merge(Vdict, pdict, edict)
+    edict = Dict("err" => err_nobarrier(p, bestV, w), "iter" => iter, "barrier" => sum(barrier(bestV, Vmin, Vmax)))
+    result = Dict()
+    result["V"] = Vdict
+    result["P"] = pdict
+    result["weights"] = Dict(k => w[i] for (i, k) in enumerate(PARAM_ORDER))
+    result["info"] = edict
+    return result
   end
 
   function params_json(V)
@@ -180,7 +192,7 @@ route("/opt", method = POST) do
     last_weight = nothing
     out[mk] = []
     for point in message
-      p = [point[k] for k in CalculatorController.PARAM_ORDER]
+      p = [haskey(point, k) ? point[k] : nothing for k in CalculatorController.PARAM_ORDER]
       if CalculatorController.KEY_ORDER[1] in keys(point)
         V0 = [convert(Float64, point[v]) for v in CalculatorController.KEY_ORDER]
       elseif last_result !== nothing
@@ -193,10 +205,16 @@ route("/opt", method = POST) do
       elseif last_weight !== nothing
         w = last_weight
       else
-        w = CalculatorController.weights
+        w = MVector{length(CalculatorController.weights)}(CalculatorController.weights)
+      end
+      for (i, k) in enumerate(CalculatorController.PARAM_ORDER)
+        if p[i] === nothing
+          p[i] = 0
+          w[i] = 0
+        end
       end
       result = CalculatorController.opt_json(p; V0=V0, w=w)
-      last_result = [convert(Float64, result[v]) for v in CalculatorController.KEY_ORDER]
+      last_result = [convert(Float64, result["V"][v]) for v in CalculatorController.KEY_ORDER]
       last_weight = w
       push!(out[mk], result)
     end
