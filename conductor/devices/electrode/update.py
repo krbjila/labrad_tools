@@ -67,28 +67,36 @@ class Update(ConductorParameter):
     @inlineCallbacks
     def update(self):
         """ value is a dict of presets to update """
+
+        def validate_normal_modes(v):
+            for (i,n) in enumerate(FORM_FIELDS['n']):
+                min_val = FIELD_MIN['n'][i]
+                max_val = FIELD_MAX['n'][i]
+                if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
+                    raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
+
         if self.value:
             for k,v in self.value.items():
                 try:
                     if 'optimize' in v:
                         if 'guess' in v['optimize']:
+                            # if the guess is an int, it's a preset index
                             if isinstance(v['optimize']['guess'], int):
                                 guess = json.loads(self.server.get_presets())[v['optimize']['guess']]['normalModes']
-                            # otherwise, the guess is already a normal mode dict
+                        # otherwise, the guess is already a normal mode dict
                             elif isinstance(v['optimize']['guess'], dict):
                                 guess = v['optimize']['guess']
                         else:
                             guess = json.loads(self.server.get_presets())[k]['normalModes']
-                        # query the optimizer with a POST request
-                        r = requests.post(self.url, json={'guess': guess})
-                        # update the electrode preset with the result
-                        v['normalModes'] = r.json()['result']
+                        v["optimize"].update(guess)                                
+                        r = requests.post(self.url, json=v['optimize'])
+                        if r.status_code == 200:
+                            v['volts'] = r.json()['V']
+                            v['values'] = VsToDACs(v['volts'])
+                            v['normalModes'] = VsToNormalModes(v['volts'])
+                            validate_normal_modes(v)
                     elif 'normalModes' in v:
-                        for (i,n) in enumerate(FORM_FIELDS['n']):
-                            min_val = FIELD_MIN['n'][i]
-                            max_val = FIELD_MAX['n'][i]
-                            if v['normalModes'][n] < min_val or v['normalModes'][n] > max_val:
-                                raise ValueError("Normal mode {}: {} is out of the acceptable range of {} to {}".format(n, v['normalModes'][n], min_val, max_val))
+                        validate_normal_modes(v)
                         v['volts'] = NormalModesToVs(v['normalModes'])
                         v['values'] = VsToDACs(v['volts'])
                     else:
