@@ -88,7 +88,7 @@ class Update(ConductorParameter):
                                 guess = v['optimize']['guess']
                         else:
                             guess = json.loads(self.server.get_presets())[k]['normalModes']
-                        v["optimize"].update(guess)                                
+                        v["optimize"].update(NormalModesToVs(guess))                                
                         r = requests.post(self.url, json=v['optimize'])
                         if r.status_code == 200:
                             v['volts'] = r.json()['V']
