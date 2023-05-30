@@ -764,8 +764,6 @@ class AreaPulse(RFPulse):
         transition = state.transition
         if self.frequency is None:
             self.frequency = transition.frequency
-        else:
-            self.frequency -= transition.frequency_offset
         if self.amplitude is None:
             self.amplitude = transition.default_amplitude
         if self.amplitude <= 0 or self.amplitude > 1:
