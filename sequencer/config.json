@@ -1040,7 +1040,7 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC16:", 
+                    "name": "DAC16: |N=1> RF filter", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },

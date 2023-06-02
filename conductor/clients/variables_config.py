@@ -53,6 +53,8 @@ variables_dict = [
     ['*RF2', 0.001],
     ['*RF3', 0.001],
     ['*RF4', 0.001],
+    ['*RFspec', 0.001],
+    ['*RFfilter', 0.001],
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
@@ -77,6 +79,8 @@ variables_dict = [
     ['*Latt2Load', -10], #for HLatt alignment
     ['*Latt1Final', -0.4],
     ['*Latt2Final', -0.4],
+    ['*Latt1Spec', -0.4],
+    ['*Latt2Spec', -0.4],
     ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', -0.9765], # was 0.5
     ['*MARIAFinal2', -0.9765],
@@ -118,6 +122,7 @@ variables_dict = [
     ['*?stirap', 1],
     ['*?layerBlast', 0],
     ['*?Blast', 0],
+    ['*?Spectroscopy', 0],
     ['*?Pulse1', 0],
     ['*?Pulse2', 0],
     ['*?Pulse3', 0],
