@@ -8,6 +8,7 @@ from functools import partial
 import pyttsx3
 import random
 from time import time
+import labrad
 
 # TODO: Fix Sphinx autodoc reporting the superclass as sphinx.ext.autodoc.importer._MockObject
 class laser_dashboard_gui(QtWidgets.QMainWindow):
@@ -20,8 +21,8 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
         self.url = 'http://192.168.141.125:8000/wavemeter/api/'
-        self.engine = pyttsx3.init()
-        self.engine.startLoop(False)
+        self.cxn = labrad.connect()
+        self.server = self.cxn.polarkrb_alerter
         self._createMenuBar()
 
     def _createMenuBar(self):
@@ -190,7 +191,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                         s = ""
                     else:
                         s = ""
-                    self.engine.say(("The %s laser is unlocked!" + s) % (n))
+                    self.server.say(("The %s laser is unlocked!" + s) % (n))
         except pycurl.error as e:
             print("could not connect to wavemeter: ", e)
             self.data = ''
@@ -209,9 +210,9 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
 
     def status(self):
         """
-        Called every 100 ms. Updates text-to-speech engine.
+        Called every 100 ms.
         """
-        self.engine.iterate()
+        pass
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
