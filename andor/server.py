@@ -93,7 +93,7 @@ class AndorServer(HardwareInterfaceServer):
         super(AndorServer, self).stopServer()
 
     def refresh_available_interfaces(self):
-        # Get available cameras
+
         (errf, nCameras) = self.get_available_cameras(None)
         errf = handle_error(errf)
         if not errf:
@@ -117,12 +117,13 @@ class AndorServer(HardwareInterfaceServer):
             errf = handle_error(errf)
             if not errf:
                 self.interfaces[str(ser)] = handle
+                self.current_camera = str(ser)
                 print("Camera " + str(i) + " with handle " + str(handle) + " and serial number " + str(ser) + " is available.")
             else:
                 print("Error connecting to camera " + str(i) + " with handle " + str(handle) + ": " + errf)
 
     def _select_interface(self, c):
-        if c['address'] != self.current_camera:
+        if c is not None and c['address'] != self.current_camera:
             self.set_current_camera(c, self.interfaces[c['address']])
             self.current_camera = c['address']
 
