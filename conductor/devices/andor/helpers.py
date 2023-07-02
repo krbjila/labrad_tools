@@ -1,4 +1,4 @@
-import sys
+from andor.proxy import AndorProxy
 
 from twisted.internet.defer import inlineCallbacks
 from labrad.wrappers import connectAsync
@@ -22,10 +22,22 @@ class AndorDevice(ConductorParameter):
         self.server_name = server_name
         self.value = None
 
+        if "temperature" not in config:
+            self.temperature = -20
+
     @inlineCallbacks
     def initialize(self):
         self.cxn = yield connectAsync()
         self.server = self.cxn[self.server_name]
+        self.andor = AndorProxy(self.server)
+
+        cameras = self.andor.get_interface_list()
+        if self.serial not in cameras:
+            raise Exception('Camera {} not found'.format(self.serial))
+        self.andor.select_interface(self.serial)
+
+        self.andor.SetTemperature(self.temperature)
+        self.andor.CoolerON()
 
 
     @inlineCallbacks
