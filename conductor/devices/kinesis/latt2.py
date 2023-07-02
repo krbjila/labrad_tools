@@ -1,6 +1,6 @@
 import helpers
 
-class Latt1(helpers.STIRAPDevice):
+class Latt1(helpers.KinesisDevice):
     """
     Latt1(helpers.KinesisDevice)
 
