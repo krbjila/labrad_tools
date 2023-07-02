@@ -7,7 +7,7 @@ description =
 instancename = %LABRADNODE%_andor
 
 [startup]
-cmdline = %PYTHON% %FILE%
+cmdline = %PYTHON3% %FILE%
 timeout = 60
 
 [shutdown]
@@ -22,8 +22,14 @@ from server_tools.hardware_interface_server import HardwareInterfaceServer
 
 from labrad.server import setting
 
-from andor.andor import Andor, ERROR_CODE
+from andor import Andor, ERROR_CODE
 from time import sleep
+
+def handle_error(err):
+    if ERROR_CODE[err] == 'DRV_SUCCESS':
+        return 0
+    else:
+        return ERROR_CODE[err]
 
 class AndorServer(HardwareInterfaceServer):
     """ Provides access to andor camera using pyandor """
@@ -35,40 +41,49 @@ class AndorServer(HardwareInterfaceServer):
         super(AndorServer, self).initServer()
     
     def stopServer(self):
-        cameras = self.get_interface_list(None)
+        c = {}
+        cameras = self.get_interface_list(c)
+        print(cameras)
+
         for camera in cameras:
-            self.select_interface(None, camera)
+            self.select_interface(c, camera)
 
-            errf = self.cooler_off(None)
+            errf = handle_error(self.cooler_off(c))
             if errf:
-                print("Error turning off cooler of camera " + str(camera) + ": " + ERROR_CODE[errf])
+                print("Error turning off cooler of camera " + str(camera) + ": " + errf)
 
-            (errf, status) = self.get_status(None)
+            (errf, status) = self.get_status(c)
+            errf = handle_error(errf)
             if errf:
-                print("Error getting status of camera " + str(camera) + ": " + ERROR_CODE[errf])
+                print("Error getting status of camera " + str(camera) + ": " + errf)
 
-            elif ERROR_CODE[status] == 'DRV_ACQUIRING':
-                errf = self.abort_acquisition(None)
+            elif status == 'DRV_ACQUIRING':
+                errf = handle_error(self.abort_acquisition(c))
                 if errf:
-                    print("Error aborting acquisition of camera " + str(camera) + ": " + ERROR_CODE[errf])
+                    print("Error aborting acquisition of camera " + str(camera) + ": " + errf)
 
-            errf = self.set_shutter(None, 1, 2, 0, 0)
+            errf = handle_error(self.set_shutter(c, 1, 2, 0, 0))
             if errf:
-                print("Error setting shutter of camera " + str(camera) + ": " + ERROR_CODE[errf])
+                print("Error setting shutter of camera " + str(camera) + ": " + errf)
         
         while True:
             warm = True
+            min_temp = -20 # C
             for camera in cameras:
-                self.select_interface(None, camera)
-                (errf, temp) = self.get_temperature(None)
-                if not errf and temp < -20:
+                self.select_interface(c, camera)
+
+                (errf, temp) = self.get_temperature(c)
+                errf = handle_error(errf)
+                if errf == "DRV_TEMP_OFF" and temp < min_temp:
                     warm = False
                     print("Waiting for camera " + str(camera) + " to warm above -20 C. Current temperature: " + str(temp) + " C.")
                     break
-                elif errf:
-                    print("Error getting temperature of camera " + str(camera) + ": " + ERROR_CODE[errf])
-                    warm = False
-                    break
+                elif errf == "DRV_TEMP_OFF":
+                    print("Temperature of camera " + str(camera) + " OK. Current temperature: " + str(temp) + " C.")
+                else:
+                    print("Incorrect mode for camera" + str(camera) + ": " + errf + "Current temperature: " + str(temp) +" C.")
+                    if temp < min_temp:
+                        warm = False
             if warm:
                 break
             sleep(1)
@@ -78,26 +93,39 @@ class AndorServer(HardwareInterfaceServer):
 
     def refresh_available_interfaces(self):
         # Get available cameras
-        (errf, nCameras) = self.get_available_cameras()
+        (errf, nCameras) = self.get_available_cameras(None)
+        errf = handle_error(errf)
         if not errf:
             print("Found " + str(nCameras) + " cameras.")
         else:
-            raise(Exception("Error getting number of cameras: " + ERROR_CODE[errf]))
+            raise(Exception("Error getting number of cameras: " + errf))
 
         for i in range(nCameras):
-            handle = self.get_camera_handle(None, i)
-            self.set_current_camera(None, handle)
-            (errf, ser) = self.get_camera_serial_number(None)
+            (errf, handle) = self.get_camera_handle(None, i)
+            errf = handle_error(errf)
+            if errf:
+                print("Error getting handle for camera {}: {}".format(i, errf))
 
+            self.set_current_camera(None, handle)
+            (errf, initdir) = self.initialize(None)
+            errf = handle_error(errf)
+            if errf:
+                print("Error initializing camera {}: {}".format(i, errf))
+            
+            (errf, ser) = self.get_camera_serial_number(None)
+            errf = handle_error(errf)
             if not errf:
-                self.interfaces[ser] = handle
+                self.interfaces[str(ser)] = handle
                 print("Camera " + str(i) + " with handle " + str(handle) + " and serial number " + str(ser) + " is available.")
             else:
-                print("Error connecting to camera " + str(i) + " with handle " + str(handle) + ": " + ERROR_CODE[errf])
+                print("Error connecting to camera " + str(i) + " with handle " + str(handle) + ": " + errf)
 
-    def select_interface(self, c, serial):
-        handle = super(AndorServer, self).select_interface(c, serial)
+    @setting(1, address='s', returns='s')
+    def select_interface(self, c, address):
+        address = super(AndorServer, self).select_interface(c, address)
+        handle = self.interfaces[address]
         self.set_current_camera(c, handle)
+        return address
 
     @setting(10, returns='i')
     def abort_acquisition(self, c):

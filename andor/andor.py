@@ -60,7 +60,10 @@ class Andor(object):
     def __init__(self):
         self.error = {}
         if platform.system() == 'Windows':
-            self.dll = ctypes.cdll.LoadLibrary("C:\\Program Files\\Andor SDK\\atmcd64d.dll")
+            if platform.architecture()[0] == '64bit':
+                self.dll = ctypes.cdll.LoadLibrary("C:\\Program Files\\Andor SDK\\atmcd64d.dll")
+            else:
+                self.dll = ctypes.cdll.LoadLibrary("C:\\Program Files\\Andor SDK\\atmcd32d.dll")
         elif platform.system() == 'Linux':
             self.dll = ctypes.cdll.LoadLibrary("/usr/local/lib/libandor.so")
 
