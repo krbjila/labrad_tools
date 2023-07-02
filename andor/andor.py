@@ -197,7 +197,7 @@ class Andor(object):
             (int) total number of cameras currently installed
         """
         totalCameras = ctypes.c_long()
-        error = self.dll.GetAvailableCameras(totalCameras)
+        error = self.dll.GetAvailableCameras(ctypes.byref(totalCameras))
         self._log(sys._getframe().f_code.co_name, error)
         return totalCameras.value
 

@@ -17,7 +17,7 @@ timeout = 5
 """
 from labrad.server import LabradServer, setting
 
-from andor.andor import Andor
+from andor import Andor
 
 class AndorServer(LabradServer):
     """ Provides access to andor camera using pyandor """
@@ -26,7 +26,6 @@ class AndorServer(LabradServer):
     def initServer(self):
         global andor
         andor = Andor()
-        andor.Initialize()
         super(AndorServer, self).initServer()
     
     def stopServer(self):
