@@ -1,5 +1,4 @@
 import sys
-sys.path.append('../')
 
 from twisted.internet.defer import inlineCallbacks
 from labrad.wrappers import connectAsync
@@ -17,9 +16,9 @@ class AndorDevice(ConductorParameter):
     priority = 1
     value_type = 'list'
 
-    def __init__(self, server_name, camera_name, config={}):
+    def __init__(self, server_name, serial, config={}):
         super(AndorDevice, self).__init__(config)
-        self.camera_name = camera_name
+        self.serial = serial
         self.server_name = server_name
         self.value = None
 
