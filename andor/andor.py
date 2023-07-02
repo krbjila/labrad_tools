@@ -54,7 +54,6 @@ class Andor(object):
         andor.CoolerON()
         andor.StartAcquisition()
     """
-    dllpath = '/usr/local/lib/libandor.so'
     initdir = "C:\\Program Files\\Andor SDK\\" #'/usr/local/etc/andor/'
     verbose = True
 
@@ -63,7 +62,7 @@ class Andor(object):
         if platform.system() == 'Windows':
             self.dll = ctypes.cdll.LoadLibrary("C:\\Program Files\\Andor SDK\\atmcd64d.dll")
         elif platform.system() == 'Linux':
-            self.dll = ctypes.cdll.LoadLibrary(self.dllpath)
+            self.dll = ctypes.cdll.LoadLibrary("/usr/local/lib/libandor.so")
 
     def __del__(self):
         self.ShutDown()
