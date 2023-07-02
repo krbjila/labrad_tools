@@ -169,7 +169,7 @@ class AndorServer(HardwareInterfaceServer):
         error_code = andor.error['GetAcquisitionProgress']
         return error_code, acc, series
 
-    @setting(17, returns='iiii')
+    @setting(17, returns='ivvv')
     def get_acquisition_timings(self, c):
         exposure, accumulate, kinetic = andor.GetAcquisitionTimings()
         error_code = andor.error['GetAcquisitionTimings']
@@ -259,7 +259,7 @@ class AndorServer(HardwareInterfaceServer):
         error_code = andor.error['GetNumberVSSpeeds']
         return error_code, speeds
 
-    @setting(32, index='i', returns='ii')
+    @setting(32, index='i', returns='iv')
     def get_pre_amp_gain(self, c, index):
         gain = andor.GetPreAmpGain(index)
         error_code = andor.error['GetPreAmpGain']
