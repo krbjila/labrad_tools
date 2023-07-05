@@ -21,6 +21,7 @@ class KinesisDevice(ConductorParameter):
         super(KinesisDevice, self).__init__(config)
         self.channel = channel
         self.server_name = server_name
+        yield self.server.select_device(self.channel)
         try:
             self.value = self.default_position
         except Exception as e:
@@ -43,6 +44,7 @@ class KinesisDevice(ConductorParameter):
     def update(self):
         if self.value:
             try:
+                yield self.server.select_device(self.channel)
                 yield self.server.move_sequence(self.value)
             except Exception as e:
                 print(e)

@@ -15,4 +15,4 @@ class Latt1(helpers.KinesisDevice):
         }
     """
     def __init__(self, config={}):
-        super(Latt1, self).__init__('polarkrb_kinesis', 'latt1_waveplate', config)
+        super(Latt1, self).__init__('imaging_kinesis', 'latt1_waveplate', config)
