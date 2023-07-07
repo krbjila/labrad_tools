@@ -802,7 +802,7 @@
     
                 {
                     "loc": ["H", 0],
-                    "name": "TTL H0",
+                    "name": "Quad. Shim Enable",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -959,13 +959,13 @@
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC6: NE/SW Quad. Shim", 
+                    "name": "DAC6: Old NE/SW Quad. Shim", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
                 {
                     "loc": 7, 
-                    "name": "DAC7: NW/SE Quad. Shim", 
+                    "name": "DAC7: Old NW/SE Quad. Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 }
@@ -1098,7 +1098,7 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC24: Broken", 
+                    "name": "DAC24: NE/SW Quad. Shim", 
                     "mode": "auto", 
                     "manual_output": 10.0
                 },
@@ -1156,7 +1156,7 @@
             "channels": [
                 {
                     "loc": 0, 
-                    "name": "DAC32: Unused (Noisy)", 
+                    "name": "DAC32: NW/SE Quad. Shim", 
                     "mode": "auto", 
                     "manual_output": 0.0
                 },
