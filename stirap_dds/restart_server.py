@@ -13,5 +13,5 @@ cxn.node_polarkrb.restart('stirap')
 # 1) If there are errors about not being able to find stirap devices when restarting 
 #	ad9910 or stirap, then it is likely the serial ports changed.
 # 	Run find_dds_channels.py on polarkrb and follow instructions to change the 
-#	config.json file on imaging
+#	ad9910 config.json file on imaging
 # 2) If there are other errors, try restarting the node. Hopefully this will fix it
