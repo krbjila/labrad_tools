@@ -22,9 +22,12 @@ import json
 import numpy as np
 import sys
 
+import subprocess
+import pty
+from time import sleep
+
 import os
 from datetime import datetime
-from copy import deepcopy
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -98,6 +101,11 @@ class ElectrodeServer(LabradServer):
         self.load_config(config_path)
         self._reload_presets()
         self.time = None
+
+        try:
+            subprocess.check_output("curl http://127.0.0.1:8000/", shell=True)
+        except:
+            self.start_webserver()
         
         l = LoopingCall(self.daily_backup)
         l.start(60)
@@ -125,6 +133,52 @@ class ElectrodeServer(LabradServer):
             config = json.load(infile)
             for key, value in config.items():
                 setattr(self, key, value)
+
+    def start_webserver(self):
+        """
+        start_webserver(self)
+
+        Starts the electrode calculator web server.
+        """
+        try:
+            dirname = os.path.dirname(__file__)
+            primary, secondary = pty.openpty()
+            if sys.platform == 'win32':
+                cmd=os.path.abspath("../webservers/ElectrodeCalculator/bin/server.bat")
+            else:
+                cmd = os.path.abspath("../webservers/ElectrodeCalculator/bin/server")
+            self.webserver = subprocess.Popen(
+                cmd,
+                cwd=os.path.abspath("../webservers/ElectrodeCalculator"),
+                stdin=secondary,
+                shell=True,
+                preexec_fn=os.setsid
+            )
+            print("Web server started!")
+        except Exception as e:
+            print("Could not start web server: {}".format(e))
+
+    def stop_webserver(self):
+        """
+        stop_webserver(self)
+
+        Stops the electrode calculator web server.
+        """
+        try:
+            os.killpg(os.getpgid(self.webserver.pid), 15)
+            while self.webserver.poll == None:
+                sleep(0.1)
+            print("Web server closed.")
+        except Exception as e:
+            print("Could not kill web server: {}".format(e))
+
+    def stopServer(self):
+        """
+        stopServer(self)
+
+        Called when the server is stopped. Shuts down the electrode calculator web server.
+        """
+        self.stop_webserver()
 
     @setting(1, returns='s')
     def get_presets(self, c):
