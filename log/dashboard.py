@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QMenu, QAction
 import pycurl
 from io import BytesIO
 from functools import partial
-import pyttsx3
 import random
 from time import time
 import labrad
@@ -20,22 +19,14 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon("laser_icon.png"))
         self.setWindowTitle("KRb Laser Dashboard")
         self.initialize()
-        self.url = 'http://192.168.141.125:8000/wavemeter/api/'
         self.cxn = labrad.connect()
-        self.server = self.cxn.polarkrb_alerter
+        self.alerter = self.cxn.polarkrb_alerter
+        self.wavemeter = self.cxn.wavemeterlaptop_wavemeter
         self._createMenuBar()
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
         eFieldMenu = menuBar.addMenu("&Field")
-
-
-        # for i in [0,1]:
-        #     self.set0Field = QAction("asdf", self)
-        #     self.set0Field.setStatusTip("&0field")
-        #     self.set0Field.triggered.connect(lambda checked, index=i: self.updateStirapField(index))
-
-        #     eFieldMenu.addAction(self.set0Field)
    
         actions = []
         filenames = range(0,len(self.stirap))
@@ -140,16 +131,9 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         """
         Gets the latest data from the wavemeter and updates buttons and plays warning audio if laser is unlocked.
         """
-        c = pycurl.Curl()
+        # c = pycurl.Curl()
         try:
-            buffer = BytesIO()
-            c.setopt(c.URL, self.url)
-            c.setopt(c.WRITEDATA, buffer)
-            c.setopt(c.TIMEOUT_MS, 100)
-            c.perform()
-            c.close()
-            body = buffer.getvalue()
-            self.data = json.loads(body.decode('iso-8859-1'))
+            self.data = json.loads(json.loads(self.wavemeter.get_wavelengths()))
             play = False
             names = []
 
@@ -179,8 +163,6 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                 if self.broken[i] and time() - self.t_good[i] > 10 and self.t_good[i] != 0:
                     self.pressed(self.buttons[i], i)
             if play:
-                # sound = vlc.MediaPlayer('unlocked.mp3')
-                # sound.play()
                 for n in names:
                     r = random.random()
                     if r > 0.99:
@@ -191,7 +173,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                         s = ""
                     else:
                         s = ""
-                    self.server.say(("The %s laser is unlocked!" + s) % (n))
+                    self.alerter.say(("The %s laser is unlocked!" + s) % (n))
         except pycurl.error as e:
             print("could not connect to wavemeter: ", e)
             self.data = ''
