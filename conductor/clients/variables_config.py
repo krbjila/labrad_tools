@@ -10,10 +10,10 @@ variables_dict = [
     ['*RbMOT', 1.7], # was 3.5
     ['*RbHFOP', 5.2], 
     # QUAD shims
-    ['*NWhigh', 4.27],# 03/14/2023 was 4.51 was 4.55, changed 05/14/2021
-    ['*NWlow', 3.8], # 03/14/23 was 4.12 was 4.32 09/29/22, 4.14 11/28/2022
-    ['*SWhigh', 4.74], # 03/14/23 was 4.73 was 4.7, changed 05/14/2021, 4.72 11/23/2022
-    ['*SWlow', 4.59], # 03/14/23 was 4.55 was 4.6 09/29/22, 4.55 11/28/2022
+    ['*NWhigh', -1],# 07/06/2023 was 0.01, pol flipped
+    ['*NWlow', 0.15], # 07/06/2023 was 0.12, pol flipped
+    ['*SWhigh', 1.14], # 07/07/2023 was 1.08
+    ['*SWlow', 0.68], # 07/07/2023 was 0.65
     # Evaporation
     ['*MagEvapTime', 12.9],
     # Plug PZTs
@@ -29,8 +29,8 @@ variables_dict = [
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*QuadVcmot', -1],
-    ['*BIASI', 0.0464], # was 0.0491 11/30/22
-    ['*BIASV', -0.385],
+    ['*BIASI', 0.048], # was 0.0491 11/30/22
+    ['*BIASV', -0.395],
     ['*LowField', 0.461], # was 0.457 (11/2/21)
     ['*LowFieldV', -0.675],
     ['*HighField', 8.45],
@@ -53,6 +53,8 @@ variables_dict = [
     ['*RF2', 0.001],
     ['*RF3', 0.001],
     ['*RF4', 0.001],
+    ['*RFspec', 0.001],
+    ['*RFfilter', 0.001],
     # Lattice 
     ['*VOTLoad', 0],
     ['*VOTBottom', 0],
@@ -77,6 +79,8 @@ variables_dict = [
     ['*Latt2Load', -10], #for HLatt alignment
     ['*Latt1Final', -0.4],
     ['*Latt2Final', -0.4],
+    ['*Latt1Spec', -0.4],
+    ['*Latt2Spec', -0.4],
     ['*MARIAMid', -3.4875], # was 0.9 (10/21/20); was 0.7 (11/27/19);  was 1.0 (7/11/19); was 1
     ['*MARIAFinal', -0.9765], # was 0.5
     ['*MARIAFinal2', -0.9765],
@@ -118,6 +122,7 @@ variables_dict = [
     ['*?stirap', 1],
     ['*?layerBlast', 0],
     ['*?Blast', 0],
+    ['*?Spectroscopy', 0],
     ['*?Pulse1', 0],
     ['*?Pulse2', 0],
     ['*?Pulse3', 0],

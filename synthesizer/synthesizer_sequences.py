@@ -746,7 +746,7 @@ class AreaPulse(RFPulse):
     Class for generating an RF pulse on a specified :class:`Transition`, which must be set by a :class:`SetTransition` command before the first :func:`AreaPulse`. The pulse timing is calculated to provide the specified pulse :code:`area`. See also :func:`Pulse` for a low level function for generating pulses with manually specified frequency, amplitude, and duration.
     """
     
-    def __init__(self, pulse_area: float, amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> None:
+    def __init__(self, pulse_area: float, amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> None:
         """
         Args:
             pulse_area (float): The pulse area in radians.
@@ -759,6 +759,7 @@ class AreaPulse(RFPulse):
         self.pulse_area = pulse_area
         self.amplitude = amplitude
         self.phase = phase
+        self.frequency = frequency
         self.centered = centered
         self.window = window
         self.kwargs = kwargs
@@ -767,6 +768,8 @@ class AreaPulse(RFPulse):
         if issubclass(self.window, AreaPulse):
             return self.window(self.pulse_area, self.amplitude, self.phase, self.centered, **self.kwargs).compile(state)
         transition = state.transition
+        if self.frequency is None:
+            self.frequency = transition.frequency
         if self.amplitude is None:
             self.amplitude = transition.default_amplitude
         if self.amplitude <= 0 or self.amplitude > 1:
@@ -778,7 +781,7 @@ class AreaPulse(RFPulse):
             return [Wait(0)]
         Rabi_frequency = transition.Rabi_frequency(self.amplitude)
         rect_pulse_duration = self.pulse_area/(2*np.pi*Rabi_frequency)
-        pulse = Pulse(1, self.amplitude, self.phase, transition.frequency - transition.frequency_offset, self.centered, self.window, **self.kwargs)
+        pulse = Pulse(1, self.amplitude, self.phase, self.frequency - transition.frequency_offset, self.centered, self.window, **self.kwargs)
         pulse.duration = rect_pulse_duration/pulse.area
         return [pulse]
 
@@ -794,21 +797,21 @@ class AreaPulse(RFPulse):
         val += ")"
         return val
 
-def PiPulse(amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
+def PiPulse(amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
     """
     PiPulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs)
 
     A wrapper for :func:`AreaPulse` with pulse area set to pi. Refer to :func:`AreaPulse` for full documentation.
     """
-    return AreaPulse(np.pi, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
+    return AreaPulse(np.pi, amplitude=amplitude, phase=phase, frequency=frequency, centered=centered, window=window, **kwargs)
 
-def PiOver2Pulse(amplitude: Optional[float] = None, phase: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
+def PiOver2Pulse(amplitude: Optional[float] = None, phase: Optional[float] = None, frequency: Optional[float] = None, centered: bool = False, window: type[RFPulse] = RectangularPulse, **kwargs) -> AreaPulse:
     """
     PiOver2Pulse(amplitude=None, phase=None, centered=False, window=RectangularPulse, **kwargs)
 
     A wrapper for :func:`AreaPulse` with pulse area set to pi/2. Refer to :func:`AreaPulse` for full documentation.
     """
-    return AreaPulse(np.pi/2, amplitude=amplitude, phase=phase, centered=centered, window=window, **kwargs)
+    return AreaPulse(np.pi/2, amplitude=amplitude, phase=phase, frequency=frequency, centered=centered, window=window, **kwargs)
 
 class BB1(AreaPulse):
     """
