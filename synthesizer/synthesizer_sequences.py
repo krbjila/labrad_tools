@@ -206,6 +206,12 @@ class Timestamp(RFBlock):
             state.time = 0
         state.digital_out = copy(state.digital_out)
         for c, v in self.digital_out.items():
+            try:
+                v = bool(v)
+            except ValueError:
+                raise ValueError("Digital output {} must be castable to a boolean but is {}.".format(c, v))
+            if c < 0 or c >= N_DIGITAL:
+                raise ValueError("Digital output {} is out of range.".format(c))
             state.digital_out[c] = v
         
         # Turn on the RF switch if the amplitude is non-zero
