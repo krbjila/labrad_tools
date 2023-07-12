@@ -15,18 +15,13 @@ class KinesisDevice(ConductorParameter):
         [...]
     """
     priority = 1
-    value_type = 'list'
+    value_type = 'single'
 
     def __init__(self, server_name, channel, config={}):
         super(KinesisDevice, self).__init__(config)
         self.channel = channel
         self.server_name = server_name
-        yield self.server.select_device(self.channel)
-        try:
-            self.value = self.default_position
-        except Exception as e:
-            print("No default position set.")
-            self.value = None
+        self.value = None
 
     @inlineCallbacks
     def initialize(self):
@@ -38,13 +33,16 @@ class KinesisDevice(ConductorParameter):
             # Log a warning that the server can't be found.
             # Conductor will throw an error and remove the parameter
             print("Kinesis parameter error: server not connected.")
-
+        yield self.server.select_device(self.channel)
+        yield self.server.enable()
+        yield self.server.home()
 
     @inlineCallbacks
     def update(self):
         if self.value:
             try:
                 yield self.server.select_device(self.channel)
-                yield self.server.move_sequence(self.value)
+                self.server.move_to(self.value)
+                # yield self.server.move_sequence(self.value)
             except Exception as e:
                 print(e)

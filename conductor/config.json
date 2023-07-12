@@ -77,9 +77,9 @@
             }
         },
         "kinesis": {
-            "Latt1": {
+            "latt1": {
             },
-            "Latt2": {
+            "latt2": {
             }
         }
     }

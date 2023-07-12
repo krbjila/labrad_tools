@@ -1,6 +1,6 @@
 import helpers
 
-class Latt1(helpers.KinesisDevice):
+class Latt2(helpers.KinesisDevice):
     """
     Latt1(helpers.KinesisDevice)
 
@@ -15,4 +15,4 @@ class Latt1(helpers.KinesisDevice):
         }
     """
     def __init__(self, config={}):
-        super(Latt1, self).__init__('imaging_kinesis', 'latt2_waveplate', config)
+        super(Latt2, self).__init__('imaging_kinesis', 'latt2_waveplate', config)
