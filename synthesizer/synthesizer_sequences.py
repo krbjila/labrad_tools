@@ -1235,8 +1235,12 @@ def plot_sequence(seq: List[RFBlock]):
     return (compiled, durations, fig)
 
 def send_seq(seq):
+    
     if isinstance(seq, List):
+        for s in seq:
+            compile_sequence(s)
         return [jsonpickle.dumps(s, keys=True) for s in seq]
     else:
+        compile_sequence(s)
         return jsonpickle.dumps(seq, keys=True)
     
