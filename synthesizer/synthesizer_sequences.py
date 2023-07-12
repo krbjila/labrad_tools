@@ -1168,6 +1168,8 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         "wait_for_trigger": obj.wait_for_trigger,
                         "digital_out": obj.digital_out
                     }
+                if isinstance(obj, np.bool_):
+                    return bool(obj)
                 return JSONEncoder.default(self, obj)
         return dumps(compiled, cls=RFBlockEncoder), all_durations
     else:
