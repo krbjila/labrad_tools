@@ -10,7 +10,7 @@ pymongo==3.11.3
 PyQt5==5.15.9
 pyttsx3==2.90
 PyVISA==1.11.3
-scipy==1.6.3
+scipy==1.10.0
 Twisted==20.3.0
 zope==5.8.1
 zope.interface==5.1.2
