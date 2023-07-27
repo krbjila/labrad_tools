@@ -9,6 +9,16 @@ from traceback import print_exc
 
 import numpy as np
 
+
+#### TODO ####
+# Save images in the correct location (data/year/month/day/location/prefix_shotnumber.npz). Should save images to a temporary location, then copy them to the dataserver using a new process, so the conductor doesn't hang.
+# Make sure the image format is the same as the previous version.
+# Add metadata to the image, including the dictionary of conductor parameters.
+# Gracefully handle timeouts.
+# What happens if one of the configuration commands fails?
+# What happens if the acquisition isn't finished when the parameter is updated? Should save a placeholder image.
+
+
 class AndorDevice(ConductorParameter):
     """
     Conductor parameter for controlling Andor cameras. Individual cameras should subclass this. The configuration for which hardware a conductor parameter communicates with is set in :mod:`conductor.conductor`'s `config.json <https://github.com/krbjila/labrad_tools/blob/master/conductor/config.json>`_.
