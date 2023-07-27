@@ -24,6 +24,7 @@ node_dicts = [
             'okfpga',
             'usb',
             'serial',
+            'kinesis',
             # 'dg800',
             'elliptec',
             'ad9910', # needs serial server

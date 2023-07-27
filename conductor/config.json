@@ -75,6 +75,12 @@
             "frequency": {
                 "default_frequency": 291.417215
             }
+        },
+        "kinesis": {
+            "latt1": {
+            },
+            "latt2": {
+            }
         }
     }
 }

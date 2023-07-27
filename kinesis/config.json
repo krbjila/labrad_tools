@@ -1,0 +1,14 @@
+{
+    "devices": {
+        "latt1_waveplate": {
+            "servername": "imaging_kinesis",
+            "device_type": "Stage",
+            "serial": "28252498"
+        },
+        "latt2_waveplate": {
+            "servername": "imaging_kinesis",
+            "device_type": "Stage",
+            "serial": "28252670"
+        }
+    }
+}

@@ -206,6 +206,10 @@ class Timestamp(RFBlock):
             state.time = 0
         state.digital_out = copy(state.digital_out)
         for c, v in self.digital_out.items():
+            if not isinstance(v, bool):
+                raise ValueError("Digital output {} must be boolean but is {}.".format(c, v))
+            if c < 0 or c >= N_DIGITAL:
+                raise ValueError("Digital output {} is out of range.".format(c))
             state.digital_out[c] = v
         
         # Turn on the RF switch if the amplitude is non-zero
@@ -1164,6 +1168,8 @@ def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[
                         "wait_for_trigger": obj.wait_for_trigger,
                         "digital_out": obj.digital_out
                     }
+                if isinstance(obj, np.bool_):
+                    return bool(obj)
                 return JSONEncoder.default(self, obj)
         return dumps(compiled, cls=RFBlockEncoder), all_durations
     else:
@@ -1231,8 +1237,12 @@ def plot_sequence(seq: List[RFBlock]):
     return (compiled, durations, fig)
 
 def send_seq(seq):
+    
     if isinstance(seq, List):
+        for s in seq:
+            compile_sequence(s)
         return [jsonpickle.dumps(s, keys=True) for s in seq]
     else:
+        compile_sequence(s)
         return jsonpickle.dumps(seq, keys=True)
     

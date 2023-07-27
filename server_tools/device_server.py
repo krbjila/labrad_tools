@@ -32,7 +32,7 @@ def get_device_wrapper(device_config):
     if os.path.isdir(_device_type):
         module_path += _device_type
     module = __import__(module_path, fromlist=[device_type])
-    print(module.__dict__.keys())
+    # print(module.__dict__.keys())
     return getattr(module, device_type)
 
 def get_connection_wrapper(device):
@@ -108,7 +108,7 @@ class DeviceServer(LabradServer):
 
     @setting(0, returns='*s')
     def get_device_list(self, c):
-        return self.devices.keys()
+        return list(self.devices.keys())
     
     @setting(1, name='s', returns=['s', ''])
     def select_device(self, c, name):
