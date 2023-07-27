@@ -1,0 +1,18 @@
+{
+    "acqLength": 3, 
+    "adChannel": 0, 
+    "binning": true, 
+    "dx": 1024, 
+    "dy": 512, 
+    "emEnable": false, 
+    "emGain": 0, 
+    "expTime": 2.0, 
+    "filebase": "ixon",
+    "hss": 0, 
+    "kinFrames": 2, 
+    "preAmpGain": 0, 
+    "vss": 2, 
+    "xOffset": 0, 
+    "yOffset": 0,
+    "temperature": -50
+}

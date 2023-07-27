@@ -565,7 +565,42 @@ class AndorServer(HardwareInterfaceServer):
         andor.WaitForAcquisitionTimeOut(iTimeOutMs)
         error_code = andor.error['WaitForAcquisitionTimeOut']
         return error_code
-
+    
+    @setting(72, returns='i')
+    def set_fk_vs_speed(self, c, index):
+        self._select_interface(c)
+        andor.SetFKVShiftSpeed(index)
+        error_code = andor.error['SetFKVShiftSpeed']
+        return error_code
+    
+    @setting(73, returns='i')
+    def set_fast_ext_trigger(self, c, mode):
+        self._select_interface(c)
+        andor.SetFastExtTrigger(mode)
+        error_code = andor.error['SetFastExtTrigger']
+        return error_code
+    
+    @setting(74, returns='iii')
+    def get_number_available_images(self, c):
+        self._select_interface(c)
+        first, last = andor.GetNumberAvailableImages()
+        error_code = andor.error['GetNumberAvailableImages']
+        return error_code, first, last
+    
+    @setting(75, returns='iii')
+    def get_number_new_images(self, c):
+        self._select_interface(c)
+        first, last = andor.GetNumberNewImages()
+        error_code = andor.error['GetNumberNewImages']
+        return error_code, first, last
+    
+    @setting(76, returns='i*iii')
+    def get_images(self, c, first, last, size):
+        self._select_interface(c)
+        arr, validfirst, validlast = andor.GetImages(first, last, size)
+        error_code = andor.error['GetImages']
+        return error_code, arr, validfirst, validlast
+    
 Server = AndorServer
 
 if __name__ == "__main__":

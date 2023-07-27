@@ -340,6 +340,21 @@ class Andor(object):
         error = self.dll.GetHSSpeed(channel, typ, index, ctypes.byref(speed))
         self._log(sys._getframe().f_code.co_name, error)
         return speed.value
+    
+    def GetImages(self, first, last, size):
+        """This function will update the data array with the specified series of images from the circular buffer. If the specified series is out of range (i.e. the images have been overwritten or have not yet been acquired then an error will be returned.
+
+        Args:
+            first (int): index of first image in buffer to retrieve
+            last (int): index of last image in buffer to retrieve
+            size (int): total number of pixels
+        """
+        arr = (ctypes.c_int * size)()
+        validfirst = ctypes.c_long()
+        validlast = ctypes.c_long()
+        error = self.dll.GetAcquiredData(first, last, ctypes.pointer(arr), size, ctypes.byref(validfirst), ctypes.byref(validlast))
+        self._log(sys._getframe().f_code.co_name, error)
+        return np.array(arr, dtype=np.uint32), validfirst, validlast
             
     def GetNumberADChannels(self):
         """ As your Andor SDK system may be capable of operating with more than 
@@ -371,6 +386,29 @@ class Andor(object):
                                            ctypes.byref(speeds))
         self._log(sys._getframe().f_code.co_name, error)
         return speeds.value
+    
+    def GetNumberAvailableImages(self):
+        """This function will return information on the number of available images in the circular buffer. This information can be used with GetImages to retrieve a series of images. If any images are overwritten in the circular buffer they no longer can be retrieved and the information returned will treat overwritten images as not available.
+
+        Returns the indices of the first and last available indices in the circular buffer.
+        """
+        first = ctypes.c_long()
+        last = ctypes.c_long()
+        error = self.dll.GetNumberAvailableImages(ctypes.byref(first), ctypes.byref(last))
+        self.log(sys._getframe().f_code.co_name, error)
+        return first.value, last.value
+    
+    def GetNumberNewImages(self):
+        """This function will return information on the number of new images (i.e. images which have not yet been retrieved) in the circular buffer. This information can be used with GetImages to retrieve a series of the latest images. If any images are overwritten in the circular buffer they can no longer be retrieved and the information returned will treat overwritten images as having been retrieved.
+
+        Returns the indices of the first and last available images in the circular buffer.
+        """
+        first = ctypes.c_long()
+        last = ctypes.c_long()
+        error = self.dll.GetNumberNewImages(ctypes.byref(first), ctypes.byref(last))
+        self.log(sys._getframe().f_code.co_name, error)
+        return first.value, last.value
+
 
     def GetNumberPreAmpGains(self):
         """ Available in some systems are a number of pre amp gains that can be 
@@ -948,6 +986,26 @@ class Andor(object):
                 0 to GetNumberVSSpeeds-1
         """
         error = self.dll.SetVSSpeed(index)
+        self._log(sys._getframe().f_code.co_name, error)
+        return
+    
+    def SetFastExtTrigger(self, mode):
+        """This function will enable fast external triggering. When fast external triggering is enabled the system will NOT wait until a “Keep Clean” cycle has been completed before accepting the next trigger. This setting will only have an effect if the trigger mode has been set to External via SetTriggerMode.
+
+        Args:
+            mode (int): 0 disabled, 1 enabled
+        """
+        error = self.dll.SetFastExtTrigger(mode)
+        self._log(sys._getframe().f_code.co_name, error)
+        return
+    
+    def SetFKVShiftSpeed(self, index):
+        """This function will set the fast kinetics vertical shift speed to one of the possible speeds of the system. It will be used for subsequent acquisitions.
+
+        Args:
+            index (int): index into the vertical speed table. 0 to GetNumberVSSpeeds-1
+        """
+        error = self.dll.SetFKVShiftSpeed(index)
         self._log(sys._getframe().f_code.co_name, error)
         return
     

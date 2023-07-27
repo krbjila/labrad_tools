@@ -853,6 +853,26 @@ class AndorProxy(object):
         error = self.andor_server.set_vs_speed(index)
         self._log(sys._getframe().f_code.co_name, error)
         return
+    
+    def SetFKVShiftSpeed(self, index):
+        """This function will set the fast kinetics vertical shift speed to one of the possible speeds of the system. It will be used for subsequent acquisitions.
+
+        Args:
+            index (int): index into the vertical speed table. 0 to GetNumberVSSpeeds-1
+        """
+        error = self.andor_server.set_fk_vs_speed(index)
+        self._log(sys._getframe().f_code.co_name, error)
+        return
+    
+    def SetFastExtTrigger(self, mode):
+        """This function will enable fast external triggering. When fast external triggering is enabled the system will NOT wait until a “Keep Clean” cycle has been completed before accepting the next trigger. This setting will only have an effect if the trigger mode has been set to External via SetTriggerMode.
+
+        Args:
+            mode (int): 0 disabled, 1 enabled
+        """
+        error = self.andor_server.set_fast_ext_trigger(mode)
+        self._log(sys._getframe().f_code.co_name, error)
+        return
             
     def StartAcquisition(self):
         """ This function starts an acquisition. The status of the acquisition 
@@ -935,5 +955,34 @@ class AndorProxy(object):
         error = self.andor_server.wait_for_acquisition_timeout(iTimeOutMs)
         self._log(sys._getframe().f_code.co_name, error)
         return 
+    
+    def GetNumberAvailableImages(self):
+        """This function will return information on the number of available images in the circular buffer. This information can be used with GetImages to retrieve a series of images. If any images are overwritten in the circular buffer they no longer can be retrieved and the information returned will treat overwritten images as not available.
+
+        Returns the indices of the first and last available indices in the circular buffer.
+        """
+        error, first, last = self.andor_server.get_number_available_images()
+        self._log(sys._getframe().f_code.co_name, error)
+        return first, last
+    
+    def GetNumberNewImages(self):
+        """This function will return information on the number of new images (i.e. images which have not yet been retrieved) in the circular buffer. This information can be used with GetImages to retrieve a series of the latest images. If any images are overwritten in the circular buffer they can no longer be retrieved and the information returned will treat overwritten images as having been retrieved.
+
+        Returns the indices of the first and last available images in the circular buffer.
+        """
+        error, first, last = self.andor_server.get_number_new_images()
+        self._log(sys._getframe().f_code.co_name, error)
+        return first, last
 
 
+    def GetImages(self, first, last, size):
+        """This function will update the data array with the specified series of images from the circular buffer. If the specified series is out of range (i.e. the images have been overwritten or have not yet been acquired then an error will be returned.
+
+        Args:
+            first (int): index of first image in buffer to retrieve
+            last (int): index of last image in buffer to retrieve
+            size (int): total number of pixels
+        """
+        error, arr, validfirst, validlast = self.andor_server.get_images(first, last, size)
+        self._log(sys._getframe().f_code.co_name, error)
+        return arr, validfirst, validlast
