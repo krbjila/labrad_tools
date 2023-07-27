@@ -54,7 +54,7 @@ class AndorDevice(ConductorParameter):
 
     @inlineCallbacks
     def update(self):
-        if self.value:
+        if self.value and self.value['takeImage']:
             try:
                 # TODO: save a placeholder image gracefully, if the camera was acquiring
                 self.andor.AbortAcquisition()
