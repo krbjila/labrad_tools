@@ -1011,6 +1011,38 @@ def WAHUHA(duration: float, pulse: RFPulse = None):
 
     return sequence
 
+def DROID60(duration: float, pulse: RFPulse = None):
+    if pulse is None:
+        pulse = PiOver2Pulse()
+    def phased_pulse(phase, area):
+        new_pulse = copy(pulse)
+        new_pulse.phase = phase
+        new_pulse.pulse_area = area
+        new_pulse.centered = False
+        return new_pulse
+    
+    def px():
+        return phased_pulse(0, np.pi)
+    def p2x():
+        return phased_pulse(0, np.pi/2)
+    def py():
+        return phased_pulse(np.pi/2, np.pi)
+    def p2y():
+        return phased_pulse(np.pi/2, np.pi/2)
+    def mpx():
+        return phased_pulse(np.pi, np.pi)
+    def mp2x():
+        return phased_pulse(np.pi, np.pi/2)
+    def mpy():
+        return phased_pulse(3*np.pi/2, np.pi)
+    def mp2y():
+        return phased_pulse(3*np.pi/2, np.pi/2)
+    def w():
+        return Wait(duration/48)
+
+    seq = [w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpy(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpy(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpy()]
+    return seq
+
 def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
     """
     Ramsey(duration, phase, pulse=None, decoupling=None)
