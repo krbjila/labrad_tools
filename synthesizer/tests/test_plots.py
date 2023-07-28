@@ -1,6 +1,8 @@
 from math import pi
 
 import sys, os
+import json
+
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
@@ -9,14 +11,18 @@ import synthesizer_sequences as ss
 seq = {
     0: [
         ss.SetTransition(ss.Transition(2E6, {0.5: 100E3})),
-        ss.DROID60(1E-3)
+        ss.DROID60(2.4E-3)
         ],
 }
 
-compiled, durations = ss.compile_sequence(seq, False)
+compiled, durations = ss.compile_sequence(seq, True)
 for s in compiled[0][0:-1]:
     print(s)
 print("durations: {}".format(durations))
+
+#Save compiled as a json file
+# with open('compiled.json', 'w') as outfile:
+#     json.dump(compiled, outfile)
 
 compiled, durations, fig = ss.plot_sequence(seq)
 # fig.write_html("fig.html")
