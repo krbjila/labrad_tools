@@ -21,8 +21,8 @@ for s in compiled[0][0:-1]:
 print("durations: {}".format(durations))
 
 #Save compiled as a json file
-# with open('compiled.json', 'w') as outfile:
-#     json.dump(compiled, outfile)
+with open('compiled.json', 'w') as outfile:
+    json.dump(json.loads(compiled), outfile, indent=4, sort_keys=True)
 
 compiled, durations, fig = ss.plot_sequence(seq)
 # fig.write_html("fig.html")
