@@ -8,4 +8,4 @@ class Side(helpers.AndorDevice):
         # TODO: add example config
     """
     def __init__(self, config={}):
-        super(Side, self).__init__('imaging_andor', 11623, config)
+        super(Side, self).__init__('imaging_andor', '11623', config)

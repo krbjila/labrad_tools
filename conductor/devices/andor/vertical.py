@@ -8,4 +8,4 @@ class Vertical(helpers.AndorDevice):
         # TODO: add example config
     """
     def __init__(self, config={}):
-        super(Vertical, self).__init__('imaging_andor', 11982, config)
+        super(Vertical, self).__init__('imaging_andor', '11982', config)

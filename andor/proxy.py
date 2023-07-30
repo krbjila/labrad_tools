@@ -865,7 +865,7 @@ class AndorProxy(object):
         return
     
     def SetFastExtTrigger(self, mode):
-        """This function will enable fast external triggering. When fast external triggering is enabled the system will NOT wait until a “Keep Clean” cycle has been completed before accepting the next trigger. This setting will only have an effect if the trigger mode has been set to External via SetTriggerMode.
+        """This function will enable fast external triggering. When fast external triggering is enables the system will NOT wait until a "Keep Clean" cycle has been completed before accepting the next trigger. This setting will only have an effect if the trigger mode has been set to External via SetTriggerMode.
 
         Args:
             mode (int): 0 disabled, 1 enabled
