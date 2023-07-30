@@ -354,7 +354,21 @@ class Andor(object):
         validlast = ctypes.c_long()
         error = self.dll.GetImages(first, last, ctypes.pointer(arr), size, ctypes.byref(validfirst), ctypes.byref(validlast))
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint32), validfirst.value, validlast.value
+        return np.array(arr, dtype=np.int32), validfirst.value, validlast.value
+    
+    def GetMostRecentImage(self, size):
+        """This function will update the data array with the most recently acquired image in any acquisition mode. The data are returned as long integers (32-bit signed integers). The "array" must be exactly the same size as the complete image.
+
+        Args:
+            size (int): total nu,ber of pixels
+
+        Returns:
+            array
+        """
+        arr = (ctypes.c_long * size)()
+        error = self.dll.GetMostRecentImage(ctypes.pointer(arr), size)
+        self._log(sys._getframe().f_code.co_name, error)
+        return np.array(arr, dtype=np.int32)
             
     def GetNumberADChannels(self):
         """ As your Andor SDK system may be capable of operating with more than 

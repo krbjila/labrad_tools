@@ -607,6 +607,13 @@ class AndorServer(HardwareInterfaceServer):
         size = andor.GetSizeOfCircularBuffer()
         error_code = andor.error['GetSizeOfCircularBuffer']
         return error_code, size
+    
+    @setting(78, returns='i*i')
+    def get_most_recent_image(self, c, first, last, size):
+        self._select_interface(c)
+        arr = andor.GetMostRecentImage(first, last, size)
+        error_code = andor.error['GetMostRecentImage']
+        return error_code, arr
 
     
 Server = AndorServer

@@ -293,7 +293,21 @@ class AndorProxy(object):
         error, speed = yield self.andor_server.get_hs_speed(channel, typ, index)
         self._log(sys._getframe().f_code.co_name, error)
         returnValue(speed)
-            
+
+    @inlineCallbacks
+    def GetMostRecentImage(self, size):
+        """This function will update the data array with the most recently acquired image in any acquisition mode. The data are returned as long integers (32-bit signed integers). The "array" must be exactly the same size as the complete image.
+
+        Args:
+            size (int): total nu,ber of pixels
+
+        Returns:
+            array
+        """
+        error, arr = yield self.andor_server.get_most_recent_image(size)
+        self._log(sys._getframe().f_code.co_name, error)
+        returnValue(arr)
+
     @inlineCallbacks
     def GetNumberADChannels(self):
         """ As your Andor SDK system may be capable of operating with more than 
