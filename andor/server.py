@@ -609,9 +609,9 @@ class AndorServer(HardwareInterfaceServer):
         return error_code, size
     
     @setting(78, returns='i*i')
-    def get_most_recent_image(self, c, first, last, size):
+    def get_most_recent_image(self, c, size):
         self._select_interface(c)
-        arr = andor.GetMostRecentImage(first, last, size)
+        arr = andor.GetMostRecentImage(size)
         error_code = andor.error['GetMostRecentImage']
         return error_code, arr
 
