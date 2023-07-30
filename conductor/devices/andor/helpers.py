@@ -11,15 +11,13 @@ from conductor_device.conductor_parameter import ConductorParameter
 from traceback import print_exc
 
 import numpy as np
-
+from datetime import datetime
 
 #### TODO ####
 # Save images in the correct location (data/year/month/day/location/prefix_shotnumber.npz). Should save images to a temporary location, then copy them to the dataserver using a new process, so the conductor doesn't hang.
 # Make sure the image format is the same as the previous version.
 # Add metadata to the image, including the dictionary of conductor parameters.
-# Gracefully handle timeouts.
 # What happens if one of the configuration commands fails?
-# What happens if the acquisition isn't finished when the parameter is updated? Should save a placeholder image.
 
 
 class AndorDevice(ConductorParameter):
@@ -47,8 +45,6 @@ class AndorDevice(ConductorParameter):
         self.andor = AndorProxy(self.server)
 
         cameras = yield self.andor.get_interface_list()
-        print("fart! poo!")
-        print(cameras)
         if self.serial not in cameras:
             raise Exception('Camera {} not found'.format(self.serial))
         yield self.andor.select_interface(self.serial)
@@ -66,88 +62,121 @@ class AndorDevice(ConductorParameter):
 
         yield self.andor.SetNumberAccumulations(1)
 
+    def save_data(self, frames):
+        expected_frame_size = self.kinFrames * self.dy * self.dx / (self.bin * self.bin)
+        if len(frames) < self.acqLength:
+            print("Expected {} frames, got {}".format(self.acqLength, len(frames)))
+            for i in range(self.acqLength - len(frames)):
+                frames.append(np.zeros(expected_frame_size))
+        data = np.array(frames).reshape((self.acqLength, self.kinFrames, self.dy/self.bin, self.dx/self.bin))
+
+        path = "poo_{}.npz".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+        print("Saving image to {}".format(os.path.abspath(path)))
+        np.savez_compressed(path, data)
+
 
     @inlineCallbacks
     def update(self):
         if self.value and self.value['takeImage']:
             try:
-                # TODO: save a placeholder image gracefully, if the camera was acquiring
                 yield self.andor.AbortAcquisition()
+                yield self.andor.CancelWait()
                 
                 # Configure the camera
-                acqLength = self.value['acqLength']
-                adChannel = self.value['adChannel']
-                dx = self.value['dx']
-                dy = self.value['dy']
-                binning = self.value['binning']
-                emEnable = self.value['emEnable']
-                emGain = self.value['emGain']
-                expTime = self.value['expTime']
-                hss = self.value['hss']
-                kinFrames = self.value['kinFrames']
-                preAmpGain = self.value['preAmpGain']
-                vss = self.value['vss']
-                xOffset = self.value['xOffset']
-                yOffset = self.value['yOffset']
-                temperature = self.value['temperature']
+                self.acqLength = self.value['acqLength']
+                self.adChannel = self.value['adChannel']
+                self.dx = self.value['dx']
+                self.dy = self.value['dy']
+                self.binning = self.value['binning']
+                self.emEnable = self.value['emEnable']
+                self.emGain = self.value['emGain']
+                self.expTime = self.value['expTime']*1E-3 # ms to s
+                self.hss = self.value['hss']
+                self.kinFrames = self.value['kinFrames']
+                self.preAmpGain = self.value['preAmpGain']
+                self.vss = self.value['vss']
+                self.xOffset = self.value['xOffset']
+                self.yOffset = self.value['yOffset']
+                self.temperature = self.value['temperature']
 
                 current_temp = yield self.andor.GetTemperature()
                 if float(current_temp) > 0:
                     print("Cooler restart.")
                     yield self.andor.SetFanMode(2) # 2 for off
-                    yield self.andor.SetTemperature(temperature)
+                    yield self.andor.SetTemperature(self.temperature)
                     yield self.andor.SetCoolerMode(0) # 1 Returns to ambient temperature on shutdown
                     yield self.andor.CoolerON()
 
 
-                if emEnable:
+                if self.emEnable:
                     yield self.andor.SetOutputAmplifier(0)
-                    yield self.andor.SetEMCCDGain(emGain)
-                    yield self.andor.SetHSSpeed(0, hss)
+                    yield self.andor.SetEMCCDGain(self.emGain)
+                    yield self.andor.SetHSSpeed(0, self.hss)
                 else:
                     yield self.andor.SetOutputAmplifier(1)
-                    yield self.andor.SetHSSpeed(1, hss)
+                    yield self.andor.SetHSSpeed(1, self.hss)
 
-                yield self.andor.SetADChannel(adChannel)
-                yield self.andor.SetPreAmpGain(preAmpGain)
+                yield self.andor.SetADChannel(self.adChannel)
+                yield self.andor.SetPreAmpGain(self.preAmpGain)
 
-                if binning:
-                    bin = 2
+                if self.binning:
+                    self.bin = 2
                 else:  
-                    bin = 1
+                    self.bin = 1
 
-                if kinFrames > 1:
+                if self.kinFrames > 1:
                     yield self.andor.SetAcquisitionMode(4) # Fast Kinetics
-                    yield self.andor.SetFKVShiftSpeed(vss)
-                    yield self.andor.SetFastKineticsEx(dy, kinFrames, expTime, 4, bin, bin, yOffset)
+                    yield self.andor.SetFKVShiftSpeed(self.vss)
+                    yield self.andor.SetFastKineticsEx(self.dy, self.kinFrames, self.expTime, 4, self.bin, self.bin, self.yOffset)
                 else:
                     yield self.andor.SetAcquisitionMode(3) # Kinetics
-                    yield self.andor.SetNumberKinetics(acqLength)
-                    yield self.andor.SetVSSpeed(vss)
-                    yield self.andor.SetExposureTime(expTime)
-                    yield self.andor.SetImage(bin, bin, xOffset + 1, dx + xOffset, yOffset + 1, dy + yOffset)
+                    yield self.andor.SetNumberKinetics(self.acqLength)
+                    yield self.andor.SetVSSpeed(self.vss)
+                    yield self.andor.SetExposureTime(self.expTime)
+                    yield self.andor.SetImage(self.bin, self.bin, self.xOffset + 1, self.dx + self.xOffset, self.yOffset + 1, self.dy + self.yOffset)
 
-                if acqLength == 1:
+                if self.acqLength == 1:
                     timeouts = [60E3] # ms
                 else:
-                    timeouts = [60E3] + [4E3] * (acqLength - 1) # ms
+                    timeouts = [60E3] + [4E3] * (self.acqLength - 1) # ms
 
                 self.andor.SetShutter(1, 1, 0, 0) # Open the shutter
-                
-                if kinFrames > 1 and acqLength > 1:
-                    for i in range(acqLength):
+
+                self.frames = []
+                npixels = int(self.kinFrames * self.dx * self.dy / (self.bin * self.bin))
+
+                if self.kinFrames > 1 and self.acqLength > 1:
+                    for i in range(self.acqLength):
                         yield self.andor.StartAcquisition()
-                        # TODO: Handle timeouts gracefully
-                        yield self.andor.WaitForAcquisitionTimeOut(timeouts[i])
+                        yield self.andor.WaitForAcquisitionTimeOut(int(timeouts[i]))
+                        if self.andor.error['WaitForAcquisitionTimeOut'] != 20002:
+                            print("Error acquiring frame {}: {}".format(i, self.andor.error['WaitForAcquisitionTimeOut']))
+                            new_image = np.zeros(npixels)
+                        else:
+                            first, last = yield self.andor.GetNumberNewImages()
+                            new_image, validfirst, validlast = yield self.andor.GetImages(first, last, npixels)
+                        self.frames.append(new_image)
                 else:
                     yield self.andor.StartAcquisition()
-                    yield self.andor.WaitForAcquisitionTimeOut(timeouts[0])
+                    yield self.andor.WaitForAcquisitionTimeOut(int(timeouts[0]))
+                    if self.andor.error['WaitForAcquisitionTimeOut'] != 20002:
+                        print("Error acquiring: {}".format(self.andor.error['WaitForAcquisitionTimeOut']))
+                        new_image = np.zeros(npixels)
+                    else:
+                        first, last = yield self.andor.GetNumberNewImages()
+                        new_image, validfirst, validlast = yield self.andor.GetImages(first, last, npixels)
+                    self.frames.append(new_image)
 
                 yield self.andor.SetShutter(1, 2, 0, 0) # Close the shutter
-                
-                first, last = yield self.andor.GetNumberNewImages()
-                data, validfirst, validlast = yield self.andor.GetImages(first, last, acqLength*dx*dy)
 
-                np.savez_compressed("poo.npz", data.reshape(acqLength, dy, dx))
+                self.save_data(self.frames)
+
+                # TODO: Why can't I read out all the images at the end?
+                # first, last = yield self.andor.GetNumberNewImages()
+                # print("first: {}, last: {}".format(first, last))
+                # npixels = int((last - first) * kinFrames * dx * dy / (bin * bin))
+                # data = yield self.andor.GetAcquiredData(npixels)
+                # data, validfirst, validlast = yield self.andor.GetImages(first, last, npixels)
+
             except Exception as e:
                 print_exc(e)

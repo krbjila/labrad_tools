@@ -28,6 +28,7 @@ node_dicts = [
             # 'dg800',
             'elliptec',
             'ad9910', # needs serial server
+            'andor',
             'logging'
         ],
         # 'node krbg2': [
