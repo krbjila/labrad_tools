@@ -460,7 +460,7 @@ class Andor(object):
         Returns:
             (int) size of the internal circular buffer in bytes.
         """
-        size = ctypes.c_long()
+        size = ctypes.c_ulong()
         error = self.dll.GetSizeOfCircularBuffer(ctypes.byref(size))
         self._log(sys._getframe().f_code.co_name, error)
         return size.value
