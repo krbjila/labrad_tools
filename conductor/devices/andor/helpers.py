@@ -12,6 +12,8 @@ from traceback import print_exc
 
 import numpy as np
 from datetime import datetime
+import re
+import multiprocessing as mp
 
 #### TODO ####
 # Save images in the correct location (data/year/month/day/location/prefix_shotnumber.npz). Should save images to a temporary location, then copy them to the dataserver using a new process, so the conductor doesn't hang.
@@ -68,12 +70,54 @@ class AndorDevice(ConductorParameter):
             print("Expected {} frames, got {}".format(self.acqLength, len(frames)))
             for i in range(self.acqLength - len(frames)):
                 frames.append(np.zeros(expected_frame_size))
-        data = np.array(frames).reshape((self.acqLength, self.kinFrames, self.dy/self.bin, self.dx/self.bin))
+        data = np.array(frames).reshape((-1, self.dy/self.bin, self.dx/self.bin))
 
-        path = "poo_{}.npz".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
-        print("Saving image to {}".format(os.path.abspath(path)))
-        np.savez_compressed(path, data)
+        savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+        file_number = 0
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        else:
+            filelist = os.listdir(savedir)
+            file_number = 0
+            for f in filelist:
+                match = re.match(self.filebase+"_([0-9])+.npz", f)
+                if match and int(match.group(1)) > file_number:
+                    file_number = int(match.group(1)) + 1
 
+        path = savedir+self.filebase+"_"+str(file_number)
+
+        metadata = {
+            'camera': 'Andor iXon 888',
+            'name': __class__ ,
+            'serial': self.serial,
+            'images': self.acqLength * self.kinFrames,
+            'width': self.dx,
+            'height': self.dy,
+            'x_offset': self.xOffset,
+            'y_offset': self.yOffset,
+            'kinetics_frames': self.kinFrames,
+            'exposure': self.expTime,
+            'binning': (self.bin, self.bin),
+            'timestamp': datetime.now(),
+            'em_enable': 'on' if self.emEnable else 'off',
+            'em_gain': self.emGain,
+            'preamp_gain': self.preAmpGain,
+            'vs_speed': self.vss,
+            'shot': -1, # TODO: get shot number from logging server
+            'path': path + ".npz",
+            'id': None
+        }
+
+        # spawn a new process to save the data to prevent hanging
+        p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
+
+    def save_data_process(self, path, data, metadata):
+        # Define a temporary path to avoid conflicts when writing file
+        # Otherwise, fitting program autoloads the file before writing is complete
+        path_temp = path+"_temp.npz"
+        with open(path_temp, 'wb') as f:
+            np.savez_compressed(f, data=data, meta=metadata)
+        os.rename(path_temp, path+".npz")
 
     @inlineCallbacks
     def update(self):
@@ -98,6 +142,8 @@ class AndorDevice(ConductorParameter):
                 self.xOffset = self.value['xOffset']
                 self.yOffset = self.value['yOffset']
                 self.temperature = self.value['temperature']
+                self.saveFolder = self.value['saveFolder']
+                self.filebase = self.value['filebase']
 
                 current_temp = yield self.andor.GetTemperature()
                 if float(current_temp) > 0:
