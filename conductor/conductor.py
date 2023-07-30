@@ -257,8 +257,6 @@ class ConductorServer(LabradServer):
             c: LabRAD context
         """
 
-        print("hello MOFOMOFOFMOFOFMOFOF")
-
         # Signal to clients that parameters are being refreshed
         self.parameters_refreshed(True)
 
