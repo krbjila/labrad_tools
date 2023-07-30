@@ -123,7 +123,7 @@ class AndorServer(HardwareInterfaceServer):
                 print("Error connecting to camera " + str(i) + " with handle " + str(handle) + ": " + errf)
 
     def _select_interface(self, c):
-        if c is not None and c['address'] != self.current_camera:
+        if c is not None and 'address' in c and c['address'] != self.current_camera:
             self.set_current_camera(c, self.interfaces[c['address']])
             self.current_camera = c['address']
 
@@ -599,7 +599,15 @@ class AndorServer(HardwareInterfaceServer):
         self._select_interface(c)
         arr, validfirst, validlast = andor.GetImages(first, last, size)
         error_code = andor.error['GetImages']
-        return error_code, arr, validfirst.value, validlast.value
+        return error_code, arr, validfirst, validlast
+    
+    @setting(77, returns='ii')
+    def get_size_of_circular_buffer(self, c):
+        self._select_interface(c)
+        size = andor.GetSizeOfCircularBuffer()
+        error_code = andor.error['GetSizeOfCircularBuffer']
+        return error_code, size
+
     
 Server = AndorServer
 

@@ -349,12 +349,12 @@ class Andor(object):
             last (int): index of last image in buffer to retrieve
             size (int): total number of pixels
         """
-        arr = (ctypes.c_int * size)()
+        arr = (ctypes.c_long * size)()
         validfirst = ctypes.c_long()
         validlast = ctypes.c_long()
         error = self.dll.GetImages(first, last, ctypes.pointer(arr), size, ctypes.byref(validfirst), ctypes.byref(validlast))
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint32), validfirst, validlast
+        return np.array(arr, dtype=np.uint32), validfirst.value, validlast.value
             
     def GetNumberADChannels(self):
         """ As your Andor SDK system may be capable of operating with more than 
@@ -453,6 +453,17 @@ class Andor(object):
         error = self.dll.GetPreAmpGain(index, ctypes.byref(gain))
         self._log(sys._getframe().f_code.co_name, error)
         return gain.value
+    
+    def GetSizeOfCircularBuffer(self):
+        """ This function will return the maximum number of images the circular buffer can store based on the current acquisition settings.
+
+        Returns:
+            (int) size of the internal circular buffer in bytes.
+        """
+        size = ctypes.c_long()
+        error = self.dll.GetSizeOfCircularBuffer(ctypes.byref(size))
+        self._log(sys._getframe().f_code.co_name, error)
+        return size.value
 
     def GetStatus(self):
         """ This function will return the current status of the Andor SDK 
