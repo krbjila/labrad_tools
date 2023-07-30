@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 ERROR_CODE = {
     20001: "DRV_ERROR_CODES",
@@ -75,45 +76,50 @@ class AndorProxy(object):
         if self.verbose:
             print("{}: {}".format(function, ERROR_CODE[error]))
 
+    @inlineCallbacks
     def select_interface(self, address):
-        return self.andor_server.select_interface(address)
+        interface = yield self.andor_server.select_interface(address)
+        returnValue(interface)
 
+    @inlineCallbacks
     def get_interface_list(self):
-        return self.andor_server.get_interface_list()
+        interface_list = yield self.andor_server.get_interface_list()
+        returnValue(interface_list)
 
+    @inlineCallbacks
     def AbortAcquisition(self):
         """ This function aborts the current acquisition if one is active. """
-        error = self.andor_server.abort_acquisition()
+        error = yield self.andor_server.abort_acquisition()
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def CancelWait(self):
         """ This function restarts a thread which is sleeping within the 
         WaitForAcquisition function. The sleeping thread will return from 
         WaitForAcquisition with a value not equal to DRV_SUCCESS.
         """
-        error = self.andor_server.cancel_wait()
+        error = yield self.andor_server.cancel_wait()
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def CoolerOFF(self):
         """ Switches OFF the cooling. The rate of temperature change is 
         controlled in some models until the temperature reaches 0o. Control is 
         returned immediately to the calling application.
         """
-        error = self.andor_server.cooler_off()
+        error = yield self.andor_server.cooler_off()
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def CoolerON(self):
         """ Switches ON the cooling. On some systems the rate of temperature 
         change is controlled until the temperature is within 3o of the set 
         value. Control is returned immediately to the calling application.
         """
-        error = self.andor_server.cooler_on()
+        error = yield self.andor_server.cooler_on()
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def GetAcquiredData(self, size):
         """ This function will return the data from the last acquisition. The 
         data are returned as long integers (32-bit signed integers). The "array" 
@@ -124,10 +130,11 @@ class AndorProxy(object):
         Returns:
             (array) image.
         """
-        error, arr = self.andor_server.get_acquired_data(size)
+        error, arr = yield self.andor_server.get_acquired_data(size)
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint32)
+        returnValue(np.array(arr, dtype=np.uint32))
     
+    @inlineCallbacks
     def GetAcquiredData16(self, size):
         """ 16-bit version of the GetAcquiredData function. The "array" must 
         be large enough to hold the complete data set.
@@ -137,10 +144,11 @@ class AndorProxy(object):
         Returns:
             (array) image.
         """
-        error, arr = self.andor_server.get_acquired_data_16(size)
+        error, arr = yield self.andor_server.get_acquired_data_16(size)
         self._log(sys._getframe().f_code.co_name, error)
-        return np.array(arr, dtype=np.uint16)
+        returnValue(np.array(arr, dtype=np.uint16))
 
+    @inlineCallbacks
     def GetAcquisitionProgress(self):
         """ This function will return information on the progress of the 
         current acquisition. It can be called at any time but is best used in 
@@ -162,10 +170,11 @@ class AndorProxy(object):
             (int) number of accumulations completed in the current kinetic scan.
             (int) number of kinetic scans completed.
         """
-        error, acc, series = self.andor_server.get_acquisition_progress()
+        error, acc, series = yield self.andor_server.get_acquisition_progress()
         self._log(sys._getframe().f_code.co_name, error)
-        return acc, series
+        returnValue((acc, series))
         
+    @inlineCallbacks
     def GetAcquisitionTimings(self):
         """ This function will return the current "valid" acquisition timing 
         information. This function should be used after all the acquisitions 
@@ -181,10 +190,11 @@ class AndorProxy(object):
             accumulate (float): valid accumulate cycle time in seconds
             kinetic (float): valid kinetic cycle time in seconds
         """
-        error, exposure, accumulate, kinetic = self.andor_server.get_acquisition_timings()
+        error, exposure, accumulate, kinetic = yield self.andor_server.get_acquisition_timings()
         self._log(sys._getframe().f_code.co_name, error)
-        return exposure, accumulate, kinetic
+        returnValue((exposure, accumulate, kinetic))
 
+    @inlineCallbacks
     def GetBitDepth(self, channel):
         """ This function will retrieve the size in bits of the dynamic range 
         for any available AD channel.
@@ -194,16 +204,18 @@ class AndorProxy(object):
         Returns:
             (int) dynamic range in bits
         """
-        error, depth = self.andor_server.get_bit_depth(channel)
+        error, depth = yield self.andor_server.get_bit_depth(channel)
         self._log(sys._getframe().f_code.co_name, error)
-        return depth
+        returnValue(depth)
     
+    @inlineCallbacks
     def GetCameraSerialNumber(self):
         """ this function will retrieve camera's serial number. """
-        error, number = self.andor_server.get_camera_serial_number()
+        error, number = yield self.andor_server.get_camera_serial_number()
         self._log(sys._getframe().f_code.co_name, error)
-        return number
+        returnValue(number)
 
+    @inlineCallbacks
     def GetDetector(self):
         """ This function returns the size of the detector in pixels. The 
         horizontal axis is taken to be the axis parallel to the readout 
@@ -213,10 +225,11 @@ class AndorProxy(object):
             (int) number of horizontal pixels.
             (int) number of vertical pixels.
         """
-        error, xpixels, ypixels = self.andor_server.get_detector()
+        error, xpixels, ypixels = yield self.andor_server.get_detector()
         self._log(sys._getframe().f_code.co_name, error)
-        return xpixels, ypixels
+        returnValue((xpixels, ypixels))
 
+    @inlineCallbacks
     def GetEMCCDGain(self):
         """ Returns the current gain setting. The meaning of the value returned
         depends on the EM Gain mode.
@@ -224,10 +237,11 @@ class AndorProxy(object):
         Returns:
             (int) current EM gain setting.
         """
-        error, gain = self.andor_server.get_emccd_gain()
+        error, gain = yield self.andor_server.get_emccd_gain()
         self._log(sys._getframe().f_code.co_name, error)
-        return gain
+        returnValue(gain)
      
+    @inlineCallbacks
     def GetEMGainRange(self):
         """ Returns the minimum and maximum values of the current selected EM 
         Gain mode and temperature of the sensor.
@@ -236,10 +250,11 @@ class AndorProxy(object):
             (int) lowest gain setting
             (int) highest gain setting
         """
-        error, low, high = self.andor_server.get_em_gain_range()
+        error, low, high = yield self.andor_server.get_em_gain_range()
         self._log(sys._getframe().f_code.co_name, error)
-        return low, high
+        returnValue((low, high))
       
+    @inlineCallbacks
     def GetFastestRecommendedVSSpeed(self):
         """ As your Andor SDK system may be capable of operating at more than 
         one vertical shift speed this function will return the fastest 
@@ -254,10 +269,11 @@ class AndorProxy(object):
             (int) index of the fastest recommended vertical shift speed.
             (float) speed in microseconds per pixel shift.
         """
-        error, index, speed = self.andor_server.get_fastest_recommended_vs_speed()
+        error, index, speed = yield self.andor_server.get_fastest_recommended_vs_speed()
         self._log(sys._getframe().f_code.co_name, error)
-        return index, speed
+        returnValue((index, speed))
 
+    @inlineCallbacks
     def GetHSSpeed(self, channel, typ, index):
         """ As your Andor system is capable of operating at more than one 
         horizontal shift speed this function will return the actual speeds 
@@ -274,10 +290,11 @@ class AndorProxy(object):
         Returns:
             (float) speed in in MHz.
         """
-        error, speed = self.andor_server.get_hs_speed(channel, typ, index)
+        error, speed = yield self.andor_server.get_hs_speed(channel, typ, index)
         self._log(sys._getframe().f_code.co_name, error)
-        return speed
+        returnValue(speed)
             
+    @inlineCallbacks
     def GetNumberADChannels(self):
         """ As your Andor SDK system may be capable of operating with more than 
         one A-D converter, this function will tell you the number available.
@@ -285,10 +302,11 @@ class AndorProxy(object):
         Returns:
             (int) number of allowed channels
         """
-        error, channels = self.andor_server.get_number_ad_channels()
+        error, channels = yield self.andor_server.get_number_ad_channels()
         self._log(sys._getframe().f_code.co_name, error)
-        return channels
+        returnValue(channels)
 
+    @inlineCallbacks
     def GetNumberHSSpeeds(self, channel, typ):
         """ As your Andor SDK system is capable of operating at more than one 
         horizontal shift speed this function will return the actual number of 
@@ -302,10 +320,11 @@ class AndorProxy(object):
         Returns:
             (int) number of allowed horizontal speeds
         """
-        error, speeds = self.andor_server.get_number_hs_speeds(channel, typ)
+        error, speeds = yield self.andor_server.get_number_hs_speeds(channel, typ)
         self._log(sys._getframe().f_code.co_name, error)
-        return speeds
+        returnValue(speeds)
 
+    @inlineCallbacks
     def GetNumberPreAmpGains(self):
         """ Available in some systems are a number of pre amp gains that can be 
         applied to the data as it is read out. This function gets the number of 
@@ -315,10 +334,11 @@ class AndorProxy(object):
         Returns:
             (int) number of allowed pre amp gains
         """ 
-        error, noGains = self.andor_server.get_number_pre_amp_gains()
+        error, noGains = yield self.andor_server.get_number_pre_amp_gains()
         self._log(sys._getframe().f_code.co_name, error)
-        return noGains
+        returnValue(noGains)
 
+    @inlineCallbacks
     def GetNumberVSSpeeds(self):
         """ As your Andor system may be capable of operating at more than one 
         vertical shift speed this function will return the actual number of 
@@ -327,10 +347,11 @@ class AndorProxy(object):
         Returns:
             (int) number of allowed vertical speeds
         """
-        error, speeds = self.andor_server.get_number_vs_speeds()
+        error, speeds = yield self.andor_server.get_number_vs_speeds()
         self._log(sys._getframe().f_code.co_name, error)
-        return speeds
+        returnValue(speeds)
 
+    @inlineCallbacks
     def GetPreAmpGain(self, index):
         """ For those systems that provide a number of pre amp gains to apply to 
         the data as it is read out; this function retrieves the amount of gain 
@@ -343,10 +364,22 @@ class AndorProxy(object):
         Returns:
             (float) gain factor for this index.
         """
-        error, gain = self.andor_server.get_pre_amp_gain(index)
+        error, gain = yield self.andor_server.get_pre_amp_gain(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return gain
+        returnValue(gain)
 
+    @inlineCallbacks
+    def GetSizeOfCircularBuffer(self):
+        """ This function will return the maximum number of images the circular buffer can store based on the current acquisition settings.
+
+        Returns:
+            (int) size of the internal circular buffer in bytes.
+        """
+        error, size = yield self.andor_server.get_size_of_circular_buffer()
+        self._log(sys._getframe().f_code.co_name, error)
+        returnValue(size)
+
+    @inlineCallbacks
     def GetStatus(self):
         """ This function will return the current status of the Andor SDK 
         system. This function should be called before an acquisition is started 
@@ -356,10 +389,11 @@ class AndorProxy(object):
         Returns:
             (str) current status
         """
-        error, status = self.andor_server.get_status()
+        error, status = yield self.andor_server.get_status()
         self._log(sys._getframe().f_code.co_name, error)
-        return status
+        returnValue(status)
 
+    @inlineCallbacks
     def GetTemperature(self):
         """ This function returns the temperature of the detector to the nearest 
         degree. It also gives the status of cooling process.
@@ -367,10 +401,11 @@ class AndorProxy(object):
         Returns:
             (int) temperature of the detector
         """
-        error, temperature = self.andor_server.get_temperature()
+        error, temperature = yield self.andor_server.get_temperature()
         self._log(sys._getframe().f_code.co_name, error)
-        return temperature
+        returnValue(temperature)
 
+    @inlineCallbacks
     def GetVSSpeed(self, index):
         """ As your Andor SDK system may be capable of operating at more than 
         one vertical shift speed this function will return the actual speeds 
@@ -381,10 +416,11 @@ class AndorProxy(object):
         Returns:
             (float) speed in microseconds per pixel shift.
         """
-        error, speed = self.andor_server.get_vs_speed(index)
+        error, speed = yield self.andor_server.get_vs_speed(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return speed
+        returnValue(speed)
         
+    @inlineCallbacks
     def IsCoolerOn(self):
         """ This function checks the status of the cooler.
 
@@ -393,10 +429,11 @@ class AndorProxy(object):
                 0 Cooler is OFF.
                 1 Cooler is ON.
         """
-        error, iCoolerStatus = self.andor_server.is_cooler_on()
+        error, iCoolerStatus = yield self.andor_server.is_cooler_on()
         self._log(sys._getframe().f_code.co_name, error)
-        return iCoolerStatus
+        returnValue(iCoolerStatus)
 
+    @inlineCallbacks
     def SetAccumulationCycleTime(self, time):
         """ This function will set the accumulation cycle time to the nearest 
         valid value not less than the given value. The actual cycle time used 
@@ -405,10 +442,10 @@ class AndorProxy(object):
         Args:
             time (float): the accumulation cycle time in seconds.
         """
-        error = self.andor_server.set_accumulation_cycle_time(time)
+        error = yield self.andor_server.set_accumulation_cycle_time(time)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetAcquisitionMode(self, mode):
         """ This function will set the acquisition mode to be used on the next 
         StartAcquisition.
@@ -421,10 +458,10 @@ class AndorProxy(object):
                 4 Fast Kinetics
                 5 Run till abort
         """
-        error = self.andor_server.set_acquisition_mode(mode)
+        error = yield self.andor_server.set_acquisition_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
         
+    @inlineCallbacks
     def SetADChannel(self, channel):
         """ This function will set the AD channel to one of the possible A-Ds of 
         the system. This AD channel will be used for all subsequent operations 
@@ -433,10 +470,10 @@ class AndorProxy(object):
         Args:
             index (int): the channel to be used. 0 to GetNumberADChannels-1
         """
-        error = self.andor_server.set_ad_channel(channel)
+        error = yield self.andor_server.set_ad_channel(channel)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
         
+    @inlineCallbacks
     def SetCoolerMode(self, mode):
         """ This function determines whether the cooler is switched off when 
         the camera is shut down.
@@ -446,11 +483,11 @@ class AndorProxy(object):
                 1 Temperature is maintained on ShutDown
                 0 Returns to ambient temperature on ShutDown
         """
-        error = self.andor_server.set_cooler_mode(mode)
+        error = yield self.andor_server.set_cooler_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
         
 
+    @inlineCallbacks
     def SetEMAdvanced(self, gainAdvanced):
         """ This function turns on and off access to higher EM gain levels 
         within the SDK. Typically, optimal signal to noise ratio and dynamic 
@@ -465,10 +502,10 @@ class AndorProxy(object):
                 1 Enable access
                 0 Disable access
         """
-        error = self.andor_server.set_em_advanced(gainAdvanced)
+        error = yield self.andor_server.set_em_advanced(gainAdvanced)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetEMCCDGain(self, gain):
         """ Allows the user to change the gain value. The valid range for the 
         gain depends on what gain mode the camera is operating in. See 
@@ -478,10 +515,10 @@ class AndorProxy(object):
         Args:
             gain (int): amount of fain applied.
         """
-        error = self.andor_server.set_emccd_gain(gain)
+        error = yield self.andor_server.set_emccd_gain(gain)
         self._log(sys._getframe().f_code.co_name, error)
-        return
         
+    @inlineCallbacks
     def SetEMGainMode(self, mode):
         """ Set the EM Gain mode to one of the following possible settings. To 
         access higher gain values (if available) it is necessary to enable 
@@ -495,10 +532,10 @@ class AndorProxy(object):
                 2 Linear mode.
                 3 Real EM gain
         """
-        error = self.andor_server.set_em_gain_mode(mode)
+        error = yield self.andor_server.set_em_gain_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
         
+    @inlineCallbacks
     def SetExposureTime(self, time):
         """ This function will set the exposure time to the nearest valid value 
         not less than the given value. The actual exposure time used is 
@@ -507,10 +544,10 @@ class AndorProxy(object):
         Args:
             time (float): the exposure time in seconds.
         """
-        error = self.andor_server.set_exposure_time(time)
+        error = yield self.andor_server.set_exposure_time(time)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetFanMode(self, mode):
         """ Allows the user to control the mode of the camera fan. If the 
         system is cooled, the fan should only be turned off for short periods 
@@ -526,10 +563,10 @@ class AndorProxy(object):
                 1 fan on low
                 2 fan off
         """
-        error = self.andor_server.set_fan_mode(mode)
+        error = yield self.andor_server.set_fan_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
     
+    @inlineCallbacks
     def SetFastKinetics(self, exposedRows, seriesLength, time, mode, hbin, 
             vbin):
         """ This function will set the parameters to be used when taking a fast 
@@ -543,12 +580,12 @@ class AndorProxy(object):
             hbin (int): horizontal binning.
             vbin (int): vertical binning (only used when in image mode).
         """
-        error = self.andor_server.set_fast_kinetics(
+        error = yield self.andor_server.set_fast_kinetics(
                 exposedRows, seriesLength, time, mode, hbin, 
                 vbin)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetFastKineticsEx(self, exposedRows, seriesLength, time, mode, hbin, 
             vbin, offset):
         """ This function is the same as SetFastKinetics with the addition of
@@ -564,12 +601,12 @@ class AndorProxy(object):
             offset (int): offset of first row to be used in Fast Kinetics from 
                 the bottom of the CCD.
         """
-        error = self.andor_server.set_fast_kinetics_ex(
+        error = yield self.andor_server.set_fast_kinetics_ex(
                 exposedRows, seriesLength, time, mode, hbin, 
                 vbin, offset)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetFrameTransferMode(self, mode):
         """ This function will set whether an acquisition will readout in Frame 
         Transfer Mode. If the acquisition mode is Single Scan or Fast Kinetics 
@@ -580,10 +617,10 @@ class AndorProxy(object):
                 0 OFF
                 1 ON
         """ 
-        error = self.andor_server.set_frame_transfer_mode(mode)
+        error = yield self.andor_server.set_frame_transfer_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
         
+    @inlineCallbacks
     def SetHSSpeed(self, typ, index):
         """ This function will set the speed at which the pixels are shifted 
         into the output node during the readout phase of an acquisition. 
@@ -598,10 +635,10 @@ class AndorProxy(object):
             index (int): the horizontal speed to be used. 
                 0 to GetNumberHSSpeeds()-1
         """
-        error = self.andor_server.set_hs_speed(typ, index)
+        error = yield self.andor_server.set_hs_speed(typ, index)
         self._log(sys._getframe().f_code.co_name, error)
-        return
         
+    @inlineCallbacks
     def SetImage(self, hbin, vbin, hstart, hend, vstart, vend):
         """ This function will set the horizontal and vertical binning to be 
         used when taking a full resolution image.
@@ -614,11 +651,11 @@ class AndorProxy(object):
             vstart (int): Start row (inclusive).
             vend (int): End row (inclusive).
         """
-        error = self.andor_server.set_image(hbin, vbin, 
+        error = yield self.andor_server.set_image(hbin, vbin, 
                                             hstart, hend, vstart, vend)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetImageFlip(self, iHFlip, iVFlip):
         """ This function will cause data output from the SDK to be flipped on 
         one or both axes. This flip is not done in the camera, it occurs after 
@@ -634,11 +671,11 @@ class AndorProxy(object):
                 1 Enables Flipping
                 0 Disables Flipping
         """
-        error = self.andor_server.set_image_flip(iHFlip, 
+        error = yield self.andor_server.set_image_flip(iHFlip, 
                                                  iVFlip)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetImageRotate(self, iRotate):
         """ This function will cause data output from the SDK to be rotated on 
         one or both axes. This rotate is not done in the camera, it occurs after 
@@ -659,10 +696,10 @@ class AndorProxy(object):
                 1 Rotate 90 degrees clockwise
                 2 Rotate 90 degrees anti-clockwise
         """
-        error = self.andor_server.set_image_rotate(iRotate)
+        error = yield self.andor_server.set_image_rotate(iRotate)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetKineticCycleTime(self, time):
         """ This function will set the kinetic cycle time to the nearest valid 
         value not less than the given value. The actual time used is obtained 
@@ -671,10 +708,10 @@ class AndorProxy(object):
         Args:
             time (float): the kinetic cycle time in seconds.
         """
-        error = self.andor_server.set_kinetic_cycle_time(time)
+        error = yield self.andor_server.set_kinetic_cycle_time(time)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetNumberAccumulations(self, number):
         """ This function will set the number of scans accumulated in memory. 
         This will only take effect if the acquisition mode is either Accumulate 
@@ -683,10 +720,10 @@ class AndorProxy(object):
         Args:
             number (int): number of scans to accumulate
         """
-        error = self.andor_server.set_number_accumulations(number)
+        error = yield self.andor_server.set_number_accumulations(number)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetNumberKinetics(self, number):
         """ This function will set the number of scans (possibly accumulated 
         scans) to be taken during a single acquisition sequence. This will 
@@ -695,10 +732,10 @@ class AndorProxy(object):
         Args:
             number (int): number of scans to store.
         """
-        error = self.andor_server.set_number_kinetics(number)
+        error = yield self.andor_server.set_number_kinetics(number)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetOutputAmplifier(self, index):
         """ Some EMCCD systems have the capability to use a second output 
         amplifier. This function will set the type of output amplifier to be 
@@ -709,10 +746,10 @@ class AndorProxy(object):
                 0 Standard EMCCD gain register (default)/Conventional(clara).
                 1 Conventional CCD register/Extended NIR mode(clara).
         """
-        error = self.andor_server.set_output_amplifier(index)
+        error = yield self.andor_server.set_output_amplifier(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
         
+    @inlineCallbacks
     def SetPreAmpGain(self, index):
         """ This function will set the pre amp gain to be used for subsequent 
         acquisitions. The actual gain factor that will be applied can be found 
@@ -722,10 +759,10 @@ class AndorProxy(object):
         Args:
             index (int): index pre amp gain table. 0 to GetNumberPreAmpGains-1
         """
-        error = self.andor_server.set_pre_amp_gain(index)
+        error = yield self.andor_server.set_pre_amp_gain(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetReadMode(self, mode):
         """ This function will set the readout mode to be used on the subsequent 
         acquisitions.
@@ -738,10 +775,10 @@ class AndorProxy(object):
                 3 Single-Track
                 4 Image
         """
-        error = self.andor_server.set_read_mode(mode)
+        error = yield self.andor_server.set_read_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetShutter(self, typ, mode, closingtime, openingtime):
         """ This function controls the behaviour of the shutter. The typ 
         parameter allows the user to control the TTL signal output to an 
@@ -763,11 +800,11 @@ class AndorProxy(object):
             closingtime (int): Time shutter takes to close (milliseconds)
             openingtime (int): Time shutter takes to open (milliseconds)
         """ 
-        error = self.andor_server.set_shutter(typ, mode, 
+        error = yield self.andor_server.set_shutter(typ, mode, 
                                               closingtime, openingtime)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def SetShutterEx(self, typ, mode, closingtime, openingtime, extmode):
         """ This function expands the control offered by SetShutter to allow an 
         external shutter and internal shutter to be controlled independently 
@@ -805,12 +842,12 @@ class AndorProxy(object):
                 4 Open for FVB series
                 5 Open for any series
         """
-        error = self.andor_server.set_shutter_ex(typ, mode, 
+        error = yield self.andor_server.set_shutter_ex(typ, mode, 
                                                  closingtime, openingtime, 
                                                  extmode)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
         
+    @inlineCallbacks
     def SetTemperature(self, temperature):
         """ This function will set the desired temperature of the detector. To 
         turn the cooling ON and OFF use the CoolerON and CoolerOFF function 
@@ -820,10 +857,10 @@ class AndorProxy(object):
             temperature (int): the temperature in Centigrade.
                 Valid range is given by GetTemperatureRange
         """
-        error = self.andor_server.set_temperature(temperature)
+        error = yield self.andor_server.set_temperature(temperature)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetTriggerMode(self, mode):
         """ This function will set the trigger mode that the camera will 
         operate in. 
@@ -838,10 +875,10 @@ class AndorProxy(object):
                 10 Software Trigger
                 12 External Charge Shifting
         """ 
-        error = self.andor_server.set_trigger_mode(mode)
+        error = yield self.andor_server.set_trigger_mode(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetVSSpeed(self, index):
         """ This function will set the vertical speed to be used for subsequent 
         acquisitions        
@@ -850,38 +887,38 @@ class AndorProxy(object):
             index (int): index into the vertical speed table. 
                 0 to GetNumberVSSpeeds-1
         """
-        error = self.andor_server.set_vs_speed(index)
+        error = yield self.andor_server.set_vs_speed(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return
     
+    @inlineCallbacks
     def SetFKVShiftSpeed(self, index):
         """This function will set the fast kinetics vertical shift speed to one of the possible speeds of the system. It will be used for subsequent acquisitions.
 
         Args:
             index (int): index into the vertical speed table. 0 to GetNumberVSSpeeds-1
         """
-        error = self.andor_server.set_fk_vs_speed(index)
+        error = yield self.andor_server.set_fk_vs_speed(index)
         self._log(sys._getframe().f_code.co_name, error)
-        return
     
+    @inlineCallbacks
     def SetFastExtTrigger(self, mode):
         """This function will enable fast external triggering. When fast external triggering is enables the system will NOT wait until a "Keep Clean" cycle has been completed before accepting the next trigger. This setting will only have an effect if the trigger mode has been set to External via SetTriggerMode.
 
         Args:
             mode (int): 0 disabled, 1 enabled
         """
-        error = self.andor_server.set_fast_ext_trigger(mode)
+        error = yield self.andor_server.set_fast_ext_trigger(mode)
         self._log(sys._getframe().f_code.co_name, error)
-        return
             
+    @inlineCallbacks
     def StartAcquisition(self):
         """ This function starts an acquisition. The status of the acquisition 
         can be monitored via GetStatus().
         """
-        error = self.andor_server.start_acquisition()
+        error = yield self.andor_server.start_acquisition()
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
+    @inlineCallbacks
     def WaitForAcquisition(self):
         """ WaitForAcquisition can be called after an acquisition is started 
         using StartAcquisition to put the calling thread to sleep until an 
@@ -898,12 +935,12 @@ class AndorProxy(object):
         the first one will be ignored. Care should be taken in this case, as 
         you may have to use CancelWait to exit the function.
         """
-        error = self.andor_server.wait_for_acquisition()
+        error = yield self.andor_server.wait_for_acquisition()
         self._log(sys._getframe().f_code.co_name, error)
-        return 
 
 
     # Update for Sr1 starts here. 
+    @inlineCallbacks
     def SetSingleTrack(self, center, height):
         """Description:
             This function will set the single track parameters. The parameters are validated in the following order: centre row and then track height.
@@ -914,10 +951,10 @@ class AndorProxy(object):
                 Valid range > 1 (maximum value depends on centre row and number of vertical pixels).
 
         """
-        error = self.andor_server.set_single_track(center, height)
+        error = yield self.andor_server.set_single_track(center, height)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
+    @inlineCallbacks
     def SetBaselineClamp(self, state):
         """Description:
             This function turns on and off the baseline clamp functionality. With this feature enabled the baseline level of each scan in a kinetic series will be more consistent across the sequence.
@@ -926,11 +963,11 @@ class AndorProxy(object):
                 1 - Enable Baseline Clamp
                 0 - Disable Baseline Clamp
         """
-        error = self.andor_server.set_baseline_clamp(state)
+        error = yield self.andor_server.set_baseline_clamp(state)
         self._log(sys._getframe().f_code.co_name, error)
-        return
 
 
+    @inlineCallbacks
     def WaitForAcquisitionTimeOut(self, iTimeOutMs):
         """ 
         Description:
@@ -952,29 +989,31 @@ class AndorProxy(object):
             DRV_SUCCESS             Acquisition Event occurred.
             DRV_NO_NEW_DATA         Non-Acquisition Event occurred.(eg CancelWait () called, time out) 
         """
-        error = self.andor_server.wait_for_acquisition_timeout(iTimeOutMs)
+        error = yield self.andor_server.wait_for_acquisition_timeout(iTimeOutMs)
         self._log(sys._getframe().f_code.co_name, error)
-        return 
     
+    @inlineCallbacks
     def GetNumberAvailableImages(self):
         """This function will return information on the number of available images in the circular buffer. This information can be used with GetImages to retrieve a series of images. If any images are overwritten in the circular buffer they no longer can be retrieved and the information returned will treat overwritten images as not available.
 
         Returns the indices of the first and last available indices in the circular buffer.
         """
-        error, first, last = self.andor_server.get_number_available_images()
+        error, first, last = yield self.andor_server.get_number_available_images()
         self._log(sys._getframe().f_code.co_name, error)
-        return first, last
+        returnValue((first, last))
     
+    @inlineCallbacks
     def GetNumberNewImages(self):
         """This function will return information on the number of new images (i.e. images which have not yet been retrieved) in the circular buffer. This information can be used with GetImages to retrieve a series of the latest images. If any images are overwritten in the circular buffer they can no longer be retrieved and the information returned will treat overwritten images as having been retrieved.
 
         Returns the indices of the first and last available images in the circular buffer.
         """
-        error, first, last = self.andor_server.get_number_new_images()
+        error, first, last = yield self.andor_server.get_number_new_images()
         self._log(sys._getframe().f_code.co_name, error)
-        return first, last
+        returnValue((first, last))
 
 
+    @inlineCallbacks
     def GetImages(self, first, last, size):
         """This function will update the data array with the specified series of images from the circular buffer. If the specified series is out of range (i.e. the images have been overwritten or have not yet been acquired then an error will be returned.
 
@@ -983,6 +1022,6 @@ class AndorProxy(object):
             last (int): index of last image in buffer to retrieve
             size (int): total number of pixels
         """
-        error, arr, validfirst, validlast = self.andor_server.get_images(first, last, size)
+        error, arr, validfirst, validlast = yield self.andor_server.get_images(first, last, size)
         self._log(sys._getframe().f_code.co_name, error)
-        return arr, validfirst, validlast
+        returnValue((arr, validfirst, validlast))
