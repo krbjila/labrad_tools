@@ -395,7 +395,7 @@ class Andor(object):
         first = ctypes.c_long()
         last = ctypes.c_long()
         error = self.dll.GetNumberAvailableImages(ctypes.byref(first), ctypes.byref(last))
-        self.log(sys._getframe().f_code.co_name, error)
+        self._log(sys._getframe().f_code.co_name, error)
         return first.value, last.value
     
     def GetNumberNewImages(self):
@@ -406,7 +406,7 @@ class Andor(object):
         first = ctypes.c_long()
         last = ctypes.c_long()
         error = self.dll.GetNumberNewImages(ctypes.byref(first), ctypes.byref(last))
-        self.log(sys._getframe().f_code.co_name, error)
+        self._log(sys._getframe().f_code.co_name, error)
         return first.value, last.value
 
 
