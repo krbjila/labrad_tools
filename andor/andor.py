@@ -352,7 +352,7 @@ class Andor(object):
         arr = (ctypes.c_int * size)()
         validfirst = ctypes.c_long()
         validlast = ctypes.c_long()
-        error = self.dll.GetAcquiredData(first, last, ctypes.pointer(arr), size, ctypes.byref(validfirst), ctypes.byref(validlast))
+        error = self.dll.GetImages(first, last, ctypes.pointer(arr), size, ctypes.byref(validfirst), ctypes.byref(validlast))
         self._log(sys._getframe().f_code.co_name, error)
         return np.array(arr, dtype=np.uint32), validfirst, validlast
             

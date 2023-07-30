@@ -599,7 +599,7 @@ class AndorServer(HardwareInterfaceServer):
         self._select_interface(c)
         arr, validfirst, validlast = andor.GetImages(first, last, size)
         error_code = andor.error['GetImages']
-        return error_code, arr, validfirst, validlast
+        return error_code, arr, validfirst.value, validlast.value
     
 Server = AndorServer
 
