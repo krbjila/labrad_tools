@@ -81,6 +81,14 @@
             },
             "latt2": {
             }
+        },
+        "andor": {
+            "vertical": {
+                "temperature": -20
+            },
+            "side": {
+                "temperature": -20
+            }
         }
     }
 }
