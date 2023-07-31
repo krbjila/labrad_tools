@@ -72,6 +72,9 @@ class AndorDevice(ConductorParameter):
                 frames.append(np.zeros(expected_frame_size))
         data = np.array(frames).reshape((-1, self.dy/self.bin, self.dx/self.bin))
 
+        if self.rotateImage:
+            data = np.flip(np.swapaxes(np.array(data), 1, 2), axis=-1)
+
         savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
         file_number = 0
         if not os.path.exists(savedir):
@@ -144,6 +147,7 @@ class AndorDevice(ConductorParameter):
                 self.temperature = self.value['temperature']
                 self.saveFolder = self.value['saveFolder']
                 self.filebase = self.value['filebase']
+                self.rotateImage = self.value['rotateImage']
 
                 current_temp = yield self.andor.GetTemperature()
                 if float(current_temp) > 0:
