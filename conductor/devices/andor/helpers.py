@@ -67,9 +67,8 @@ class AndorDevice(ConductorParameter):
     def save_data(self, frames):
         expected_frame_size = self.kinFrames * self.dy * self.dx / (self.bin * self.bin)
         if len(frames) < self.acqLength:
-            print("Expected {} frames, got {}".format(self.acqLength, len(frames)))
-            for i in range(self.acqLength - len(frames)):
-                frames.append(np.zeros(expected_frame_size))
+            print("Expected {} frames, got {}. Saving blank image".format(self.acqLength, len(frames)))
+            frames = np.zeros(self.acqLength * expected_frame_size)
         data = np.array(frames)
 
         # uninterleave the fk frames
