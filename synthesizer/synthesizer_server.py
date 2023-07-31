@@ -165,7 +165,7 @@ class SynthesizerServer(LabradServer):
         """
 
         N_CHANNELS = 4
-        N_ADDRESSES = 2**13
+        N_ADDRESSES = 2**14
         N_DIGITAL = 7
 
         if channel >= N_CHANNELS or channel < 0 or not isinstance(channel, int):
