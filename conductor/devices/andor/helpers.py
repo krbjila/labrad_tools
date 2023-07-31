@@ -14,10 +14,7 @@ import numpy as np
 from datetime import datetime
 import re
 import multiprocessing as mp
-
-#### TODO ####
-# Add metadata to the image, including the dictionary of conductor parameters.
-# What happens if one of the configuration commands fails?
+import json
 
 class AndorDevice(ConductorParameter):
     """
@@ -111,9 +108,9 @@ class AndorDevice(ConductorParameter):
             'em_gain': self.emGain,
             'preamp_gain': self.preAmpGain,
             'vs_speed': self.vss,
-            'shot': -1, # TODO: get shot number from logging server
+            'shot': self.shot,
             'path': path + ".npz",
-            'id': None
+            'parameters': json.loads(self.parameters)
         }
 
         # spawn a new process to save the data to prevent hanging
@@ -155,6 +152,9 @@ class AndorDevice(ConductorParameter):
                 self.filebase = self.value['filebase']
                 self.rotateImage = self.value['rotateImage']
                 self.timeouts = self.value['timeouts']
+
+                self.parameters = yield self.conductor.get_parameter_values()
+                self.shot = yield self.logging.get_shot()
 
                 if 'temperature' in self.value and self.value['temperature'] != self.temperature:
                     self.temperature = self.value['temperature']
