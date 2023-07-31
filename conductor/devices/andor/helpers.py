@@ -89,7 +89,7 @@ class AndorDevice(ConductorParameter):
             filelist = os.listdir(savedir)
             file_number = 0
             for f in filelist:
-                match = re.match(self.filebase+"_([0-9])+.npz", f)
+                match = re.match(self.filebase+"_([0-9]+).npz", f)
                 if match and int(match.group(1)) >= file_number:
                     file_number = int(match.group(1)) + 1
 
