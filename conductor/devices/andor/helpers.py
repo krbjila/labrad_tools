@@ -151,20 +151,23 @@ class AndorDevice(ConductorParameter):
                 self.vss = self.value['vss']
                 self.xOffset = self.value['xOffset']
                 self.yOffset = self.value['yOffset']
-                self.temperature = self.value['temperature']
                 self.saveFolder = self.value['saveFolder']
                 self.filebase = self.value['filebase']
                 self.rotateImage = self.value['rotateImage']
                 self.timeouts = self.value['timeouts']
 
+                if 'temperature' in self.value and self.value['temperature'] != self.temperature:
+                    self.temperature = self.value['temperature']
+                    yield self.andor.SetTemperature(self.temperature)
+
                 current_temp = yield self.andor.GetTemperature()
+                print("Current temperature: {}".format(current_temp))
                 if float(current_temp) > 0:
                     print("Cooler restart.")
                     yield self.andor.SetFanMode(2) # 2 for off
                     yield self.andor.SetTemperature(self.temperature)
                     yield self.andor.SetCoolerMode(0) # 1 Returns to ambient temperature on shutdown
                     yield self.andor.CoolerON()
-
 
                 if self.emEnable:
                     yield self.andor.SetOutputAmplifier(0)
