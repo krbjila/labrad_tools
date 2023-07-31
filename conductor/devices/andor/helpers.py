@@ -16,11 +16,8 @@ import re
 import multiprocessing as mp
 
 #### TODO ####
-# Save images in the correct location (data/year/month/day/location/prefix_shotnumber.npz). Should save images to a temporary location, then copy them to the dataserver using a new process, so the conductor doesn't hang.
-# Make sure the image format is the same as the previous version.
 # Add metadata to the image, including the dictionary of conductor parameters.
 # What happens if one of the configuration commands fails?
-
 
 class AndorDevice(ConductorParameter):
     """
@@ -51,6 +48,9 @@ class AndorDevice(ConductorParameter):
             raise Exception('Camera {} not found'.format(self.serial))
         yield self.andor.select_interface(self.serial)
 
+        yield self.andor.AbortAcquisition()
+        yield self.andor.CancelWait()
+
         yield self.andor.SetTemperature(self.temperature)
         yield self.andor.SetFanMode(2)
         yield self.andor.SetCoolerMode(0) # Returns to ambient temperature on shutdown
@@ -70,7 +70,13 @@ class AndorDevice(ConductorParameter):
             print("Expected {} frames, got {}".format(self.acqLength, len(frames)))
             for i in range(self.acqLength - len(frames)):
                 frames.append(np.zeros(expected_frame_size))
-        data = np.array(frames).reshape((-1, self.dy/self.bin, self.dx/self.bin))
+        data = np.array(frames)
+
+        # uninterleave the fk frames
+        if self.kinFrames > 1:
+            data = data.reshape((-1, self.kinFrames, self.dy/self.bin, self.dx/self.bin))
+            data = np.swapaxes(data, 0, 1)
+        data = data.reshape((-1, self.dy/self.bin, self.dx/self.bin))
 
         if self.rotateImage:
             data = np.flip(np.swapaxes(np.array(data), 1, 2), axis=-1)
@@ -84,14 +90,14 @@ class AndorDevice(ConductorParameter):
             file_number = 0
             for f in filelist:
                 match = re.match(self.filebase+"_([0-9])+.npz", f)
-                if match and int(match.group(1)) > file_number:
+                if match and int(match.group(1)) >= file_number:
                     file_number = int(match.group(1)) + 1
 
         path = savedir+self.filebase+"_"+str(file_number)
 
         metadata = {
             'camera': 'Andor iXon 888',
-            'name': __class__ ,
+            'name': self.__class__.__name__,
             'serial': self.serial,
             'images': self.acqLength * self.kinFrames,
             'width': self.dx,
@@ -101,7 +107,7 @@ class AndorDevice(ConductorParameter):
             'kinetics_frames': self.kinFrames,
             'exposure': self.expTime,
             'binning': (self.bin, self.bin),
-            'timestamp': datetime.now(),
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'em_enable': 'on' if self.emEnable else 'off',
             'em_gain': self.emGain,
             'preamp_gain': self.preAmpGain,
@@ -113,6 +119,7 @@ class AndorDevice(ConductorParameter):
 
         # spawn a new process to save the data to prevent hanging
         p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
+        p.start()
 
     def save_data_process(self, path, data, metadata):
         # Define a temporary path to avoid conflicts when writing file
@@ -121,6 +128,7 @@ class AndorDevice(ConductorParameter):
         with open(path_temp, 'wb') as f:
             np.savez_compressed(f, data=data, meta=metadata)
         os.rename(path_temp, path+".npz")
+        print("Saved image to {}".format(path+".npz"))
 
     @inlineCallbacks
     def update(self):
@@ -148,6 +156,7 @@ class AndorDevice(ConductorParameter):
                 self.saveFolder = self.value['saveFolder']
                 self.filebase = self.value['filebase']
                 self.rotateImage = self.value['rotateImage']
+                self.timeouts = self.value['timeouts']
 
                 current_temp = yield self.andor.GetTemperature()
                 if float(current_temp) > 0:
@@ -185,11 +194,6 @@ class AndorDevice(ConductorParameter):
                     yield self.andor.SetExposureTime(self.expTime)
                     yield self.andor.SetImage(self.bin, self.bin, self.xOffset + 1, self.dx + self.xOffset, self.yOffset + 1, self.dy + self.yOffset)
 
-                if self.acqLength == 1:
-                    timeouts = [60E3] # ms
-                else:
-                    timeouts = [60E3] + [4E3] * (self.acqLength - 1) # ms
-
                 self.andor.SetShutter(1, 1, 0, 0) # Open the shutter
 
                 self.frames = []
@@ -198,24 +202,23 @@ class AndorDevice(ConductorParameter):
                 if self.kinFrames > 1 and self.acqLength > 1:
                     for i in range(self.acqLength):
                         yield self.andor.StartAcquisition()
-                        yield self.andor.WaitForAcquisitionTimeOut(int(timeouts[i]))
+                        yield self.andor.WaitForAcquisitionTimeOut(int(self.timeouts[i]))
                         if self.andor.error['WaitForAcquisitionTimeOut'] != 20002:
                             print("Error acquiring frame {}: {}".format(i, self.andor.error['WaitForAcquisitionTimeOut']))
-                            new_image = np.zeros(npixels)
+                            break
                         else:
                             first, last = yield self.andor.GetNumberNewImages()
                             new_image, validfirst, validlast = yield self.andor.GetImages(first, last, npixels)
-                        self.frames.append(new_image)
+                            self.frames.append(new_image)
                 else:
                     yield self.andor.StartAcquisition()
-                    yield self.andor.WaitForAcquisitionTimeOut(int(timeouts[0]))
+                    yield self.andor.WaitForAcquisitionTimeOut(int(self.timeouts[0]))
                     if self.andor.error['WaitForAcquisitionTimeOut'] != 20002:
                         print("Error acquiring: {}".format(self.andor.error['WaitForAcquisitionTimeOut']))
-                        new_image = np.zeros(npixels)
                     else:
                         first, last = yield self.andor.GetNumberNewImages()
                         new_image, validfirst, validlast = yield self.andor.GetImages(first, last, npixels)
-                    self.frames.append(new_image)
+                        self.frames.append(new_image)
 
                 yield self.andor.SetShutter(1, 2, 0, 0) # Close the shutter
 
