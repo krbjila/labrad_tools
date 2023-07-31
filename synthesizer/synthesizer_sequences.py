@@ -19,7 +19,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 MAX_FREQUENCY = 307.2E6 # Hertz
-MAX_LENGTH = 8192
+MAX_LENGTH = 16384
 MIN_DURATION = 1/153.6E6
 MAX_DURATION = 2**48*MIN_DURATION # seconds
 N_DIGITAL = 7
