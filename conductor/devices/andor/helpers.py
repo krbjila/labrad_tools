@@ -39,6 +39,8 @@ class AndorDevice(ConductorParameter):
         self.cxn = yield connectAsync()
         self.server = self.cxn[self.server_name]
         self.andor = AndorProxy(self.server)
+        self.conductor = self.cxn.conductor
+        self.logging = self.cxn.imaging_logging
 
         cameras = yield self.andor.get_interface_list()
         if self.serial not in cameras:
