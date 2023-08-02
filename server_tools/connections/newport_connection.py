@@ -1,4 +1,4 @@
-import clr, sys
+import clr
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
@@ -13,6 +13,9 @@ class NewportConnection(object):
     @inlineCallbacks
     def initialize(self, device):
         self.oUSB = USB(True)
+
+        self.oUSB.CloseDevices()
+
         bStatus = yield self.oUSB.OpenDevices(0, True)
         oDeviceTable = yield self.oUSB.GetDeviceTable()
         nDeviceCount = oDeviceTable.Count
@@ -25,6 +28,7 @@ class NewportConnection(object):
 
         for nIdx in range(0, nDeviceCount):
             if oEnumerator.MoveNext():
+                print('Found device: {}'.format(oEnumerator.Key))
                 if str(oEnumerator.Key) == device.address:
                     self.connection = str(oEnumerator.Key)
                     break

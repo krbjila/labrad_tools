@@ -29,7 +29,7 @@ for note, duration in notes:
     vel = note_to_Hz(note)
     s.set_velocity(1, vel)
     time.sleep(0.02)
-    # s.move_rel(1, sign * 2000)
+    s.move_rel(1, sign * 2000)
     time.sleep(duration)
     s.abort()
     time.sleep(0.02)

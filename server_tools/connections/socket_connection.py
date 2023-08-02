@@ -22,6 +22,12 @@ class SocketConnection(object):
     def recv(self, value):
         response = yield deferToThread(self.connection.recv, value)
         returnValue(response)
+
+    @inlineCallbacks
+    def query(self, value):
+        yield self.send(value)
+        response = yield self.recv(1024)
+        returnValue(response)
     
     def getsockname(self):
         return self.connection.getsockname()

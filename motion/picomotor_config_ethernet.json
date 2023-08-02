@@ -1,0 +1,11 @@
+{
+    "devices": {
+        "RbMOT": {
+            "device_type": "Picomotor",
+            "connection_type": "Socket",
+            "servername": "10.1.107.20",
+            "address": "23",
+            "axes": ["H1", "V1", "H2", "V2"]
+        }
+    }
+}

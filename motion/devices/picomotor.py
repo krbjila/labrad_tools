@@ -27,10 +27,17 @@ class Picomotor(DeviceWrapper):
         super().__init__(config)
 
     def send(self, command):
-        self.connection.send((command+'\r'))
+        if self.connection_type == 'Newport':
+            self.connection.send(command+'\r')
+        elif self.connection_type == 'Socket':
+            self.connection.send((command+'\r').encode())
 
     def query(self, command):
-        return self.connection.query(command+'\r')
+        if self.connection_type == 'Newport':
+            return self.connection.query(command+'\r')
+        elif self.connection_type == 'Socket':
+            self.connection.send((command+'\r').encode())
+            return self.connection.recv(1024)
 
     @inlineCallbacks
     def get_position(self, axis):
