@@ -15,8 +15,8 @@ class SocketConnection(object):
 
     @inlineCallbacks 
     def send(self, value):
-        response = yield deferToThread(self.connection.send, value)
-        returnValue(response)
+        nbytes = yield deferToThread(self.connection.send, value)
+        returnValue(nbytes)
     
     @inlineCallbacks 
     def recv(self, value):
