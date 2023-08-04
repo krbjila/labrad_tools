@@ -16,11 +16,13 @@ class SocketConnection(object):
     @inlineCallbacks 
     def send(self, value):
         nbytes = yield deferToThread(self.connection.send, value)
+        # nbytes = yield self.connection.send(value)
         returnValue(nbytes)
     
     @inlineCallbacks 
     def recv(self, value):
         response = yield deferToThread(self.connection.recv, value)
+        # response = yield self.connection.recv(value)
         returnValue(response)
 
     @inlineCallbacks
