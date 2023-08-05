@@ -15,6 +15,10 @@ from datetime import datetime
 import re
 import multiprocessing as mp
 import json
+from bson.binary import Binary as bsonbinary
+import io
+
+from txmongo.connection import ConnectionPool
 
 class AndorDevice(ConductorParameter):
     """
@@ -42,6 +46,21 @@ class AndorDevice(ConductorParameter):
         self.conductor = self.cxn.conductor
         self.logging = self.cxn.imaging_logging
 
+        try:
+            with open('mongodb.json', 'r') as f:
+                mongo_config = json.load(f)
+            connection_string = "mongodb://{}:{}@{}:{}".format(
+                mongo_config['user'],
+                mongo_config['password'],
+                mongo_config['address'],
+                mongo_config['port']
+            )
+            self.client = yield ConnectionPool(connection_string)
+        except Exception as e:
+            self.client = None
+            print("Could not connect to MongoDB:")
+            print_exc(e)
+
         cameras = yield self.andor.get_interface_list()
         if self.serial not in cameras:
             raise Exception('Camera {} not found'.format(self.serial))
@@ -63,7 +82,7 @@ class AndorDevice(ConductorParameter):
 
         yield self.andor.SetNumberAccumulations(1)
 
-    def save_data(self, frames):
+    def save_data(self, frames, save_file=True, save_db=True):
         expected_frame_size = self.kinFrames * self.dy * self.dx / (self.bin * self.bin)
         if len(frames) < self.acqLength:
             print("Expected {} frames, got {}. Saving blank image".format(self.acqLength, len(frames)))
@@ -79,19 +98,7 @@ class AndorDevice(ConductorParameter):
         if self.rotateImage:
             data = np.flip(np.swapaxes(np.array(data), 1, 2), axis=-1)
 
-        savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
-        file_number = 0
-        if not os.path.exists(savedir):
-            os.makedirs(savedir)
-        else:
-            filelist = os.listdir(savedir)
-            file_number = 0
-            for f in filelist:
-                match = re.match(self.filebase+"_([0-9]+).npz", f)
-                if match and int(match.group(1)) >= file_number:
-                    file_number = int(match.group(1)) + 1
-
-        path = savedir+self.filebase+"_"+str(file_number)
+        now = datetime.now()
 
         metadata = {
             'camera': 'Andor iXon 888',
@@ -105,19 +112,54 @@ class AndorDevice(ConductorParameter):
             'kinetics_frames': self.kinFrames,
             'exposure': self.expTime,
             'binning': (self.bin, self.bin),
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'timestamp': now.strftime("%Y-%m-%d %H:%M:%S"),
             'em_enable': 'on' if self.emEnable else 'off',
             'em_gain': self.emGain,
             'preamp_gain': self.preAmpGain,
             'vs_speed': self.vss,
             'shot': self.shot,
             'path': path + ".npz",
-            'parameters': json.loads(self.parameters)
         }
 
-        # spawn a new process to save the data to prevent hanging
-        p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
-        p.start()
+        if save_db:
+            if self.client:
+                id = now.strftime("%Y_%m_%d_{}").format(self.shot)
+                f = io.BytesIO()
+                np.savez(f, data=data)
+                update = [{
+                    "$set": {
+                        "images": {
+                            metadata["name"]: {
+                                "metadata": metadata,
+                                "data": bsonbinary(f.getvalue())
+                            }
+                        }
+                    },
+                }]
+                yield self.client['data']['shots'].update_one({"_id": id}, update, upsert=True)
+            else:
+                print("Could not save to MongoDB: not connected")
+
+        if save_file:
+            savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+            file_number = 0
+            if not os.path.exists(savedir):
+                os.makedirs(savedir)
+            else:
+                filelist = os.listdir(savedir)
+                file_number = 0
+                for f in filelist:
+                    match = re.match(self.filebase+"_([0-9]+).npz", f)
+                    if match and int(match.group(1)) >= file_number:
+                        file_number = int(match.group(1)) + 1
+
+            path = savedir+self.filebase+"_"+str(file_number)
+
+            metadata['parameters'] = json.loads(self.parameters)
+
+            # spawn a new process to save the data to prevent hanging
+            p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
+            p.start()
 
     def save_data_process(self, path, data, metadata):
         # Define a temporary path to avoid conflicts when writing file
@@ -161,6 +203,16 @@ class AndorDevice(ConductorParameter):
                 if 'temperature' in self.value and self.value['temperature'] != self.temperature:
                     self.temperature = self.value['temperature']
                     yield self.andor.SetTemperature(self.temperature)
+
+                if 'save_file' in self.value:
+                    save_file = self.value['save_file']
+                else:
+                    save_file = True
+
+                if 'save_db' in self.value:
+                    save_db = self.value['save_db']
+                else:
+                    save_db = True
 
                 current_temp = yield self.andor.GetTemperature()
                 print("Current temperature: {}".format(current_temp))
@@ -226,7 +278,7 @@ class AndorDevice(ConductorParameter):
 
                 yield self.andor.SetShutter(1, 2, 0, 0) # Close the shutter
 
-                self.save_data(self.frames)
+                self.save_data(self.frames, save_file, save_db)
 
                 # TODO: Why can't I read out all the images at the end?
                 # first, last = yield self.andor.GetNumberNewImages()
