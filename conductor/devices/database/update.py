@@ -48,6 +48,7 @@ class Update(ConductorParameter):
                     }
                 }
                 yield self.database.update_one(dumps({'_id': shot_id}), dumps(update))
+                print("Saved parameters to database with shot ID {}".format(shot_id))
         except Exception as e:
             print("Could not save parameters to database: {}".format(e))
 

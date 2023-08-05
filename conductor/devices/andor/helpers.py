@@ -16,9 +16,10 @@ import re
 import multiprocessing as mp
 import json
 from bson.binary import Binary as bsonbinary
+from bson.json_util import dumps as bsondumps, loads as bsonloads
 import io
 
-from txmongo.connection import ConnectionPool
+# from txmongo.connection import ConnectionPool
 
 class AndorDevice(ConductorParameter):
     """
@@ -47,18 +48,23 @@ class AndorDevice(ConductorParameter):
         self.logging = self.cxn.imaging_logging
 
         try:
-            with open('mongodb.json', 'r') as f:
+            with open('/home/bialkali/labrad_tools/conductor/devices/andor/mongodb.json', 'r') as f:
                 mongo_config = json.load(f)
-            connection_string = "mongodb://{}:{}@{}:{}".format(
-                mongo_config['user'],
-                mongo_config['password'],
-                mongo_config['address'],
-                mongo_config['port']
-            )
-            self.client = yield ConnectionPool(connection_string)
+            # connection_string = "mongodb://{}:{}@{}:{}".format(
+            #     mongo_config['user'],
+            #     mongo_config['password'],
+            #     mongo_config['address'],
+            #     mongo_config['port']
+            # )
+            # self.database = yield ConnectionPool(connection_string)
+            self.database = self.cxn.database
+            yield self.database.connect()
+            yield self.database.set_database("data")
+            yield self.database.set_collection("shots")
+            print("{} connected to MongoDB".format(self.__class__.__name__))
         except Exception as e:
-            self.client = None
-            print("Could not connect to MongoDB:")
+            self.database = None
+            print("{} could not connect to MongoDB".format(self.__class__.__name__))
             print_exc(e)
 
         cameras = yield self.andor.get_interface_list()
@@ -82,6 +88,7 @@ class AndorDevice(ConductorParameter):
 
         yield self.andor.SetNumberAccumulations(1)
 
+    @inlineCallbacks
     def save_data(self, frames, save_file=True, save_db=True):
         expected_frame_size = self.kinFrames * self.dy * self.dx / (self.bin * self.bin)
         if len(frames) < self.acqLength:
@@ -118,11 +125,10 @@ class AndorDevice(ConductorParameter):
             'preamp_gain': self.preAmpGain,
             'vs_speed': self.vss,
             'shot': self.shot,
-            'path': path + ".npz",
         }
 
         if save_db:
-            if self.client:
+            if self.database:
                 id = now.strftime("%Y_%m_%d_{}").format(self.shot)
                 f = io.BytesIO()
                 np.savez(f, data=data)
@@ -136,7 +142,13 @@ class AndorDevice(ConductorParameter):
                         }
                     },
                 }]
-                yield self.client['data']['shots'].update_one({"_id": id}, update, upsert=True)
+                try:
+                    # yield self.database['data']['shots'].update_one({"_id": id}, update, upsert=True)
+                    update_value = yield self.database.update_one(bsondumps({"_id": id}), bsondumps(update))
+                    print("Saved image to MongoDB with id {}: {}".format(id, update_value))
+                except Exception as e:
+                    print("Could not save to MongoDB:")
+                    print_exc(e)
             else:
                 print("Could not save to MongoDB: not connected")
 
@@ -154,6 +166,8 @@ class AndorDevice(ConductorParameter):
                         file_number = int(match.group(1)) + 1
 
             path = savedir+self.filebase+"_"+str(file_number)
+
+            print("Saving image to {}...".format(path+".npz"))
 
             metadata['parameters'] = json.loads(self.parameters)
 
@@ -278,7 +292,7 @@ class AndorDevice(ConductorParameter):
 
                 yield self.andor.SetShutter(1, 2, 0, 0) # Close the shutter
 
-                self.save_data(self.frames, save_file, save_db)
+                yield self.save_data(self.frames, save_file, save_db)
 
                 # TODO: Why can't I read out all the images at the end?
                 # first, last = yield self.andor.GetNumberNewImages()
