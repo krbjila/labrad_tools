@@ -89,6 +89,9 @@
             "side": {
                 "temperature": -20
             }
+        },
+        "database": {
+            
         }
     }
 }
