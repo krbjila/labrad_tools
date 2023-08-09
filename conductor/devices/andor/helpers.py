@@ -15,11 +15,9 @@ from datetime import datetime
 import re
 import multiprocessing as mp
 import json
-from bson.binary import Binary as bsonbinary
-from bson.json_util import dumps as bsondumps, loads as bsonloads
-import io
 
-# from txmongo.connection import ConnectionPool
+from pymongo import MongoClient
+import gridfs
 
 class AndorDevice(ConductorParameter):
     """
@@ -50,17 +48,8 @@ class AndorDevice(ConductorParameter):
         try:
             with open('/home/bialkali/labrad_tools/conductor/devices/andor/mongodb.json', 'r') as f:
                 mongo_config = json.load(f)
-            # connection_string = "mongodb://{}:{}@{}:{}".format(
-            #     mongo_config['user'],
-            #     mongo_config['password'],
-            #     mongo_config['address'],
-            #     mongo_config['port']
-            # )
-            # self.database = yield ConnectionPool(connection_string)
-            self.database = self.cxn.database
-            yield self.database.connect()
-            yield self.database.set_database("data")
-            yield self.database.set_collection("shots")
+            self.database = yield MongoClient(mongo_config['address'], mongo_config['port'], username=mongo_config['user'], password=mongo_config['password']).data
+            self.gfs = gridfs.GridFS(self.database)
             print("{} connected to MongoDB".format(self.__class__.__name__))
         except Exception as e:
             self.database = None
@@ -125,26 +114,24 @@ class AndorDevice(ConductorParameter):
             'preamp_gain': self.preAmpGain,
             'vs_speed': self.vss,
             'shot': self.shot,
+            'temperature': self.current_temp,
         }
 
         if save_db:
             if self.database:
                 id = now.strftime("%Y_%m_%d_{}").format(self.shot)
-                f = io.BytesIO()
-                np.savez(f, data=data)
+                # See here for format: https://stackoverflow.com/questions/49493493/python-store-cv-image-in-mongodb-gridfs
+                imageID = self.gfs.put(data.tobytes(), _id=id+"_{}".format(self.__class__.__name__), shape=data.shape, dtype=str(data.dtype))
+                metadata['imageID'] = imageID
                 update = [{
                     "$set": {
                         "images": {
-                            metadata["name"]: {
-                                "metadata": metadata,
-                                "data": bsonbinary(f.getvalue())
-                            }
+                            metadata["image_id"]: metadata
                         }
                     },
                 }]
                 try:
-                    # yield self.database['data']['shots'].update_one({"_id": id}, update, upsert=True)
-                    update_value = yield self.database.update_one(bsondumps({"_id": id}), bsondumps(update))
+                    update_value = yield self.database.shots.update_one({"_id": id}, update, upsert=True)
                     print("Saved image to MongoDB with id {}: {}".format(id, update_value))
                 except Exception as e:
                     print("Could not save to MongoDB:")
@@ -228,9 +215,9 @@ class AndorDevice(ConductorParameter):
                 else:
                     save_db = True
 
-                current_temp = yield self.andor.GetTemperature()
-                print("Current temperature: {}".format(current_temp))
-                if float(current_temp) > 0:
+                self.current_temp = yield self.andor.GetTemperature()
+                print("Current temperature: {}".format(self.current_temp))
+                if float(self.current_temp) > 0:
                     print("Cooler restart.")
                     yield self.andor.SetFanMode(2) # 2 for off
                     yield self.andor.SetTemperature(self.temperature)
