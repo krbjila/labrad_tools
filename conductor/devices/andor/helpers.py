@@ -19,6 +19,8 @@ import json
 from pymongo import MongoClient
 import gridfs
 
+import pytz
+
 class AndorDevice(ConductorParameter):
     """
     Conductor parameter for controlling Andor cameras. Individual cameras should subclass this. The configuration for which hardware a conductor parameter communicates with is set in :mod:`conductor.conductor`'s `config.json <https://github.com/krbjila/labrad_tools/blob/master/conductor/config.json>`_.
@@ -94,7 +96,7 @@ class AndorDevice(ConductorParameter):
         if self.rotateImage:
             data = np.flip(np.swapaxes(np.array(data), 1, 2), axis=-1)
 
-        now = datetime.now()
+        now = datetime.now(pytz.timezone('US/Mountain'))
 
         metadata = {
             'camera': 'Andor iXon 888',
@@ -108,7 +110,7 @@ class AndorDevice(ConductorParameter):
             'kinetics_frames': self.kinFrames,
             'exposure': self.expTime,
             'binning': (self.bin, self.bin),
-            'timestamp': now.strftime("%Y-%m-%d %H:%M:%S"),
+            'timestamp': now,
             'em_enable': 'on' if self.emEnable else 'off',
             'em_gain': self.emGain,
             'preamp_gain': self.preAmpGain,
@@ -140,7 +142,7 @@ class AndorDevice(ConductorParameter):
                 print("Could not save to MongoDB: not connected")
 
         if save_file:
-            savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+            savedir = "/dataserver/data/"+now.strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
             file_number = 0
             if not os.path.exists(savedir):
                 os.makedirs(savedir)
