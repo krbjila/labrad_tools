@@ -7,6 +7,7 @@ from conductor_device.conductor_parameter import ConductorParameter
 
 from bson.json_util import loads, dumps
 from datetime import datetime
+import pytz
 
 class Update(ConductorParameter):
     """
@@ -39,7 +40,7 @@ class Update(ConductorParameter):
             parameters = yield self.conductor.get_parameter_values()
             shot = yield self.logging.get_shot()
             if shot != None and shot != -1:
-                now = datetime.now()
+                now = datetime.now(pytz.timezone('US/Mountain'))
                 shot_id = now.strftime("%Y_%m_%d_{}").format(shot)
                 update = {
                     "$set": {
