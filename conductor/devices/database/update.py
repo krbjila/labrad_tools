@@ -16,7 +16,7 @@ class Update(ConductorParameter):
     Conductor parameter for saving the list of conductor parameters in MongoDB each shot
     """
 
-    priority = 1
+    priority = 5
 
     @inlineCallbacks
     def initialize(self):

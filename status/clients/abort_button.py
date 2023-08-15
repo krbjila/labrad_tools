@@ -48,6 +48,11 @@ class AbortButton(QWidget):
     def abort(self, c):
         self.button.setEnabled(False)
         success = yield self.server.abort_experiment()
+        # try:
+        #     andor_server = yield self.cxn.get_server('imaging_andor')
+        #     yield andor_server.cancel_waits()
+        # except Exception as e:
+        #     print("Error aborting camera acquisition: {}".format(e))
         if success:
             self.button.setEnabled(True)
 

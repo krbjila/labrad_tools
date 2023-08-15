@@ -14,7 +14,7 @@ class KinesisDevice(ConductorParameter):
 
         [...]
     """
-    priority = 1
+    priority = 3
     value_type = 'single'
 
     def __init__(self, server_name, channel, config={}):

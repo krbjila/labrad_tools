@@ -28,7 +28,7 @@ CHANNEL_NAME = "Up Leg Double Pass"
 DEVICE = '3xAD9959_0'
 
 class Uplegdp(ConductorParameter):
-    priority = 1
+    priority = 2
 
     def __init__(self, config={}):
         super(Uplegdp, self).__init__(config)

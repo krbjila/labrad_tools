@@ -37,7 +37,7 @@ class Sin(ConductorParameter):
                 }
             }
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Sin, self).__init__(config)

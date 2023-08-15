@@ -26,7 +26,7 @@ class Frequency(ConductorParameter):
         }
        
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Frequency, self).__init__(config)
