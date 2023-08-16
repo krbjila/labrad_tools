@@ -796,6 +796,8 @@ class ConductorServer(LabradServer):
         # call parameter updates in order of priority. 
         # 1 is called last. 0 is never called.
         for parameter in sorted(priority_parameters, key=lambda x: x.priority)[::-1]:
+            # if parameter.device_name != 'sequencer' or "*" not in parameter.name:
+            #     print('priority: {}: updating {}\'s {}'.format(parameter.priority, parameter.device_name, parameter.name))
             yield self.update_parameter(parameter)
 
         # signal update

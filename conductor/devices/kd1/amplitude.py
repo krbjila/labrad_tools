@@ -26,7 +26,7 @@ class Amplitude(ConductorParameter):
         }
         
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Amplitude, self).__init__(config)

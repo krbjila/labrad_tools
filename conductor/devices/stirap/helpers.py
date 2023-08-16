@@ -18,7 +18,7 @@ class STIRAPDevice(ConductorParameter):
 
     TODO: Finish documenting this.
     """
-    priority = 1
+    priority = 3
     value_type = 'list'
 
     def __init__(self, channel, config={}):

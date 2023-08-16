@@ -66,14 +66,15 @@
                 }
             }
         },
-        "synthesizer": {
-            "waveform": {
-                "default_waveform": ""
-            }
-        },
         "wavemeterLock": {
             "frequency": {
                 "default_frequency": 291.417215
+            }
+        },
+
+        "synthesizer": {
+            "waveform": {
+                "default_waveform": ""
             }
         },
         "kinesis": {
@@ -88,6 +89,10 @@
             },
             "side": {
                 "temperature": -20
+            }
+        },
+        "database": {
+            "update": {
             }
         }
     }

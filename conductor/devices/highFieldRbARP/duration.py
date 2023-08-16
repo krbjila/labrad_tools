@@ -20,7 +20,7 @@ class Duration(ConductorParameter):
         }
 
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Duration, self).__init__(config)

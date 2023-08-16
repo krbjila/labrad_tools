@@ -9,9 +9,9 @@ node_dicts = [
                 'synthesizer',
                 'usb',
                 'serial',
-                # 'labjack',
+                'labjack',
                 # 'pco',
-                # 'database',
+                'database',
             ]
     },
     {

@@ -20,3 +20,4 @@ docs/_build
 docs/_static
 dds/backup
 database/mongodb.json
+conductor/devices/andor/mongodb.json
