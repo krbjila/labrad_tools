@@ -127,13 +127,11 @@ class AndorDevice(ConductorParameter):
                 metadata['imageID'] = imageID
                 update = [{
                     "$set": {
-                        "images": {
-                            metadata["name"]: metadata
-                        }
+                        "images.{}".format(metadata["name"]): metadata
                     },
                 }]
                 try:
-                    update_value = yield self.database.shots.update_one({"_id": id}, update, upsert=True)
+                    update_value = yield self.database.shots.update_one({"_id": id}, update)
                     print("Saved image to MongoDB with id {}: {}".format(id, update_value.acknowledged))
                 except Exception as e:
                     print("Could not save to MongoDB:")

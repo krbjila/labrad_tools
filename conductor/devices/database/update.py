@@ -50,8 +50,8 @@ class Update(ConductorParameter):
                     "parameters": parameters_dict,
                     "time": now
                 }
-                if db_param != None:
-                    db_entry.update(db_param)
+                if db_param["update"] != None and len(db_param["update"]) > 0:
+                    db_entry.update(db_param["update"])
                 if synth_param != None and "waveform" in synth_param:
                     synth_param["waveform"] = json.loads(synth_param["waveform"])
                     parameters_dict.update(synth_param)
