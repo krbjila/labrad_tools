@@ -1,10 +1,17 @@
 {
     "devices": {
+        "KMOT": {
+            "device_type": "Picomotor",
+            "connection_type": "Socket",
+            "servername": "192.168.107.30",
+            "address": "23",
+            "axes": ["H1", "V1", "H2", "V2"]
+        },
         "RbMOT": {
             "device_type": "Picomotor",
-            "connection_type": "Newport",
-            "servername": "polarkrb_picomotor",
-            "address": "8742 98538",
+            "connection_type": "Socket",
+            "servername": "192.168.107.31",
+            "address": "23",
             "axes": ["H1", "V1", "H2", "V2"]
         }
     }
