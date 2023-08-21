@@ -1,27 +1,47 @@
 import labrad
 import numpy as np
 from matplotlib import pyplot as plt
+
+#### ### ### ####
+optimize_Rb = True
+# Optimizes K if False
+#### ### ### ####
+
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 from calibrated_picomotor import CalibratedPicomotor
 import time
-
-def get_voltage():
-    return labjack.read_name('AIN0')
 
 cxn = labrad.connect()
 picomotor = cxn.polarkrb_picomotor
 labjack = cxn.polarkrb_labjack
 
-picomotor.select_device('RbMOT')
 
-calibration = {
-    1: 0.9060735228939916,
-    2: 0.8211087379097065,
-    3: 0.921183140809069,
-    4: 0.873316437926352
- }
+if optimize_Rb:
+    def get_voltage():
+        return labjack.read_name('AIN0')
+    picomotor.select_device('RbMOT')
+    calibration = {
+        1: 1/0.9060735228939916,
+        2: 1/0.8211087379097065,
+        3: 1/0.921183140809069,
+        4: 1/0.873316437926352
+    }
+else:
+    def get_voltage():
+        return labjack.read_name('AIN1')
+    picomotor.select_device('KMOT')
+    calibration = {
+            1: 1.2430034558945282,
+            2: 1.2012205752414258,
+            3: 1.0936954742350635,
+            4: 1.1944678217819649
+        }
 
-cpm = CalibratedPicomotor(picomotor, signal_source=get_voltage, calibration=calibration)
-# cpm = CalibratedPicomotor(picomotor, signal_source=get_voltage, calibration=None)
+cpm = CalibratedPicomotor(picomotor, signal_source=get_voltage, calibration=calibration, velocity=2000)
+# cpm.axes = [1,4]
+# cpm.axes = [2,3]
+
 for axis in cpm.axes:
     cpm.positions[axis] = 0
 
@@ -52,14 +72,14 @@ line, = ax.plot(xs, ys, 'o-')
 
 t = time.time()
 
-ranges = [50]*20
+ranges = [50]*10
 last_side = {axis: 0 for axis in cpm.axes} # -1 for negative, 0 for none, 1 for positive
 best_voltage = -10
 rounds_since_best = 0
 for (round_num, max_delta) in enumerate(ranges):
     for axis in cpm.axes:
         # if the power is too low, do nothing to avoid misalignment
-        if get_voltage() < 0.6:
+        if get_voltage() < 0.1:
             print('Power is too low, aborting')
             exit(69420)
 

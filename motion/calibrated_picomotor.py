@@ -45,7 +45,7 @@ class CalibratedPicomotor():
         self.picomotor.move_rel(axis, round(delta_position))
         time.sleep(abs(delta_position) / self.velocity + 0.04)
 
-    def _calibrate(self, axis, signal_source):
+    def _calibrate(self, axis, signal_source, make_plot=False):
         """Calibrates the step size of a picomotor axis.
 
         Args:
@@ -56,7 +56,7 @@ class CalibratedPicomotor():
             float: The ratio of the forward and reverse step sizes of the picomotor.
         """
         x0 = self.positions[axis]
-        positions = np.arange(x0-300, x0+300, 10)
+        positions = np.arange(x0+300, x0-300, 10)
         forward_voltages = np.zeros(len(positions))
 
         for (i, position) in enumerate(positions):
@@ -85,5 +85,13 @@ class CalibratedPicomotor():
             return res
         
         res = minimize(cost, [1])
+
+        if make_plot:
+            plt.figure()
+            plt.plot(positions, forward_voltages, label='forward')
+            plt.plot(positions, reverse_voltages, label='reverse')
+            plt.plot(rescale_positions(res.x[0]), reverse_voltages, label='rescaled')
+            plt.legend()
+            plt.show()
 
         return res.x[0]
