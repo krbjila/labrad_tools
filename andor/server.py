@@ -25,6 +25,9 @@ from labrad.server import setting
 from andor import Andor, ERROR_CODE
 from time import sleep
 
+from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.threads import deferToThread
+
 def handle_error(err):
     if ERROR_CODE[err] == 'DRV_SUCCESS':
         return 0
@@ -44,7 +47,6 @@ class AndorServer(HardwareInterfaceServer):
     def stopServer(self):
         c = {}
         cameras = self.get_interface_list(c)
-        print(cameras)
 
         for camera in cameras:
             self.select_interface(c, camera)
@@ -538,11 +540,14 @@ class AndorServer(HardwareInterfaceServer):
         error_code = andor.error['StartAcquisition']
         return error_code
 
+    # @inlineCallbacks
     @setting(68, returns='i')
     def wait_for_acquisition(self, c):
         self._select_interface(c)
+        # yield deferToThread(andor.WaitForAcquisition)
         andor.WaitForAcquisition()
         error_code = andor.error['WaitForAcquisition']
+        # returnValue(error_code)
         return error_code
 
     @setting(69, returns='i')
@@ -559,11 +564,14 @@ class AndorServer(HardwareInterfaceServer):
         error_code = andor.error['SetBaselineClamp']
         return error_code
 
+    @inlineCallbacks
     @setting(71, returns='i')
     def wait_for_acquisition_timeout(self, c, iTimeOutMs):
         self._select_interface(c)
+        # yield deferToThread(andor.WaitForAcquisitionTimeOut, iTimeOutMs)
         andor.WaitForAcquisitionTimeOut(iTimeOutMs)
         error_code = andor.error['WaitForAcquisitionTimeOut']
+        # returnValue(error_code)
         return error_code
     
     @setting(72, returns='i')
@@ -614,6 +622,13 @@ class AndorServer(HardwareInterfaceServer):
         arr = andor.GetMostRecentImage(size)
         error_code = andor.error['GetMostRecentImage']
         return error_code, arr
+    
+    # @setting(79)
+    # def cancel_waits(self, c):
+    #     cameras = self.get_interface_list(c)
+    #     for camera in cameras:
+    #         self.select_interface(c, camera)
+    #         self.cancel_wait(c)
 
     
 Server = AndorServer

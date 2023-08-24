@@ -29,7 +29,7 @@ class Downlegexp(ConductorParameter):
 
     IMPORTANT: This parameter is no longer used, since the down leg frequency is controlled with a fiber EOM.
     """
-    priority = 1
+    priority = 2
 
     def __init__(self, config={}):
         super(Downlegexp, self).__init__(config)

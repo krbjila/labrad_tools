@@ -60,16 +60,16 @@ class LoggingServer(LabradServer):
             self.wavemetercall = LoopingCall(self.log_frequency)
             self.wavemetercall.start(BETWEEN_SHOTS_TIME, now=False)
         except Exception as e:
-            self.labjack = None
+            self.wavemeter = None
             print("Could not connect to wavemeter:")
             print(e)
 
-        try:
-            self.labjack = yield self.client.servers['polarkrb_labjack']
-        except Exception as e:
-            self.labjack = None
-            print("Could not connect to LabJack:")
-            print(e)
+        # try:
+        #     self.labjack = yield self.client.servers['polarkrb_labjack']
+        # except Exception as e:
+        #     self.labjack = None
+        #     print("Could not connect to LabJack:")
+        #     print(e)
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
@@ -106,11 +106,11 @@ class LoggingServer(LabradServer):
         self.shot = shot
         self.shot_updated(shot if shot is not None else -1)
         self.set_save_location()
-        try:
-            self.labjack.set_shot(self.ljpath, self.shot == None)
-            print("Starting labjack at path %s" % (self.ljpath))
-        except Exception as e:
-            print("Could not start LabJack: %s" % (e))
+        # try:
+        #     self.labjack.set_shot(self.ljpath, self.shot == None)
+        #     print("Starting labjack at path %s" % (self.ljpath))
+        # except Exception as e:
+        #     print("Could not start LabJack: %s" % (e))
         try:
             self.wavemetercall.stop()
         except Exception as e:
@@ -207,11 +207,11 @@ class LoggingServer(LabradServer):
         if self.shot is None:
             # save to a log file in the directory on the data server defined by the date; make directories if necessary
             self.path = PATHBASE + "%s/" % (now.strftime('%Y/%m/%Y%m%d'))
-            self.ljpath = self.path + "labjack/"
+            # self.ljpath = self.path + "labjack/"
         else:
             # save to a log file in a directory defined by the date and the shot number; make directories if necessary
             self.path = PATHBASE + "%s/shots/%d/" % (now.strftime('%Y/%m/%Y%m%d'), self.shot)
-            self.ljpath = self.path
+            # self.ljpath = self.path
         fname = self.path+"log.txt"
         ffname = self.path+"freqs.txt"
 
@@ -220,11 +220,11 @@ class LoggingServer(LabradServer):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-        try:
-            os.makedirs(self.ljpath)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+        # try:
+        #     os.makedirs(self.ljpath)
+        # except OSError as e:
+        #     if e.errno != errno.EEXIST:
+        #         raise
         self.logfile = open(fname, 'a+')
         self.freqfile = open(ffname, 'a+')
         print("Opening log file %s" % (fname))

@@ -16,6 +16,11 @@ import re
 import multiprocessing as mp
 import json
 
+from pymongo import MongoClient
+import gridfs
+
+import pytz
+
 class AndorDevice(ConductorParameter):
     """
     Conductor parameter for controlling Andor cameras. Individual cameras should subclass this. The configuration for which hardware a conductor parameter communicates with is set in :mod:`conductor.conductor`'s `config.json <https://github.com/krbjila/labrad_tools/blob/master/conductor/config.json>`_.
@@ -42,6 +47,17 @@ class AndorDevice(ConductorParameter):
         self.conductor = self.cxn.conductor
         self.logging = self.cxn.imaging_logging
 
+        try:
+            with open('/home/bialkali/labrad_tools/conductor/devices/andor/mongodb.json', 'r') as f:
+                mongo_config = json.load(f)
+            self.database = yield MongoClient(mongo_config['address'], mongo_config['port'], username=mongo_config['user'], password=mongo_config['password'], connectTimeoutMS=5000, socketTimeoutMS=5000).data
+            self.gfs = gridfs.GridFS(self.database)
+            print("{} connected to MongoDB".format(self.__class__.__name__))
+        except Exception as e:
+            self.database = None
+            print("{} could not connect to MongoDB".format(self.__class__.__name__))
+            print_exc(e)
+
         cameras = yield self.andor.get_interface_list()
         if self.serial not in cameras:
             raise Exception('Camera {} not found'.format(self.serial))
@@ -63,7 +79,8 @@ class AndorDevice(ConductorParameter):
 
         yield self.andor.SetNumberAccumulations(1)
 
-    def save_data(self, frames):
+    @inlineCallbacks
+    def save_data(self, frames, save_file=True, save_db=True):
         expected_frame_size = self.kinFrames * self.dy * self.dx / (self.bin * self.bin)
         if len(frames) < self.acqLength:
             print("Expected {} frames, got {}. Saving blank image".format(self.acqLength, len(frames)))
@@ -79,19 +96,7 @@ class AndorDevice(ConductorParameter):
         if self.rotateImage:
             data = np.flip(np.swapaxes(np.array(data), 1, 2), axis=-1)
 
-        savedir = "/dataserver/data/"+datetime.now().strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
-        file_number = 0
-        if not os.path.exists(savedir):
-            os.makedirs(savedir)
-        else:
-            filelist = os.listdir(savedir)
-            file_number = 0
-            for f in filelist:
-                match = re.match(self.filebase+"_([0-9]+).npz", f)
-                if match and int(match.group(1)) >= file_number:
-                    file_number = int(match.group(1)) + 1
-
-        path = savedir+self.filebase+"_"+str(file_number)
+        now = datetime.now(pytz.timezone('US/Mountain'))
 
         metadata = {
             'camera': 'Andor iXon 888',
@@ -105,19 +110,58 @@ class AndorDevice(ConductorParameter):
             'kinetics_frames': self.kinFrames,
             'exposure': self.expTime,
             'binning': (self.bin, self.bin),
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'timestamp': now,
             'em_enable': 'on' if self.emEnable else 'off',
             'em_gain': self.emGain,
             'preamp_gain': self.preAmpGain,
             'vs_speed': self.vss,
             'shot': self.shot,
-            'path': path + ".npz",
-            'parameters': json.loads(self.parameters)
+            'temperature': self.current_temp,
         }
 
-        # spawn a new process to save the data to prevent hanging
-        p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
-        p.start()
+        if save_db:
+            if self.database:
+                id = now.strftime("%Y_%m_%d_{}").format(self.shot)
+                # See here for format: https://stackoverflow.com/questions/49493493/python-store-cv-image-in-mongodb-gridfs
+                imageID = self.gfs.put(data.tobytes(), _id=id+"_{}".format(self.__class__.__name__), shape=data.shape, dtype=str(data.dtype))
+                metadata['imageID'] = imageID
+                update = [{
+                    "$set": {
+                        "images.{}".format(metadata["name"]): metadata
+                    },
+                }]
+                try:
+                    update_value = yield self.database.shots.update_one({"_id": id}, update)
+                    print("Saved image to MongoDB with id {}: {}".format(id, update_value.acknowledged))
+                except Exception as e:
+                    print("Could not save to MongoDB:")
+                    print_exc(e)
+            else:
+                print("Could not save to MongoDB: not connected")
+
+        if save_file:
+            savedir = "/dataserver/data/"+now.strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+            file_number = 0
+            if not os.path.exists(savedir):
+                os.makedirs(savedir)
+            else:
+                filelist = os.listdir(savedir)
+                file_number = 0
+                for f in filelist:
+                    match = re.match(self.filebase+"_([0-9]+).npz", f)
+                    if match and int(match.group(1)) >= file_number:
+                        file_number = int(match.group(1)) + 1
+
+            path = savedir+self.filebase+"_"+str(file_number)
+
+            print("Saving image to {}...".format(path+".npz"))
+
+            metadata['parameters'] = json.loads(self.parameters)
+            metadata['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # spawn a new process to save the data to prevent hanging
+            p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
+            p.start()
 
     def save_data_process(self, path, data, metadata):
         # Define a temporary path to avoid conflicts when writing file
@@ -162,9 +206,19 @@ class AndorDevice(ConductorParameter):
                     self.temperature = self.value['temperature']
                     yield self.andor.SetTemperature(self.temperature)
 
-                current_temp = yield self.andor.GetTemperature()
-                print("Current temperature: {}".format(current_temp))
-                if float(current_temp) > 0:
+                if 'save_file' in self.value:
+                    save_file = self.value['save_file']
+                else:
+                    save_file = True
+
+                if 'save_db' in self.value:
+                    save_db = self.value['save_db']
+                else:
+                    save_db = True
+
+                self.current_temp = yield self.andor.GetTemperature()
+                print("Current temperature: {}".format(self.current_temp))
+                if float(self.current_temp) > 0:
                     print("Cooler restart.")
                     yield self.andor.SetFanMode(2) # 2 for off
                     yield self.andor.SetTemperature(self.temperature)
@@ -226,7 +280,7 @@ class AndorDevice(ConductorParameter):
 
                 yield self.andor.SetShutter(1, 2, 0, 0) # Close the shutter
 
-                self.save_data(self.frames)
+                yield self.save_data(self.frames, save_file, save_db)
 
                 # TODO: Why can't I read out all the images at the end?
                 # first, last = yield self.andor.GetNumberNewImages()

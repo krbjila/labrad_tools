@@ -12,7 +12,7 @@ class Timestamp(ConductorParameter):
     Conductor parameter for logging the time when the experiment was run.
     """
     value_type = 'data'
-    priority = 1
+    priority = 2
 
     @inlineCallbacks
     def update(self):
