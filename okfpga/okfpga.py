@@ -56,7 +56,9 @@ class OKFPGAServer(HardwareInterfaceServer):
 
     @setting(3, filename='s')
     def program_bitfile(self, c, filename):
-        self.call_if_available('ConfigureFPGA', c, 'bit_files'+SEP+filename)
+        res = self.call_if_available('ConfigureFPGA', c, 'bit_files'+SEP+filename)
+        if res < 0:
+            raise Exception('FPGA configuration failed')
     
     @setting(11, wire='i', byte_array='s')
     def write_to_pipe_in(self, c, wire, byte_array):
