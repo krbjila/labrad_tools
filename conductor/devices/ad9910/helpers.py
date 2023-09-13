@@ -25,7 +25,7 @@ class AD9910Device(ConductorParameter):
 
     TODO: Finish documenting this.
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(AD9910Device, self).__init__(config)

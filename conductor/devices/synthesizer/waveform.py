@@ -15,7 +15,7 @@ class Waveform(ConductorParameter):
 
     Conductor parameter for controlling the waveform output by the RF synthesizer.
     """
-    priority = 99
+    priority = 3
     value_type = 'single'
 
     def __init__(self, config={}):

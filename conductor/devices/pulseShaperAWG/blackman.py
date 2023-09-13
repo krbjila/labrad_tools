@@ -28,7 +28,7 @@ class Blackman(ConductorParameter):
             }
         }
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Blackman, self).__init__(config)

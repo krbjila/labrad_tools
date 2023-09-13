@@ -8,6 +8,7 @@ from conductor_device.conductor_parameter import ConductorParameter
 from bson.json_util import loads, dumps
 from datetime import datetime
 import pytz
+import json
 
 class Update(ConductorParameter):
     """
@@ -16,7 +17,7 @@ class Update(ConductorParameter):
     Conductor parameter for saving the list of conductor parameters in MongoDB each shot
     """
 
-    priority = 1
+    priority = 5
 
     @inlineCallbacks
     def initialize(self):
@@ -38,15 +39,24 @@ class Update(ConductorParameter):
     def update(self):
         try:
             parameters = yield self.conductor.get_parameter_values()
+            parameters_dict = loads(parameters)
+            db_param = parameters_dict.pop('database', None)
+            synth_param = parameters_dict.pop("synthesizer", None)
             shot = yield self.logging.get_shot()
             if shot != None and shot != -1:
                 now = datetime.now(pytz.timezone('US/Mountain'))
                 shot_id = now.strftime("%Y_%m_%d_{}").format(shot)
+                db_entry = {
+                    "parameters": parameters_dict,
+                    "time": now
+                }
+                if db_param["update"] != None and len(db_param["update"]) > 0:
+                    db_entry.update(db_param["update"])
+                if synth_param != None and "waveform" in synth_param:
+                    synth_param["waveform"] = json.loads(synth_param["waveform"])
+                    parameters_dict.update(synth_param)
                 update = {
-                    "$set": {
-                        "parameters": loads(parameters),
-                        "time": now
-                    }
+                    "$set": db_entry
                 }
                 yield self.database.update_one(dumps({'_id': shot_id}), dumps(update))
                 print("Saved parameters to database with shot ID {}".format(shot_id))

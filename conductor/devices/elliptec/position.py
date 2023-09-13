@@ -27,7 +27,7 @@ class Position(ConductorParameter):
         }
 
     """
-    priority = 1
+    priority = 3
 
     def __init__(self, config={}):
         super(Position, self).__init__(config)

@@ -2,6 +2,8 @@ import re
 import json
 import types
 import os
+import traceback
+import importlib
 
 from twisted.internet.defer import returnValue, inlineCallbacks
 from labrad.server import LabradServer, setting
@@ -37,7 +39,8 @@ def get_device_wrapper(device_config):
 
 def get_connection_wrapper(device):
     module_path = 'server_tools.connections.{}_connection'.format(device.connection_type.lower())
-    module = __import__(module_path, fromlist=[device.connection_type+'Connection'], level=1)
+    # TODO: make sure this doesn't affect any other instances of device_server!
+    module = importlib.import_module(module_path, package='labrad_tools')
     return getattr(module, device.connection_type+'Connection')
 
 class DeviceWrapper(object):
@@ -88,7 +91,7 @@ class DeviceServer(LabradServer):
             self.devices[name] = device
             yield device.initialize()
         except Exception as e:
-            print(e)
+            print(traceback(e))
             print('could not initialize device {}'.format(name))
             print('removing {} from available devices'.format(name))
             self.devices.pop(name)

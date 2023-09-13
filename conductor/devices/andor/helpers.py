@@ -50,7 +50,7 @@ class AndorDevice(ConductorParameter):
         try:
             with open('/home/bialkali/labrad_tools/conductor/devices/andor/mongodb.json', 'r') as f:
                 mongo_config = json.load(f)
-            self.database = yield MongoClient(mongo_config['address'], mongo_config['port'], username=mongo_config['user'], password=mongo_config['password']).data
+            self.database = yield MongoClient(mongo_config['address'], mongo_config['port'], username=mongo_config['user'], password=mongo_config['password'], connectTimeoutMS=5000, socketTimeoutMS=5000).data
             self.gfs = gridfs.GridFS(self.database)
             print("{} connected to MongoDB".format(self.__class__.__name__))
         except Exception as e:
@@ -127,14 +127,12 @@ class AndorDevice(ConductorParameter):
                 metadata['imageID'] = imageID
                 update = [{
                     "$set": {
-                        "images": {
-                            metadata["image_id"]: metadata
-                        }
+                        "images.{}".format(metadata["name"]): metadata
                     },
                 }]
                 try:
-                    update_value = yield self.database.shots.update_one({"_id": id}, update, upsert=True)
-                    print("Saved image to MongoDB with id {}: {}".format(id, update_value))
+                    update_value = yield self.database.shots.update_one({"_id": id}, update)
+                    print("Saved image to MongoDB with id {}: {}".format(id, update_value.acknowledged))
                 except Exception as e:
                     print("Could not save to MongoDB:")
                     print_exc(e)
@@ -159,6 +157,7 @@ class AndorDevice(ConductorParameter):
             print("Saving image to {}...".format(path+".npz"))
 
             metadata['parameters'] = json.loads(self.parameters)
+            metadata['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # spawn a new process to save the data to prevent hanging
             p = mp.Process(target=self.save_data_process, args=(path, data, metadata))

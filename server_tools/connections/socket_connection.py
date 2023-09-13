@@ -15,12 +15,20 @@ class SocketConnection(object):
 
     @inlineCallbacks 
     def send(self, value):
-        response = yield deferToThread(self.connection.send, value)
-        returnValue(response)
+        nbytes = yield deferToThread(self.connection.send, value)
+        # nbytes = yield self.connection.send(value)
+        returnValue(nbytes)
     
     @inlineCallbacks 
     def recv(self, value):
         response = yield deferToThread(self.connection.recv, value)
+        # response = yield self.connection.recv(value)
+        returnValue(response)
+
+    @inlineCallbacks
+    def query(self, value):
+        yield self.send(value)
+        response = yield self.recv(1024)
         returnValue(response)
     
     def getsockname(self):
