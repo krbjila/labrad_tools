@@ -1265,8 +1265,8 @@
             "device_type": "AD5791Board",
             "connection_type": "OKFPGA",
             "servername": "imaging_okfpga",
-            "address": "KRbStable01",
-            "bitfile": "ad5791_2021.bit",
+            "address": "Opal Kelly XEM6001",
+            "bitfile": "ad5791.bit",
             "channels": [
                 {
                     "loc": 0,
