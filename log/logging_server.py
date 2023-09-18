@@ -9,7 +9,7 @@ Logs experiment status to InfluxDB. Also manages the shot number.
     description = server for logging
     instancename = %LABRADNODE%_logging
     [startup]
-    cmdline = %PYTHON% %FILE%
+    cmdline = %PYTHON3% %FILE%
     timeout = 20
     [shutdown]
     message = 987654321
@@ -56,28 +56,29 @@ class LoggingServer(LabradServer):
         self.logfile = None
         self.freqfile = None
         self.path = None
-        LabradServer.__init__(self)
+        super(LoggingServer, self).__init__()
+
+    @inlineCallbacks
+    def initServer(self):
         self.set_save_location()
         self.opentime = datetime.now()
-        self.cxn = labrad.connect()
         try:
-            self.wm = self.cxn.wavemeterlaptop_wavemeter
+            self.wavemeter = yield self.client.servers['wavemeterlaptop_wavemeter']
+
         except Exception as e:
-            self.wm = None
+            self.wavemeter = None
             print("Could not connect to wavemeter: %s" % (e))
             
         try:
-            self.labjack = self.cxn.polarkrb_labjack
+            self.labjack = yield self.client.servers['polarkrb_labjack']
         except Exception as e:
             self.labjack = None
             print("Could not connect to labjack: %s" % (e))
 
-    @inlineCallbacks
-    def initServer(self):
-        with open('C:\\Users\\krbji\\Desktop\\labrad_tools\\log\\logging_config.json', 'r') as f:
+        with open('C:\\Users\\Ye Lab\\Desktop\\labrad_tools\\log\\logging_config.json', 'r') as f:
             self.lasers = load(f)['wavemeter']['channels']
 
-        with open("C:\\Users\\krbji\\Desktop\\labrad_tools\\log\\secrets.json", 'r') as f:
+        with open("C:\\Users\\Ye Lab\\Desktop\\labrad_tools\\log\\secrets.json", 'r') as f:
             config= load(f)
             self.TEMPSTICK_KEY = config['TEMPSTICK_KEY']
             INFLUXDB_TOKEN = config['INFLUXDB_TOKEN']
@@ -90,6 +91,8 @@ class LoggingServer(LabradServer):
 
         self.logging_call = LoopingCall(self.log_stuff)
         self.logging_call.start(BETWEEN_SHOTS_TIME, now=True)
+
+        yield None
 
     @setting(1, message='s', time='t')
     def log(self, c, message, time=None):
@@ -126,16 +129,18 @@ class LoggingServer(LabradServer):
         self.shot = shot
         self.shot_updated(shot if shot is not None else -1)
         self.set_save_location()
-        # try:
-        self.logging_call.stop()
-        # except Exception as e:
-        #     print("Could not stop looping call for logging: %s" % (e))
+        try:
+            if self.logging_call.running:
+                self.logging_call.stop()
+        except Exception as e:
+            print("Could not stop looping call for logging: %s" % (e))
         # try:
         if shot is None:
             self.logging_call.start(BETWEEN_SHOTS_TIME)
         else:
+            # pass
             # run the logging call once after 10 seconds
-            reactor.callLater(10, self.logging_call, 10)
+            reactor.callLater(10, self.logging_call)
         # except Exception as e:
         #     print("Could not start looping call for wavemeter: %s" % (e))
 
@@ -255,24 +260,27 @@ class LoggingServer(LabradServer):
             print("Could not read tempstick: %s" % (e))
             return None
 
+    @inlineCallbacks
     def log_stuff(self):
-        now = datetime.datetime.now(pytz.timezone('US/Mountain'))
+        now = datetime.now(pytz.timezone('US/Mountain'))
         try:
-            RbMOT = self.labjack.read_name('AIN0')
+            RbMOT = yield self.labjack.read_name('AIN0')
         except Exception as e:
             print("Could not read RbMOT: %s" % (e))
             RbMOT = None
         try:
-            KMOT = self.labjack.read_name('AIN1')
+            KMOT = yield self.labjack.read_name('AIN1')
         except Exception as e:
             print("Could not read KMOT: %s" % (e))
             KMOT = None
         try:
-            waterPressure = self.labjack.read_name('AIN2')*15.0 #15 PSI/V
+            waterPressure = yield self.labjack.read_name('AIN2')
+            waterPressure *= 15.0 #15 PSI/V
         except Exception as e:
             print("Could not read waterPressure: %s" % (e))
             waterPressure = None
-        wavelens = loads(loads(self.wavemeter.get_wavelengths()))
+        wavelengths = yield self.wavemeter.get_wavelengths()
+        wavelens = loads(loads(wavelengths))
         try:
             freqs = {}
             for (i, l) in enumerate(self.lasers):
@@ -288,8 +296,9 @@ class LoggingServer(LabradServer):
         tempstick = self.get_tempstick()
 
         # write to influxdb
-        p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
-        self.influx_api.write(self.bucket, "krb", p)
+        if self.shot is not None:
+            p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
+            self.influx_api.write(self.bucket, "krb", p)
 
         # write temperature data
         if tempstick is not None:
@@ -316,6 +325,8 @@ class LoggingServer(LabradServer):
                 freq = freqs[laser]['freq']
                 p = Point("wavemeter").tag("laser", laser).field("freq", freq).time(now, WritePrecision.S)
                 self.influx_api.write(self.bucket, "krb", p)
+
+        print("Logged at %s" % (now.strftime('%Y-%m-%d %H:%M:%S.%f')))
 
 if __name__ == '__main__':
     from labrad import util
