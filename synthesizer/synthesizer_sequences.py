@@ -1093,7 +1093,16 @@ def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling:
     end_pulse.phase = phase
     return [pulse] + decoupling + [end_pulse]
         
+class Repeat(RFBlock):
+    def __init__(self, sequence: List[RFBlock], repetitions: int) -> None:
+        self.sequence = sequence
+        self.repetitions = repetitions
 
+    def __repr__(self) -> str:
+        return "Repeat({}, {})".format(self.sequence, self.repetitions)
+    
+    def compile(self, state: SequenceState) -> List[RFBlock]:
+        return [deepcopy(self.sequence) for _ in range(self.repetitions)]
 
 def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[RFBlock] | str:
     """
