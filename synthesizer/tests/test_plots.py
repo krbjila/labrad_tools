@@ -11,7 +11,8 @@ import synthesizer_sequences as ss
 seq = {
     0: [
         ss.SetTransition(ss.Transition(2E6, {0.5: 100E3})),
-        ss.DROID60(2.4E-3)
+        # ss.DROID60(2.4E-3)
+        ss.KDD(2.4E-3)
         ],
 }
 
