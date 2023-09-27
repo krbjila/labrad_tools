@@ -297,34 +297,52 @@ class LoggingServer(LabradServer):
 
         # write to influxdb
         if self.shot is not None:
-            p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
-            self.influx_api.write(self.bucket, "krb", p)
+            try:
+                p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write shot data to influxdb: %s" % (e))
 
         # write temperature data
         if tempstick is not None:
             for sensor in tempstick:
-                temp = float(tempstick[sensor]['temp'])
-                humidity = float(tempstick[sensor]['humidity'])
-                p = Point("temperature").tag("sensor", sensor).field("temp", temp).field("humidity", humidity).time(now, WritePrecision.S)
-                self.influx_api.write(self.bucket, "krb", p)
+                try:
+                    temp = float(tempstick[sensor]['temp'])
+                    humidity = float(tempstick[sensor]['humidity'])
+                    p = Point("temperature").tag("sensor", sensor).field("temp", temp).field("humidity", humidity).time(now, WritePrecision.S)
+                    self.influx_api.write(self.bucket, "krb", p)
+                except Exception as e:
+                    print("Could not write temperature data to influxdb: %s" % (e))
 
         # write labjack data
         if RbMOT is not None:
-            p = Point("labjack").tag("channel", "RbMOT").tag("unit", "V").field("value", RbMOT).time(now, WritePrecision.S)
-            self.influx_api.write(self.bucket, "krb", p)
+            try:
+                p = Point("labjack").tag("channel", "RbMOT").tag("unit", "V").field("value", RbMOT).time(now, WritePrecision.S)
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write RbMOT data to influxdb: %s" % (e))
         if KMOT is not None:
-            p = Point("labjack").tag("channel", "KMOT").tag("unit", "V").field("value", KMOT).time(now, WritePrecision.S)
-            self.influx_api.write(self.bucket, "krb", p)
+            try:
+                p = Point("labjack").tag("channel", "KMOT").tag("unit", "V").field("value", KMOT).time(now, WritePrecision.S)
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write KMOT data to influxdb: %s" % (e))
         if waterPressure is not None:
-            p = Point("labjack").tag("channel", "waterPressure").tag("unit", "PSI").field("value", waterPressure).time(now, WritePrecision.S)
-            self.influx_api.write(self.bucket, "krb", p)
+            try:
+                p = Point("labjack").tag("channel", "waterPressure").tag("unit", "PSI").field("value", waterPressure).time(now, WritePrecision.S)
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write waterPressure data to influxdb: %s" % (e))
 
         # write wavemeter data
         if freqs is not None:
             for laser in freqs:
-                freq = freqs[laser]['freq']
-                p = Point("wavemeter").tag("laser", laser).field("freq", freq).time(now, WritePrecision.S)
-                self.influx_api.write(self.bucket, "krb", p)
+                try:
+                    freq = freqs[laser]['freq']
+                    p = Point("wavemeter").tag("laser", laser).field("freq", freq).time(now, WritePrecision.S)
+                    self.influx_api.write(self.bucket, "krb", p)
+                except Exception as e:
+                    print("Could not write wavemeter data to influxdb: %s" % (e))
 
         print("Logged at %s" % (now.strftime('%Y-%m-%d %H:%M:%S.%f')))
 
