@@ -695,10 +695,10 @@ class ConductorServer(LabradServer):
         return True
 
     # KM added 09/10/2017
-    @setting(17, safe_mode="b")
+    @setting(17, safe_mode="b", returns="b")
     def abort_experiment(self, c, safe_mode=False):
         """
-        abort_experiment(self, c)
+        abort_experiment(self, c, safe_mode=False)
 
         Abort the experiment immediately, then run defaults. Also cancels queued experiments.
 
@@ -732,13 +732,18 @@ class ConductorServer(LabradServer):
             defaults["parameter_values"]["andor"] = {"vertical": {"takeImage": False}}
             defaults["parameter_values"]["andor"] = {"side": {"takeImage": False}}
             defaults["parameter_values"]["database"] = {"update": {}}
-            self.queue_experiment(c, json.dumps(defaults))
+            self.set_experiment_queue(c)
             self.stop_experiment(c)
+            yield self.set_parameter_values(None, json.dumps(defaults["parameter_values"]))
+            for device_name, device_parameters in self.parameters.items():
+                for parameter_name, parameter in device_parameters.items():
+                    self.update_parameter(parameter)
         else:
             self.stop_experiment(c)
             for device_name, device_parameters in self.parameters.items():
                 for parameter_name, parameter in device_parameters.items():
                     self.update_parameter(parameter)
+        returnValue(True)
 
     @setting(13, returns="s")
     def get_data(self, c):

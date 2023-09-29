@@ -29,7 +29,7 @@ variables_dict = [
     ['*QuadI3', 0.],
     ['*QuadV3', -0.],
     ['*QuadVcmot', -1],
-    ['*BIASI', 0.048], # was 0.0491 11/30/22
+    ['*BIASI', 0.0479], # 09/27/2023
     ['*BIASV', -0.395],
     ['*LowField', 0.461], # was 0.457 (11/2/21)
     ['*LowFieldV', -0.675],

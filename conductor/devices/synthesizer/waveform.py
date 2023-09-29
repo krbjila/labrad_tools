@@ -31,7 +31,9 @@ class Waveform(ConductorParameter):
     def update(self):
         if self.value and len(self.value) > 0:
             try:
+                print("Setting synthesizer waveform...")
                 yield self.synthesizer.reset(True)
                 yield self.synthesizer.write_timestamps(self.value, True)
+                print("Waveform set!")
             except Exception as e:
                 print(e)

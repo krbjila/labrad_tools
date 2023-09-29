@@ -3,8 +3,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 #### ### ### ####
-optimize_Rb = True
+optimize_Rb = False
 # Optimizes K if False
+## did not work for me ... 
 #### ### ### ####
 
 import os, sys
@@ -18,6 +19,7 @@ labjack = cxn.polarkrb_labjack
 
 
 if optimize_Rb:
+    print("optimize Rb")
     def get_voltage():
         return labjack.read_name('AIN0')
     picomotor.select_device('RbMOT')
@@ -72,7 +74,7 @@ line, = ax.plot(xs, ys, 'o-')
 
 t = time.time()
 
-ranges = [50]*10
+ranges = [50]*20
 last_side = {axis: 0 for axis in cpm.axes} # -1 for negative, 0 for none, 1 for positive
 best_voltage = -10
 rounds_since_best = 0
