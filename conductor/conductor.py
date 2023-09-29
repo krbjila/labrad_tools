@@ -925,7 +925,7 @@ class ConductorServer(LabradServer):
         else:
             ti = time()
             #TODO: Remove save_parameters here
-            yield deferToThread(self.save_parameters)
+            # yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
             if 'ID' in kwargs:
