@@ -67,6 +67,7 @@ Parameters can be registered on-the-fly, but we typically enable them by includi
 
 import json
 import os, errno, sys
+
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from collections import deque
@@ -92,25 +93,26 @@ from lib.exceptions import ParameterNotInitialized
 
 from clients import variables_config
 
-FILEBASE = '/dataserver/data/%Y/%m/%Y%m%d/shots'
+FILEBASE = "/dataserver/data/%Y/%m/%Y%m%d/shots"
+
 
 class ConductorServer(LabradServer):
     """
     ConductorServer(LabradServer)
-    
+
     Coordinate setting and saving experiment parameters.
-    
+
     Parameters are classes defined in `./devices/ <https://github.com/krbjila/labrad_tools/tree/master/conductor/devices>`_.
 
         * parameters hold values representing real world attributes.
         * typically send/receive data to/from hardware.
         * see `./devices/conductor_device/conductor_parameter.py <https://github.com/krbjila/labrad_tools/blob/master/conductor/devices/conductor_device/conductor_parameter.py>`_ for documentation.
-    
+
     Experiments specify parameter values to be iterated over and a filename for saving data.
     """
 
-    name = 'conductor'
-    parameters_updated = Signal(698124, 'signal: parameters_updated', 'b')
+    name = "conductor"
+    parameters_updated = Signal(698124, "signal: parameters_updated", "b")
     """
         signal__parameters_updated
         
@@ -122,7 +124,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    parameters_changed = Signal(698125, 'signal: parameters_changed', 's')
+    parameters_changed = Signal(698125, "signal: parameters_changed", "s")
     """
         signal__parameters_changed
         
@@ -136,7 +138,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    experiment_started = Signal(696970, 'signal: experiment started', 'b')
+    experiment_started = Signal(696970, "signal: experiment started", "b")
     """
         signal__experiment_started
         
@@ -148,7 +150,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    experiment_stopped = Signal(696971, 'signal: experiment stopped', 'b')
+    experiment_stopped = Signal(696971, "signal: experiment stopped", "b")
     """
         signal__experiment_stopped
         
@@ -160,7 +162,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    parameter_removed = Signal(696972, 'signal: parameter removed', 's')
+    parameter_removed = Signal(696972, "signal: parameter removed", "s")
     """
         signal__parameter_removed
         
@@ -172,7 +174,7 @@ class ConductorServer(LabradServer):
         .. seealso::
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
-    parameters_refreshed = Signal(696973, 'signal: parameters refreshed', 'b')
+    parameters_refreshed = Signal(696973, "signal: parameters refreshed", "b")
     """
         signal__parameters_refreshed
         
@@ -185,8 +187,7 @@ class ConductorServer(LabradServer):
             For help with Signals, see :ref:`labrad-tips-tricks-label`.
     """
 
-
-    def __init__(self, config_path='./config.json'):
+    def __init__(self, config_path="./config.json"):
         self.parameters = {}
         self.experiment_queue = deque([])
         self.data = {}
@@ -198,11 +199,11 @@ class ConductorServer(LabradServer):
 
         self.load_config(config_path)
         LabradServer.__init__(self)
-        
+
         # added KM 09/10/2017
         self.advance_dict = {}
         self.advance_counter = 0
-    
+
     def load_config(self, path=None):
         """
         load_config(self, path=None)
@@ -211,10 +212,10 @@ class ConductorServer(LabradServer):
 
         Args:
             path (str, optional): Location of the JSON config. Defaults to None, in which case the object's ``self.config_path`` is loaded.
-        """        
+        """
         if path is not None:
             self.config_path = path
-        with open(self.config_path, 'r') as infile:
+        with open(self.config_path, "r") as infile:
             config = json.load(infile)
             for key, value in config.items():
                 setattr(self, key, value)
@@ -238,9 +239,10 @@ class ConductorServer(LabradServer):
 
         Registers default parameters and loads sequencer variables after connected to LabRAD
         """
-        callLater(0.1, self.register_parameters, None, json.dumps(self.default_parameters))
+        callLater(
+            0.1, self.register_parameters, None, json.dumps(self.default_parameters)
+        )
         callLater(0.5, self.load_variables)
-
 
     # Re-initialize parameters
     # Added KM 03/18/18
@@ -250,7 +252,7 @@ class ConductorServer(LabradServer):
         refresh_default_parameters(self, c)
 
         Tries to register all default parameters defined in the ``config.json`` file.
-        
+
         Also checks that all sequencer variables are defined.
 
         Args:
@@ -276,20 +278,23 @@ class ConductorServer(LabradServer):
                     # If a parameter is missing, try to import it
                     if not param in self.parameters[device]:
                         param_dict = {param: self.default_parameters[device][param]}
-                        yield self.register_parameters(c, json.dumps({device: param_dict}))
+                        yield self.register_parameters(
+                            c, json.dumps({device: param_dict})
+                        )
 
         for k, v in self.variables.items():
             if not k in self.parameters["sequencer"]:
                 self.set_parameter_values(c, json.dumps({"sequencer": {k: float(v)}}))
 
-
-    @setting(2, parameters='s', generic_parameter='b', value_type='s', returns='b')
-    def register_parameters(self, c, parameters, generic_parameter=False, value_type=None):
+    @setting(2, parameters="s", generic_parameter="b", value_type="s", returns="b")
+    def register_parameters(
+        self, c, parameters, generic_parameter=False, value_type=None
+    ):
         """
         register_parameters(self, c, parameters, generic_parameter=False, value_type=None)
 
         Load parameters into conductor.
-        
+
         Parameters are defined in conductor/devices/device_name/parameter_name.py.
 
         View defined parameters with conductor.available_parameters
@@ -312,17 +317,28 @@ class ConductorServer(LabradServer):
 
         Yields:
             bool: True if an error occurs
-        """        
+        """
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_config in device_parameters.items():
-                yield self.register_parameter(device_name, parameter_name, 
-                        parameter_config, generic_parameter, value_type)
+                yield self.register_parameter(
+                    device_name,
+                    parameter_name,
+                    parameter_config,
+                    generic_parameter,
+                    value_type,
+                )
 
         returnValue(True)
-    
+
     @inlineCallbacks
-    def register_parameter(self, device_name, parameter_name, parameter_config,
-                           generic_parameter, value_type):
+    def register_parameter(
+        self,
+        device_name,
+        parameter_name,
+        parameter_config,
+        generic_parameter,
+        value_type,
+    ):
         """register_parameter(self, device_name, parameter_name, parameter_config, generic_parameter, value_type)
 
         Populate ``self.parameters`` with specified parameter.
@@ -341,16 +357,15 @@ class ConductorServer(LabradServer):
         Raises:
             ParameterAlreadyRegistered: if specified parameter is already in ``self.parameters``
             ParameterNotImported: if import of specified parameter fails
-        """        
-      
+        """
+
         if not self.parameters.get(device_name):
             self.parameters[device_name] = {}
 
         if self.parameters[device_name].get(parameter_name):
             raise ParameterAlreadyRegistered(device_name, parameter_name)
         else:
-            Parameter = import_parameter(device_name, parameter_name, 
-                                         generic_parameter)
+            Parameter = import_parameter(device_name, parameter_name, generic_parameter)
             if not Parameter:
                 raise ParameterNotImported(device_name, parameter_name)
             else:
@@ -360,12 +375,12 @@ class ConductorServer(LabradServer):
                 if value_type is not None:
                     parameter.value_type = value_type
                 self.parameters[device_name][parameter_name] = parameter
-                
-                print("{}'s {} registered".format(device_name, parameter_name))           
+
+                print("{}'s {} registered".format(device_name, parameter_name))
                 yield parameter.initialize()
                 yield self.update_parameter(parameter)
 
-    @setting(3, parameters='s', returns='b')
+    @setting(3, parameters="s", returns="b")
     def remove_parameters(self, c, parameters):
         """
         remove_parameters(self, c, parameters)
@@ -384,17 +399,17 @@ class ConductorServer(LabradServer):
 
         Yields:
             bool: True
-        """        
+        """
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, _ in device_parameters.items():
                 yield self.remove_parameter(device_name, parameter_name)
         returnValue(True)
-    
+
     @inlineCallbacks
     def remove_parameter(self, device_name, parameter_name):
         """
         remove_parameter(self, device_name, parameter_name)
-        
+
         Remove specified parameter from ``self.parameters``.
 
         Args:
@@ -414,9 +429,10 @@ class ConductorServer(LabradServer):
         # Signal parameter removed
         self.parameter_removed(str(device_name + " " + parameter_name))
 
-    @setting(4, parameters='s', generic_parameter='b', returns='b')
-    def set_parameter_values(self, c, parameters, generic_parameter=False, 
-                             value_type=None):
+    @setting(4, parameters="s", generic_parameter="b", returns="b")
+    def set_parameter_values(
+        self, c, parameters, generic_parameter=False, value_type=None
+    ):
         """
         set_parameter_values(self, c, parameters, generic_parameter=False, value_type=None)
 
@@ -434,21 +450,27 @@ class ConductorServer(LabradServer):
 
         Yields:
             bool: True
-        """                             
+        """
         changed_parameters = {}
         changed = False
 
         for device_name, device_parameters in json.loads(parameters).items():
             for parameter_name, parameter_value in device_parameters.items():
                 try:
-                    changed = self.parameters[device_name][parameter_name] != parameter_value
+                    changed = (
+                        self.parameters[device_name][parameter_name] != parameter_value
+                    )
                 except KeyError:
                     changed = True
-                
-                yield self.set_parameter_value(device_name, parameter_name, 
-                                               parameter_value, 
-                                               generic_parameter, value_type)
-                
+
+                yield self.set_parameter_value(
+                    device_name,
+                    parameter_name,
+                    parameter_value,
+                    generic_parameter,
+                    value_type,
+                )
+
                 if changed:
                     # Do this to get the current value of parameter, not a list if there is a scan
                     pv = yield self.get_parameter_value(device_name, parameter_name)
@@ -457,13 +479,20 @@ class ConductorServer(LabradServer):
                     except KeyError:
                         changed_parameters[device_name] = {parameter_name: pv}
 
-        if len(changed_parameters): # Don't fire if no parameters were actually set
+        if len(changed_parameters):  # Don't fire if no parameters were actually set
             yield self.parameters_updated(True)
             yield self.parameters_changed(json.dumps(changed_parameters))
         returnValue(True)
 
     @inlineCallbacks
-    def set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None):
+    def set_parameter_value(
+        self,
+        device_name,
+        parameter_name,
+        parameter_value,
+        generic_parameter=False,
+        value_type=None,
+    ):
         """
         set_parameter_value(self, device_name, parameter_name, parameter_value, generic_parameter=False, value_type=None)
 
@@ -476,17 +505,18 @@ class ConductorServer(LabradServer):
         Raises:
             ParameterNotImported: if import of specified parameter fails.
 
-        """        
+        """
         try:
             self.parameters[device_name][parameter_name]
         except KeyError:
-            if parameter_name[0] == '*':
+            if parameter_name[0] == "*":
                 generic_parameter = True
-            yield self.register_parameter(device_name, parameter_name, {}, 
-                                          generic_parameter, value_type)
+            yield self.register_parameter(
+                device_name, parameter_name, {}, generic_parameter, value_type
+            )
         self.parameters[device_name][parameter_name].value = parameter_value
 
-    @setting(5, parameters='s', use_registry='b', returns='s')
+    @setting(5, parameters="s", use_registry="b", returns="s")
     def get_parameter_values(self, c, parameters=None, use_registry=False):
         """
         get_parameter_values(self, c, parameters=None, use_registry=False)
@@ -502,13 +532,13 @@ class ConductorServer(LabradServer):
                         parameter_name: None
                     }
                 }
-            
+
               Defaults to None, in which case all parameter values are returned.
             use_registry (bool, optional): Look for parameter in registry (deprecated). Defaults to False.
 
         Yields:
             str: json dumped string (:py:meth:`json.dumps(...)`) of dict of parameter values
-        """        
+        """
         if parameters is None:
             parameters = {dn: dp.keys() for dn, dp in self.parameters.items()}
         else:
@@ -518,10 +548,11 @@ class ConductorServer(LabradServer):
         for device_name, device_parameters in parameters.items():
             parameter_values[device_name] = {}
             for parameter_name in device_parameters:
-                parameter_values[device_name][parameter_name] = \
-                        yield self.get_parameter_value(device_name, 
-                                                       parameter_name,
-                                                       use_registry)
+                parameter_values[device_name][
+                    parameter_name
+                ] = yield self.get_parameter_value(
+                    device_name, parameter_name, use_registry
+                )
         returnValue(json.dumps(parameter_values))
 
     @inlineCallbacks
@@ -539,47 +570,59 @@ class ConductorServer(LabradServer):
 
         Yields:
             any: The value of the selected parameter
-        """        
+        """
         message = None
         try:
-            try: 
+            try:
                 parameter = self.parameters[device_name][parameter_name]
                 value = parameter.value
             except:
-                parameters_filename = self.parameters_directory + 'current_parameters.json'
-                with open(parameters_filename, 'r') as infile:
+                parameters_filename = (
+                    self.parameters_directory + "current_parameters.json"
+                )
+                with open(parameters_filename, "r") as infile:
                     old_parameters = json.load(infile)
                     value = old_parameters[device_name][parameter_name]
-                    yield self.set_parameter_value(device_name, parameter_name, value, True)
+                    yield self.set_parameter_value(
+                        device_name, parameter_name, value, True
+                    )
         except:
             if use_registry:
-                print('looking in registry for parameter {}'.format(device_name + parameter_name))
-                print('this feature will be depreciated')
-                try: 
-                    yield self.client.registry.cd(self.registry_directory
-                                                  + [device_name])
+                print(
+                    "looking in registry for parameter {}".format(
+                        device_name + parameter_name
+                    )
+                )
+                print("this feature will be depreciated")
+                try:
+                    yield self.client.registry.cd(
+                        self.registry_directory + [device_name]
+                    )
                     value = yield self.client.registry.get(parameter_name)
                     config = json.dumps({device_name: {parameter_name: value}})
                     yield self.set_parameter_values(None, config, True)
                 except Exception as e:
                     print(e)
-                    message = 'unable to get most recent value for\
-                               {} {}'.format(device_name, parameter_name)
+                    message = "unable to get most recent value for\
+                               {} {}".format(
+                        device_name, parameter_name
+                    )
             else:
-                message = '{} {} is not an active parameter'.format(device_name,
-                                                                 parameter_name)
+                message = "{} {} is not an active parameter".format(
+                    device_name, parameter_name
+                )
         if message:
             raise Exception(message)
         returnValue(value)
-    
-    @setting(8, experiment='s', run_next='b', returns='i')
+
+    @setting(8, experiment="s", run_next="b", returns="i")
     def queue_experiment(self, c, experiment, run_next=False):
         """
         queue_experiment(self, c, experiment, run_next=False)
 
         Args:
             c: LabRAD context
-            experiment (str): json-dumped string with keys 
+            experiment (str): json-dumped string with keys
 
                 * ``name``' (str): Some string. Required.
                 * ``parameter_values`` (Dict, optional): {name: value}.
@@ -589,14 +632,14 @@ class ConductorServer(LabradServer):
 
         Returns:
             int: Number of experiments in the queue
-        """        
+        """
         if run_next:
             self.experiment_queue.appendleft(json.loads(experiment))
         else:
             self.experiment_queue.append(json.loads(experiment))
         return len(self.experiment_queue)
 
-    @setting(9, experiment_queue='s', returns='i')
+    @setting(9, experiment_queue="s", returns="i")
     def set_experiment_queue(self, c, experiment_queue=None):
         """
         set_experiment_queue(self, c, experiment_queue=None)
@@ -617,7 +660,7 @@ class ConductorServer(LabradServer):
                 self.experiment_queue.append(experiment)
         return len(self.experiment_queue)
 
-    @setting(10, returns='b')
+    @setting(10, returns="b")
     def stop_experiment(self, c):
         """
         stop_experiment(self, c)
@@ -636,13 +679,15 @@ class ConductorServer(LabradServer):
         for device_name, device_parameters in self.parameters.items():
             for parameter_name, parameter in device_parameters.items():
                 parameter.value = parameter.value
-                if parameter_name == 'sequence':
+                if parameter_name == "sequence":
                     parameter.value = [parameter.default_sequence]
                 # Ensure that Rb uwave synth outputs default
-                if parameter_name == 'enable' and device_name == 'E8257D':
+                if parameter_name == "enable" and device_name == "E8257D":
                     parameter.value = 0
                 # Ensure that the STIRAP DDS's are not rewritten
-                if device_name == 'stirap' and (parameter_name == 'up' or parameter_name == 'down'):
+                if device_name == "stirap" and (
+                    parameter_name == "up" or parameter_name == "down"
+                ):
                     parameter.value = []
         self.data = {}
         self.data_path = None
@@ -650,9 +695,8 @@ class ConductorServer(LabradServer):
         return True
 
     # KM added 09/10/2017
-    # 
-    @setting(17)
-    def abort_experiment(self, c):
+    @setting(17, safe_mode="b")
+    def abort_experiment(self, c, safe_mode=False):
         """
         abort_experiment(self, c)
 
@@ -660,7 +704,8 @@ class ConductorServer(LabradServer):
 
         Args:
             c: LabRAD context
-        """        
+            safe_mode (bool, optional): If True, runs everythingOff. Defaults to False.
+        """
         yield self._advance_logging(True)
         for ID, call in self.advance_dict.items():
             try:
@@ -668,12 +713,34 @@ class ConductorServer(LabradServer):
             except:
                 pass
         self.advance_dict = {}
-        self.stop_experiment(c)
-        for device_name, device_parameters in self.parameters.items():
-            for parameter_name, parameter in device_parameters.items():
-                self.update_parameter(parameter)
- 
-    @setting(13, returns='s')
+        if safe_mode:
+            defaults = {}
+            defaults["name"] = "everythingOff"
+            defaults["parameter_values"] = {}
+            defaults["parameter_values"] = {
+                "sequencer": {"sequence": ["everythingOff"]}
+            }
+            defaults["parameter_values"]["E8257D"] = {"enable": 0}
+            defaults["parameter_values"]["arp33220A"] = {
+                "frequency": 0,
+                "amplitude": 0,
+            }
+            defaults["parameter_values"]["ad9910"] = {"update": 0}
+            defaults["parameter_values"]["stirap"] = {"up": [], "down": []}
+            defaults["parameter_values"]["electrode"] = {"update": {}}
+            defaults["parameter_values"]["synthesizer"] = {"waveform": ""}
+            defaults["parameter_values"]["andor"] = {"vertical": {"takeImage": False}}
+            defaults["parameter_values"]["andor"] = {"side": {"takeImage": False}}
+            defaults["parameter_values"]["database"] = {"update": {}}
+            self.queue_experiment(c, json.dumps(defaults))
+            self.stop_experiment(c)
+        else:
+            self.stop_experiment(c)
+            for device_name, device_parameters in self.parameters.items():
+                for parameter_name, parameter in device_parameters.items():
+                    self.update_parameter(parameter)
+
+    @setting(13, returns="s")
     def get_data(self, c):
         """
         get_data(self, c)
@@ -687,7 +754,7 @@ class ConductorServer(LabradServer):
             str: json-dumped dictionary of current parameter values
         """
         return json.dumps(self.data)
-    
+
     @inlineCallbacks
     def advance_experiment(self):
         """
@@ -703,38 +770,38 @@ class ConductorServer(LabradServer):
             experiment_copy = deepcopy(experiment)
 
             if "name" in experiment and "default" not in experiment["name"]:
-                #TODO: Move save_parameters here
+                # TODO: Move save_parameters here
                 yield self._advance_logging(False)
             else:
                 yield self._advance_logging(True)
-            
-            parameter_values = experiment.get('parameter_values')
+
+            parameter_values = experiment.get("parameter_values")
             if parameter_values:
                 yield self.set_parameter_values(None, json.dumps(parameter_values))
             # signal that experiment has started again
             self.experiment_started(True)
             # if this experiment should loop, append to begining of queue
-            if experiment.get('loop'):
+            if experiment.get("loop"):
                 # now we require appending data
-                experiment_copy['append_data'] = True
+                experiment_copy["append_data"] = True
                 # add experiment to begining of queue
                 self.experiment_queue.appendleft(experiment_copy)
-            
-            if not experiment.get('append_data'):
+
+            if not experiment.get("append_data"):
                 self.data = {}
 
                 # determine data path
-                timestr = strftime('%Y%m%d')
+                timestr = strftime("%Y%m%d")
                 data_directory = self.data_directory.format(timestr)
-                self.experiment_name = experiment['name']
-                data_path = lambda i: str(data_directory 
-                                          + experiment['name'] 
-                                          + '#{}'.format(i))
-                iteration = 0 
+                self.experiment_name = experiment["name"]
+                data_path = lambda i: str(
+                    data_directory + experiment["name"] + "#{}".format(i)
+                )
+                iteration = 0
                 while os.path.isfile(data_path(iteration)):
                     iteration += 1
                 self.data_path = data_path(iteration)
-                
+
                 if not os.path.exists(data_directory):
                     os.mkdir(data_directory)
 
@@ -742,7 +809,7 @@ class ConductorServer(LabradServer):
         else:
             self.data = {}
             if self.data_path:
-                print('experiment queue is empty')
+                print("experiment queue is empty")
             # signal that experiment has stopped
             self.experiment_stopped(True)
             self.data_path = None
@@ -752,7 +819,7 @@ class ConductorServer(LabradServer):
     def advance_parameters(self):
         """
         advance_parameters(self)
-        
+
         Get new parameter values then send to devices. Calls :meth:`advance_experiment`.
         """
         advanced = False
@@ -761,18 +828,19 @@ class ConductorServer(LabradServer):
         if not pts:
             advanced = yield self.advance_experiment()
         else:
-            print('remaining points: {}'.format(pts)) 
-            #TODO: Add save_parameters here
+            print("remaining points: {}".format(pts))
+            # TODO: Add save_parameters here
             if self.logging:
                 yield self._advance_logging(True)
                 yield self._advance_logging(False)
 
-        # sort by priority. higher priority is called first. 
-        priority_parameters = [parameter for device_name, device_parameters
-                                         in self.parameters.items()
-                                         for parameter_name, parameter 
-                                         in device_parameters.items()
-                                         if parameter.priority]
+        # sort by priority. higher priority is called first.
+        priority_parameters = [
+            parameter
+            for device_name, device_parameters in self.parameters.items()
+            for parameter_name, parameter in device_parameters.items()
+            if parameter.priority
+        ]
 
         # advance parameter values if parameter has priority
         if not advanced:
@@ -780,20 +848,28 @@ class ConductorServer(LabradServer):
             changed = False
 
             for parameter in priority_parameters:
-                old_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
+                old_pv = yield self.get_parameter_value(
+                    parameter.device_name, parameter.name
+                )
                 parameter.advance()
-                new_pv = yield self.get_parameter_value(parameter.device_name, parameter.name)
-                
+                new_pv = yield self.get_parameter_value(
+                    parameter.device_name, parameter.name
+                )
+
                 if old_pv != new_pv:
                     try:
-                        changed_parameters[parameter.device_name].update({parameter.name: new_pv})
+                        changed_parameters[parameter.device_name].update(
+                            {parameter.name: new_pv}
+                        )
                     except KeyError:
-                        changed_parameters[parameter.device_name] = {parameter.name: new_pv}
-            
+                        changed_parameters[parameter.device_name] = {
+                            parameter.name: new_pv
+                        }
+
             if len(changed_parameters):
                 self.parameters_changed(json.dumps(changed_parameters))
-        
-        # call parameter updates in order of priority. 
+
+        # call parameter updates in order of priority.
         # 1 is called last. 0 is never called.
         for parameter in sorted(priority_parameters, key=lambda x: x.priority)[::-1]:
             # if parameter.device_name != 'sequencer' or "*" not in parameter.name:
@@ -812,16 +888,19 @@ class ConductorServer(LabradServer):
 
         Args:
             parameter (ConductorParameter): The parameter to update.
-        """        
+        """
         try:
             yield parameter.update()
         except Exception as e:
             # remove parameter is update failed.
             print(e)
-            print('could not update {}\'s {}. removing parameter'.format(
-                    parameter.device_name, parameter.name))
+            print(
+                "could not update {}'s {}. removing parameter".format(
+                    parameter.device_name, parameter.name
+                )
+            )
             yield self.remove_parameter(parameter.device_name, parameter.name)
-    
+
     def save_parameters(self):
         """
         save_parameters(self)
@@ -831,36 +910,39 @@ class ConductorServer(LabradServer):
         # save data to disk
         if self.data:
             try:
-                data_length = max([len(p) for dp in self.data.values()
-                                        for p in dp.values()])
+                data_length = max(
+                    [len(p) for dp in self.data.values() for p in dp.values()]
+                )
             except Exception as e:
                 data_length = 0
                 print("saving data failed due to error:", e)
         else:
             data_length = 0
-        
+
         for device_name, device_parameters in self.parameters.items():
             if not self.data.get(device_name):
                 self.data[device_name] = {}
             for parameter_name, parameter in device_parameters.items():
                 if not self.data[device_name].get(parameter_name):
                     self.data[device_name][parameter_name] = []
-                parameter_data = self.data[device_name][parameter_name] 
+                parameter_data = self.data[device_name][parameter_name]
                 while len(parameter_data) < data_length:
                     parameter_data.append(None)
                 new_value = parameter.value
                 parameter_data.append(new_value)
-        
-        if self.data_path:
-            self.data['shot_number'] = {"shot": [self.shot]}
 
-            if not 'defaults' in self.data_path:
-                s = json.dumps(self.data, default=lambda x: None, sort_keys=True, indent=2)
-                with open(self.data_path, 'w+') as outfile:
+        if self.data_path:
+            self.data["shot_number"] = {"shot": [self.shot]}
+
+            if not "defaults" in self.data_path:
+                s = json.dumps(
+                    self.data, default=lambda x: None, sort_keys=True, indent=2
+                )
+                with open(self.data_path, "w+") as outfile:
                     outfile.write(s)
-                print('saving data to {}'.format(self.data_path))
-                
-                path =  "%s/%d/" % (self.last_time.strftime(FILEBASE), self.shot)
+                print("saving data to {}".format(self.data_path))
+
+                path = "%s/%d/" % (self.last_time.strftime(FILEBASE), self.shot)
                 try:
                     os.makedirs(path)
                 except OSError as e:
@@ -868,9 +950,9 @@ class ConductorServer(LabradServer):
                         print("Could not connect to data server: ", e)
 
                 try:
-                    with open(path + "sequence.json", 'w+') as outfile:
+                    with open(path + "sequence.json", "w+") as outfile:
                         outfile.write(s)
-                    print('saving data to {}'.format(path + "sequence.json"))
+                    print("saving data to {}".format(path + "sequence.json"))
                 except Exception as e:
                     print("Could not connect to data server: ", e)
 
@@ -883,9 +965,9 @@ class ConductorServer(LabradServer):
         """
         yield self._advance_logging(True)
 
-        parameters_filename = self.parameters_directory + 'current_parameters.json'
+        parameters_filename = self.parameters_directory + "current_parameters.json"
         if os.path.isfile(parameters_filename):
-            with open(parameters_filename, 'r') as infile:
+            with open(parameters_filename, "r") as infile:
                 old_parameters = json.load(infile)
         else:
             old_parameters = {}
@@ -895,14 +977,15 @@ class ConductorServer(LabradServer):
                 parameters[device_name] = {}
             for parameter_name, parameter in device_parameters.items():
                 parameters[device_name][parameter_name] = parameter.value
-        
-        parameters_filename = self.parameters_directory + 'current_parameters.json'
-        with open(parameters_filename, 'w') as outfile:
+
+        parameters_filename = self.parameters_directory + "current_parameters.json"
+        with open(parameters_filename, "w") as outfile:
             json.dump(parameters, outfile)
 
-        parameters_filename = self.parameters_directory + '{}.json'.format(
-                                  strftime(self.time_format))
-        with open(parameters_filename, 'w') as outfile:
+        parameters_filename = self.parameters_directory + "{}.json".format(
+            strftime(self.time_format)
+        )
+        with open(parameters_filename, "w") as outfile:
             json.dump(parameters, outfile)
 
     # KM edited 09/10/2017
@@ -916,25 +999,27 @@ class ConductorServer(LabradServer):
         Args:
             c: LabRAD context
             delay (int, optional): The delay in seconds before advancing the experiment. Defaults to 0.
-        """        
+        """
         if delay:
-            self.advance_dict[str(self.advance_counter)] = callLater(delay, self.advance, c, ID=self.advance_counter)
-            self.advance_counter=0
+            self.advance_dict[str(self.advance_counter)] = callLater(
+                delay, self.advance, c, ID=self.advance_counter
+            )
+            self.advance_counter = 0
             while str(self.advance_counter) in self.advance_dict.keys():
-                self.advance_counter += 1 
+                self.advance_counter += 1
         else:
             ti = time()
-            #TODO: Remove save_parameters here
+            # TODO: Remove save_parameters here
             # yield deferToThread(self.save_parameters)
             yield self.advance_parameters()
             tf = time()
-            if 'ID' in kwargs:
-                del self.advance_dict[str(kwargs['ID'])]
+            if "ID" in kwargs:
+                del self.advance_dict[str(kwargs["ID"])]
             if self.do_print_delay:
-                print('delay: {}'.format(tf-ti))
+                print("delay: {}".format(tf - ti))
 
-    @setting(1700, end='b')
-    def advance_logging(self, c, end = False):
+    @setting(1700, end="b")
+    def advance_logging(self, c, end=False):
         """
         advance_logging(self, c, end = False)
 
@@ -943,11 +1028,11 @@ class ConductorServer(LabradServer):
         Args:
             c: LabRAD context
             end (bool, optional): Stops logging the current shot if `True`. Defaults to False.
-        """        
+        """
         yield self._advance_logging(end)
 
     @inlineCallbacks
-    def _advance_logging(self, end = False):
+    def _advance_logging(self, end=False):
         """
         _advance_logging(self, end = False)
 
@@ -961,7 +1046,7 @@ class ConductorServer(LabradServer):
         cur_time = datetime.now()
 
         try:
-            logging = yield self.client.servers['imaging_logging']
+            logging = yield self.client.servers["imaging_logging"]
             logging.set_name("conductor")
         except Exception as e:
             print("Could not connect to logging server: ", e)
@@ -985,7 +1070,7 @@ class ConductorServer(LabradServer):
             except Exception as e:
                 print("Could not stop logging shot: ", e)
 
-    @setting(16, do_print_delay='b', returns='b')
+    @setting(16, do_print_delay="b", returns="b")
     def print_delay(self, c, do_print_delay=None):
         """
         print_delay(self, c, do_print_delay=None)
@@ -1001,7 +1086,9 @@ class ConductorServer(LabradServer):
             self.do_print_delay = do_print_delay
         return self.do_print_delay
 
+
 if __name__ == "__main__":
     from labrad import util
+
     server = ConductorServer()
     util.runServer(server)
