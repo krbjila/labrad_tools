@@ -33,9 +33,9 @@ accumulator gets set to the value provided in the PTW.
 The higher bit is for relative phase updates. In this mode that phase
 accumulator gets set to its current value plus the PTW.
 
-The FPGA fabric can hold 8192 entries for the sequencer table. This
-results in a 13 bit address space for these timestamps. We have 16 bits
-allocated in the messages, therefore the uppermost 3 bits are not used
+The FPGA fabric can hold 16384 entries for the sequencer table. This
+results in a 14 bit address space for these timestamps. We have 16 bits
+allocated in the messages, therefore the uppermost 2 bits are not used
 and can be set to 0.
 
 The messages will then be of the format
@@ -149,3 +149,49 @@ Each one of the channels has 8192 entries. The four memories are completely inde
 8) Is there a way to interrupt the sequence when it is running? For instance, as Cal mentioned in his email about trying the updated FPGA code, we had an issue where the sequence did not seem to terminate, and when we tried to rewrite to it, it actively refused the connection
 
 I have added this for you, please see above.
+
+Update 09/28/2023:
+
+We got 64 bits in the sequencer output.
+Currently, 62 bits are used:
+61 Phase update relative
+60 Phase update absolute
+59-48 Phase
+47-32 Amplitude
+31-0 Frequency
+
+We'll use the two most significant bits for
+the new instructions.
+Bit 63 indicates control instruction to populate register values
+Bit 62 is for compare/jump instructions
+Bits 63 AND bit 62 set is for unconditional jump
+
+When the new instructions are used, the meaning of lower bits
+changes:
+Bits [47:32] are address
+Bits [31: 0] are data to be written.
+
+Address 16'h00 - 16'h07 are 8 counter registers. Writing to them sets
+their value which is the number of repetitions.
+
+When bit 62 is set, the address encodes for a compare instruction.
+If the register value is 0, the sequencer goes to the address stored in
+the corresponding jump registers in the range 16'h10 - 16'h17.
+If the register value is not zero the sequencer goes to the address
+stored in the corresponding mismatch registers in the range
+16'h20 - 16'h27.
+Both a match and a mismatch will reset the timer value.
+
+
+Example:
+So let's say we have a sequence in addresses 10-30.
+We set register 16'h00 to 10 to get 10 repetitions.
+Register 16'h10 is set to address 10.
+Finally, we set register 16'h20 to address 31 as that's where we go when
+the loop is completed.
+Executing a jump instruction 64'hC000AADDDD where AA is 0 and DDDD
+bits are ignored will jump back to address 10 and decrement the value
+in register 16'h00 by one. Once the value of 16'h00 reaches 0, the next
+address for the sequencer will be taken from 16'h20. After 10 loops, we
+finally end
+up at address 31.
