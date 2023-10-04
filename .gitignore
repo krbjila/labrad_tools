@@ -21,3 +21,4 @@ docs/_static
 dds/backup
 database/mongodb.json
 conductor/devices/andor/mongodb.json
+log/secrets.json

@@ -947,7 +947,7 @@ def XY16(duration: float, pulse:Optional[RFPulse] = None) -> List[RFBlock]:
     phases = [0, np.pi/2, 0, np.pi/2, np.pi/2, 0, np.pi/2, 0, np.pi, 3*np.pi/2, np.pi, 3*np.pi/2, 3*np.pi/2, np.pi, 3*np.pi/2, np.pi] # XYXYYXYX-X-Y-X-Y-Y-X-Y-X
     return [Wait(duration/32)] + [f(phi) for phi in phases for f in (phased_pulse, lambda x: Wait(duration/16))][:-1] + [Wait(duration/32)]
 
-def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
+class KDD:
     """
     KDD(duration, pulse=None)
 
@@ -960,30 +960,40 @@ def KDD(duration: float, pulse: Optional[RFPulse] = None) -> List[RFBlock]:
     Returns:
         list of :class:`RFBlock`: Returns a list of pulses and :class:`Wait` commands implementing a KDD decoupling sequence.
     """
-    if pulse is None:
-        pulse = PiPulse(phase=0, centered=True)
-    elif isinstance(pulse, type) and issubclass(pulse, RFPulse):
-        pulse = PiPulse(window=pulse, centered=True)
 
-    def phased_pulse(phase):
-        new_pulse = copy(pulse)
-        new_pulse.phase = phase
-        return new_pulse
-    tau = duration/20.0
-    def KDDphi(phi):
-        return [Wait(tau/2.0),
-            phased_pulse(np.pi/6 + phi),
-            Wait(tau),
-            phased_pulse(phi),
-            Wait(tau),
-            phased_pulse(np.pi/2 + phi),
-            Wait(tau),
-            phased_pulse(phi),
-            Wait(tau),
-            phased_pulse(np.pi/6 + phi),
-            Wait(tau/2.0)]
+    def __init__(self, duration: float, pulse: Optional[RFPulse] = None) -> None:
+        self.duration = duration
+        self.pulse = pulse
+
+    def __repr__(self) -> str:
+        return f"KDD({self.duration.__repr__()}, {self.pulse.__repr__()})"
+
+    def compile(self, state: SequenceState) -> List[RFBlock]:
+        if self.pulse is None:
+            self.pulse = PiPulse(phase=0, centered=True)
+        elif isinstance(self.pulse, type) and issubclass(self.pulse, RFPulse):
+            self.pulse = PiPulse(window=self.pulse, centered=True)
+
+        def phased_pulse(phase):
+            new_pulse = copy(self.pulse)
+            new_pulse.phase = phase
+            return new_pulse
         
-    return KDDphi(0) + KDDphi(np.pi/2) + KDDphi(0) + KDDphi(np.pi/2)
+        tau = self.duration/20.0
+        def KDDphi(phi):
+            return [Wait(tau/2.0),
+                phased_pulse(np.pi/6 + phi),
+                Wait(tau),
+                phased_pulse(phi),
+                Wait(tau),
+                phased_pulse(np.pi/2 + phi),
+                Wait(tau),
+                phased_pulse(phi),
+                Wait(tau),
+                phased_pulse(np.pi/6 + phi),
+                Wait(tau/2.0)]
+            
+        return KDDphi(0) + KDDphi(np.pi/2) + KDDphi(0) + KDDphi(np.pi/2)
 
 def WAHUHA(duration: float, pulse: RFPulse = None):
     if pulse is None:
@@ -1083,7 +1093,16 @@ def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling:
     end_pulse.phase = phase
     return [pulse] + decoupling + [end_pulse]
         
+class Repeat(RFBlock):
+    def __init__(self, sequence: List[RFBlock], repetitions: int) -> None:
+        self.sequence = sequence
+        self.repetitions = repetitions
 
+    def __repr__(self) -> str:
+        return "Repeat({}, {})".format(self.sequence, self.repetitions)
+    
+    def compile(self, state: SequenceState) -> List[RFBlock]:
+        return [deepcopy(self.sequence) for _ in range(self.repetitions)]
 
 def compile_sequence(sequence: List[RFBlock], output_json: bool = True) -> List[RFBlock] | str:
     """

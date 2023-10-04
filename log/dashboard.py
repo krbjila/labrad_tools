@@ -68,7 +68,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                     { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026},
                     { "i": 1, "label": "1030", "max_freq": 1E3, "min_freq": 1},
                     { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
-                    { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01617},
+                    { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01616},
                     { "i": 4, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
                     { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},
                     { "i": 6, "label": "Rb Repump", "max_freq": 384.23482, "min_freq": 384.23472},
@@ -133,7 +133,10 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         """
         # c = pycurl.Curl()
         try:
-            self.data = json.loads(json.loads(self.wavemeter.get_wavelengths()))
+            try:
+                self.data = json.loads(json.loads(self.wavemeter.get_wavelengths()))
+            except Exception as e:
+                print("could not connect to wavemeter: ", e)
             play = False
             names = []
 
