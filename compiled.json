@@ -1,0 +1,786 @@
+{
+    "0": [
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 2,
+            "timestamp": 5.7499999999999995e-05,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 6.25e-05,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 2,
+            "timestamp": 0.00017749999999999998,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0.0001825,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.00029749999999999997,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0003025,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 2,
+            "timestamp": 0.00041749999999999996,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0.00042249999999999997,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 2,
+            "timestamp": 0.0005375,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 0.0005425,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 0.0006000000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 2,
+            "timestamp": 0.0006575000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0006625000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.0007775000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0007825000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 3.141592653589793,
+            "phase_update": 2,
+            "timestamp": 0.0008975000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 3.141592653589793,
+            "phase_update": 0,
+            "timestamp": 0.0009025000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.0010175000000000002,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0010225000000000002,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 2,
+            "timestamp": 0.0011375,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0011425,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0012000000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 2,
+            "timestamp": 0.0012575000000000002,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 0.0012625000000000002,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 2,
+            "timestamp": 0.0013775000000000003,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0.0013825000000000003,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.0014975000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0015025000000000001,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 2,
+            "timestamp": 0.0016175,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0.0016225,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 2,
+            "timestamp": 0.0017375,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 0.0017425,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 0.5235987755982988,
+            "phase_update": 0,
+            "timestamp": 0.0018,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 2,
+            "timestamp": 0.0018575,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0018625,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.0019775,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0019825,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 3.141592653589793,
+            "phase_update": 2,
+            "timestamp": 0.0020975,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 3.141592653589793,
+            "phase_update": 0,
+            "timestamp": 0.0021024999999999998,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 2,
+            "timestamp": 0.0022175,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 1.5707963267948966,
+            "phase_update": 0,
+            "timestamp": 0.0022224999999999996,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0.5,
+            "digital_out": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 2,
+            "timestamp": 0.0023374999999999997,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0023424999999999995,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 2000000.0,
+            "phase": 2.0943951023931953,
+            "phase_update": 0,
+            "timestamp": 0.0023999999999999994,
+            "wait_for_trigger": false
+        },
+        {
+            "amplitude": 0,
+            "digital_out": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "frequency": 0,
+            "phase": 0,
+            "phase_update": 0,
+            "timestamp": 0,
+            "wait_for_trigger": false
+        }
+    ]
+}
