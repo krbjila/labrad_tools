@@ -1,6 +1,5 @@
 import unittest
-
-from synthesizer.synthesizer_sequences_base import *
+from synthesizer_sequences_base import *
 
 
 class TestSequence(unittest.TestCase):
@@ -57,13 +56,13 @@ class TestSequence(unittest.TestCase):
 
     def test_compilation(self):
         sequence = Sequence(Timestamp(1), Timestamp(2))
-        self.assertEqual(sequence.compile(set()), Sequence(Timestamp(3)))
+        self.assertEqual(sequence.compile(set()), Timestamp(3))
 
         sequence = Sequence(Sequence(Timestamp(1)), Timestamp(2))
-        self.assertEqual(sequence.compile(set()), Sequence(Timestamp(3)))
+        self.assertEqual(sequence.compile(set()), Timestamp(3))
 
         sequence = Sequence(Sequence(Timestamp(1)), Sequence(Timestamp(2)))
-        self.assertEqual(sequence.compile(set()), Sequence(Timestamp(3)))
+        self.assertEqual(sequence.compile(set()), Timestamp(3))
 
         sequence = Sequence(Timestamp(1, {"RF0": RFUpdate()}))
         self.assertEqual(
@@ -78,6 +77,17 @@ class TestSequence(unittest.TestCase):
 
         sequence = Timestamp(1) * 3
         self.assertEqual(sequence.compile(set()), Timestamp(3))
+
+    def test_instruction_generation(self):
+        r1 = Subroutine(
+            Sequence(
+                Timestamp(1, {"RF0": RFUpdate(frequency=1e6)}),
+                Timestamp(1, {"RF0": RFUpdate(frequency=2e6)}),
+            )
+        )
+        sequence = Sequence(r1, r1 * 3, r1)
+        # print(sequence.compile(CHANNEL_GROUPS["RF0D"]))
+        instructions = sequence.to_instructions()
 
 
 if __name__ == "__main__":

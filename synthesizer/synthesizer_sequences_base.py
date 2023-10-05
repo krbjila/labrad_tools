@@ -2,12 +2,24 @@ from abc import ABC, abstractmethod
 from typing import List, Set, Dict, Union
 from typing import NamedTuple
 import re
+from copy import copy, deepcopy
+from collections import deque
+from dataclasses import dataclass, field
+
 
 MAX_FREQUENCY = 307.2e6  # Hertz
 MIN_DURATION = 1 / 153.6e6  # seconds
 MAX_DURATION = 2**48 * MIN_DURATION  # seconds
 MAX_RF_CHANNEL = 3
 MAX_DIGITAL_CHANNEL = 6
+MAX_ADDRESS = 2**14 - 1
+
+RF_CHANNELS = {f"RF{i}" for i in range(MAX_RF_CHANNEL + 1)}
+DIGITAL_CHANNELS = {f"D{i}" for i in range(MAX_DIGITAL_CHANNEL + 1)}
+CHANNELS = RF_CHANNELS | DIGITAL_CHANNELS
+CHANNEL_GROUPS = {"RF0D": {"RF0"} | DIGITAL_CHANNELS}
+for i in range(1, MAX_RF_CHANNEL + 1):
+    CHANNEL_GROUPS[f"RF{i}"] = {f"RF{i}"} | DIGITAL_CHANNELS
 
 
 def validate_channel(channel: str):
@@ -38,10 +50,13 @@ class RFUpdate(NamedTuple):
         offset (float): LO frequency in Hertz. This is not controlled by the synthesizer but is used to calculate the IF frequency.
     """
 
-    frequency: float | None = None
-    phase: float | None = None
-    amplitude: float | None = None
+    frequency: Union[float, None] = None
+    phase: Union[float, None] = None
+    amplitude: Union[float, None] = None
     offset: float = 0
+
+    def __post_init__(self):
+        self.validate()
 
     def validate(self):
         if self.frequency is not None and (
@@ -64,7 +79,7 @@ class DigitalUpdate(NamedTuple):
         value (bool): Value of the digital channel
     """
 
-    value: bool | None = None
+    value: Union[bool, None] = None
 
     def validate(self):
         if self.value is not None:
@@ -129,6 +144,9 @@ class Sequence(SequenceElement):
         return f"Sequence({', '.join(repr(element) for element in self.elements)})"
 
     def compile(self, channels) -> "Sequence":
+        if not self.channels & channels:
+            return Timestamp(self.duration)
+
         compiled = Sequence(*[element.compile(channels) for element in self.elements])
 
         # Combines adjacent timestamps into a single timestamp if they have the same update and unpacks nested sequences
@@ -139,6 +157,7 @@ class Sequence(SequenceElement):
             element = stack.pop()
             if isinstance(element, Sequence):
                 stack.extend(reversed(element.elements))
+                continue
             elif isinstance(element, Timestamp):
                 update = {
                     channel: setting
@@ -157,8 +176,74 @@ class Sequence(SequenceElement):
                         new_elements[-1].duration = element.duration
                         new_elements[-1].update = new_elements[-1].update | update
                         continue
-                new_elements.append(element)
+            new_elements.append(element)
         return Sequence(*new_elements)
+
+    def to_instructions(self) -> Dict[str, List[bytearray]]:
+        """
+        Compiles a sequence into a list of instructions for each channel group. Each instruction is a bytearray of length 16.
+
+        Args:
+            sequence (SequenceElement): Sequence to compile
+        """
+
+        timestamps = {}
+        for group, channels in CHANNEL_GROUPS.items():
+            print(f"Channel group {group}")
+            timestamps[group] = []
+
+            @dataclass
+            class Node:
+                element: Union["Subroutine", "Repeat", None]
+                children: List["Node"] = field(default_factory=list)
+                counter: int = -1
+
+            # Build a tree of subroutines and loops
+            stack = [self.compile(channels)]
+            routines = {}
+            root_node = Node(None)
+            routine_stack = [root_node]
+            while len(stack):
+                element = stack.pop()
+                if isinstance(element, Sequence):
+                    stack.extend(reversed(element.elements))
+                elif isinstance(element, Subroutine) or isinstance(element, Repeat):
+                    if element not in routines:
+                        routines[element] = Node(element)
+                        routine_stack[-1].children.append(routines[element])
+                        routine_stack.append(routines[element])
+                        stack.append("end")
+                        stack.append(element.sequence)
+                elif element == "end":
+                    routine_stack.pop()
+
+            for routine, node in routines.items():
+                print(
+                    f"Routine {routine.__hash__() % 1000} has children {[child.element.__hash__() % 1000 for child in node.children]}"
+                )
+
+            queue = deque([root_node]) if root_node.children else deque()
+            while len(queue):
+                node = queue.popleft()
+                if node.counter < 0:  # node has not been visited yet
+                    print(f"Visiting node {node.element.__hash__() % 1000}")
+                    node.counter = 0
+                    queue.extend(node.children)
+                    queue.append(node)
+                elif node.children:  # node has been visited and has children
+                    print(
+                        f"Revisiting node {node.element.__hash__() % 1000} with children {[child.element.__hash__() % 1000 for child in node.children]}"
+                    )
+                    node.counter = max(child.counter for child in node.children) + 1
+                    print(f"Node counter is now {node.counter}")
+                else:  # node has been visited and has no children
+                    print(
+                        f"Revisiting node {node.element.__hash__() % 1000} with no children"
+                    )
+                    node.counter = 0
+
+            for routine, node in routines.items():
+                print(f"Routine {routine.__hash__() % 1000} has counter {node.counter}")
 
 
 class Parallel(SequenceElement):
@@ -176,11 +261,15 @@ class Parallel(SequenceElement):
             raise ValueError("Parallel sequence must have at least one element")
 
         channels = set()
+        channel_groups = set()
         for element in elements:
-            if any(channel in channels for channel in element.channels):
-                raise ValueError(
-                    "Parallel sequence cannot have multiple elements that use the same channel"
-                )
+            for group, group_channels in CHANNEL_GROUPS.items():
+                if any(channel in group_channels for channel in element.channels):
+                    if group in channel_groups:
+                        raise ValueError(
+                            f"Multiple elements of parallel sequence use channel group {group}"
+                        )
+                    channel_groups.add(group)
             channels.update(element.channels)
 
         self._elements = {elements.compile(channels) for elements in elements}
@@ -195,7 +284,7 @@ class Parallel(SequenceElement):
     def channels(self) -> Set[str]:
         return self._channels
 
-    def compile(self, channels: Set[str] | None = None) -> "Sequence":
+    def compile(self, channels: Union[Set[str], None] = None) -> "Sequence":
         raise NotImplementedError
         # add padding to each element to make them all the same duration
         elements = set()
@@ -237,6 +326,9 @@ class Repeat(SequenceElement):
         return self.sequence.channels
 
     def compile(self, channels) -> "SequenceElement":
+        if not self.channels & channels:
+            return Timestamp(self.duration)
+
         if isinstance(self.sequence, Repeat):
             return Repeat(
                 self.sequence.sequence.compile(channels),
@@ -270,6 +362,12 @@ class Subroutine(SequenceElement):
     @property
     def channels(self) -> Set[str]:
         return self.sequence.channels
+
+    def compile(self, channels) -> "SequenceElement":
+        if not self.channels & channels:
+            return Timestamp(self.duration)
+        else:
+            return Subroutine(self.sequence.compile(channels))
 
     def __repr__(self) -> str:
         return f"Subroutine({repr(self.sequence)})"
