@@ -12,7 +12,6 @@ MIN_DURATION = 1 / 153.6e6  # seconds
 MAX_DURATION = 2**48 * MIN_DURATION  # seconds
 MAX_RF_CHANNEL = 3
 MAX_DIGITAL_CHANNEL = 6
-MAX_ADDRESS = 2**14 - 1
 
 RF_CHANNELS = {f"RF{i}" for i in range(MAX_RF_CHANNEL + 1)}
 DIGITAL_CHANNELS = {f"D{i}" for i in range(MAX_DIGITAL_CHANNEL + 1)}
@@ -23,22 +22,8 @@ for i in range(1, MAX_RF_CHANNEL + 1):
 
 
 def validate_channel(channel: str):
-    if not isinstance(channel, str) or not channel:
-        raise TypeError("Channel must be a non-empty string")
-
-    match = re.match(r"(RF|D)(\d+)", channel)
-    if not match:
-        raise ValueError(f"Channel {channel} must be of the form (RF|D)\\d+")
-    if match.group(1) == "RF":
-        if int(match.group(2)) > MAX_RF_CHANNEL:
-            raise ValueError(
-                f"RF channel number must be between 0 and {MAX_RF_CHANNEL}"
-            )
-    elif match.group(1) == "D":
-        if int(match.group(2)) > MAX_DIGITAL_CHANNEL:
-            raise ValueError(
-                f"Digital channel number must be between 0 and {MAX_DIGITAL_CHANNEL}"
-            )
+    if channel not in CHANNELS:
+        raise ValueError(f"Channel must be one of {CHANNELS}")
 
 
 class RFUpdate(NamedTuple):
@@ -178,72 +163,6 @@ class Sequence(SequenceElement):
                         continue
             new_elements.append(element)
         return Sequence(*new_elements)
-
-    def to_instructions(self) -> Dict[str, List[bytearray]]:
-        """
-        Compiles a sequence into a list of instructions for each channel group. Each instruction is a bytearray of length 16.
-
-        Args:
-            sequence (SequenceElement): Sequence to compile
-        """
-
-        timestamps = {}
-        for group, channels in CHANNEL_GROUPS.items():
-            print(f"Channel group {group}")
-            timestamps[group] = []
-
-            @dataclass
-            class Node:
-                element: Union["Subroutine", "Repeat", None]
-                children: List["Node"] = field(default_factory=list)
-                counter: int = -1
-
-            # Build a tree of subroutines and loops
-            stack = [self.compile(channels)]
-            routines = {}
-            root_node = Node(None)
-            routine_stack = [root_node]
-            while len(stack):
-                element = stack.pop()
-                if isinstance(element, Sequence):
-                    stack.extend(reversed(element.elements))
-                elif isinstance(element, Subroutine) or isinstance(element, Repeat):
-                    if element not in routines:
-                        routines[element] = Node(element)
-                        routine_stack[-1].children.append(routines[element])
-                        routine_stack.append(routines[element])
-                        stack.append("end")
-                        stack.append(element.sequence)
-                elif element == "end":
-                    routine_stack.pop()
-
-            for routine, node in routines.items():
-                print(
-                    f"Routine {routine.__hash__() % 1000} has children {[child.element.__hash__() % 1000 for child in node.children]}"
-                )
-
-            queue = deque([root_node]) if root_node.children else deque()
-            while len(queue):
-                node = queue.popleft()
-                if node.counter < 0:  # node has not been visited yet
-                    print(f"Visiting node {node.element.__hash__() % 1000}")
-                    node.counter = 0
-                    queue.extend(node.children)
-                    queue.append(node)
-                elif node.children:  # node has been visited and has children
-                    print(
-                        f"Revisiting node {node.element.__hash__() % 1000} with children {[child.element.__hash__() % 1000 for child in node.children]}"
-                    )
-                    node.counter = max(child.counter for child in node.children) + 1
-                    print(f"Node counter is now {node.counter}")
-                else:  # node has been visited and has no children
-                    print(
-                        f"Revisiting node {node.element.__hash__() % 1000} with no children"
-                    )
-                    node.counter = 0
-
-            for routine, node in routines.items():
-                print(f"Routine {routine.__hash__() % 1000} has counter {node.counter}")
 
 
 class Parallel(SequenceElement):
@@ -443,131 +362,3 @@ class Timestamp(SequenceElement):
                 if channel in channels
             },
         )
-
-
-INSTRUCTION_ADDRESS_SIZE = 14
-INSTRUCTION_SIZE = 64
-REGISTER_ADDRESS_SIZE = 16
-REGISTER_SIZE = 32
-N_COUNTERS = 8
-
-
-def set_register(register: int, value: int) -> bytearray:
-    """
-    Returns an instruction to set a register to a value.
-
-    Bits [0:31]: register value
-    Bits [32:47]: register address
-    Bits [48:61]: 0
-    Bits [62:63]: 0b01 (set register)
-
-    Args:
-        register (int): Register number
-        value (int): Value to set the register to
-    """
-    assert 0 <= register < 2**REGISTER_ADDRESS_SIZE
-    assert 0 <= value < 2**REGISTER_SIZE
-
-    instruction = bytearray(INSTRUCTION_SIZE // 8)
-    instruction[0:32] = value.to_bytes(4, byteorder="little")
-    instruction[32:48] = register.to_bytes(2, byteorder="little")
-    instruction[62:64] = b"\x01"
-
-    return instruction
-
-
-def jump(address: int) -> bytearray:
-    """
-    Returns an instruction to jump to an address.
-
-    Bits [0:31]: 0
-    Bits [32:47]: address
-    Bits [48:61]: 0
-    Bits [62:63]: 0b11 (jump)
-
-    Args:
-        address (int): Address to jump to
-    """
-    assert 0 <= address < 2**INSTRUCTION_ADDRESS_SIZE
-
-    instruction = bytearray(INSTRUCTION_SIZE // 8)
-    instruction[32:48] = address.to_bytes(2, byteorder="little")
-    instruction[62:64] = b"\x03"
-
-    return instruction
-
-
-def conditional_jump(counter: int) -> bytearray:
-    """
-    Returns an instruction to jump to the address stored in register 0x20 + counter if register 0x00 + counter is not zero and register 0x10 + counter otherwise. Decrements register 0x00 + counter.
-
-    Bits [0:31]: 0
-    Bits [32:47]: 0x00 + counter
-    Bits [48:61]: 0
-    Bits [62:63]: 0b10 (conditional jump)
-    """
-
-    assert 0 <= counter < N_COUNTERS
-
-    instruction = bytearray(INSTRUCTION_SIZE // 8)
-    instruction[32:48] = (0x00 + counter).to_bytes(2, byteorder="little")
-    instruction[62:64] = b"\x02"
-
-    return instruction
-
-
-def compile_loop(
-    start: int, sequence: List[bytearray], n: int, counter: int
-) -> List[bytearray]:
-    """
-    Args:
-        start (int): First address of the loop
-        sequence (List[bytearray]): List of instructions to be repeated
-        n (int): Number of times to repeat the loop
-        counter (int): Which counter to use for the loop
-    """
-    assert 0 <= start
-    assert len(sequence) > 0
-    assert start + len(sequence) + 3 <= 2**INSTRUCTION_ADDRESS_SIZE
-    assert 1 <= n < 2**REGISTER_SIZE
-    assert 0 <= counter < N_COUNTERS
-
-    instructions = []
-
-    # Set the loop counter
-    instructions.append(set_register(0x00 + counter, n))
-    # Set the loop end address
-    instructions.append(set_register(0x10 + counter, start + len(sequence) + 3))
-    # Set the loop start address
-    instructions.append(set_register(0x20 + counter, start))
-    # Loop
-    instructions.extend(sequence)
-    # Conditional jump
-    instructions.append(conditional_jump(counter))
-
-    return instructions
-
-
-def compile_subroutine(
-    start: int, subroutine_start: int, counter: int
-) -> List[bytearray]:
-    """
-    Args:
-        start (int): Address from which the subroutine is called
-        subroutine_start (int): First address of the subroutine
-        counter (int): Which counter to use for the subroutine
-    """
-    assert 0 <= start < 2**INSTRUCTION_ADDRESS_SIZE
-    assert 0 <= subroutine_start < 2**INSTRUCTION_ADDRESS_SIZE
-    assert 0 <= counter < N_COUNTERS
-
-    instructions = []
-
-    # Set the counter to zero
-    instructions.append(set_register(0x00 + counter, 0))
-    # Set the end address
-    instructions.append(set_register(0x10 + counter, start + 3))
-    # Jump to the subroutine
-    instructions.append(jump(subroutine_start))
-
-    return instructions

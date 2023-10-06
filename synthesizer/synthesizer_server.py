@@ -23,6 +23,7 @@ To do:
 from math import pi
 import sys, os
 from labrad.server import LabradServer, setting
+
 sys.path.append("../client_tools")
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
@@ -31,27 +32,30 @@ from jsonpickle import loads
 import socket
 
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 import synthesizer_sequences as ss
 
+
 class SynthesizerServer(LabradServer):
     """Provides low-level control of the 4-channel RF synthesizer developed by the JILA shop."""
-    name = '%LABRADNODE%_synthesizer'
+
+    name = "%LABRADNODE%_synthesizer"
 
     def __init__(self):
-        self.name = '{}_synthesizer'.format(getNodeName())
+        self.name = "{}_synthesizer".format(getNodeName())
         super(SynthesizerServer, self).__init__()
 
     def initServer(self):
         """
         initServer(self)
-        
+
         Called by LabRAD when server is started. Connects to the synthesizer using the socket library.
         """
         timeout = 1.02
         port = 804
-        host = '192.168.7.179'
+        host = "192.168.7.179"
         self.dest = (host, int(port))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.sock.settimeout(timeout)
@@ -72,11 +76,13 @@ class SynthesizerServer(LabradServer):
         Returns:
             int: The 32-bit unsigned integer corresponding to f
         """
-        F_MAX = 307.2E6
+        F_MAX = 307.2e6
         F_BITS = 32
         if f < 0 or f > F_MAX * (2**F_BITS - 1) / 2**F_BITS:
-            raise ValueError("Frequency of {} Hz outside valid range of 0 to {} Hz".format(f, F_MAX))
-        f_int = round((f/F_MAX)*(2**F_BITS - 1))
+            raise ValueError(
+                "Frequency of {} Hz outside valid range of 0 to {} Hz".format(f, F_MAX)
+            )
+        f_int = round((f / F_MAX) * (2**F_BITS - 1))
         return f_int
 
     @staticmethod
@@ -98,7 +104,7 @@ class SynthesizerServer(LabradServer):
         A_BITS = 16
         if a < 0 or a > 1:
             raise ValueError("Amplitude of {} outside valid range of 0 to 1".format(a))
-        a_int = round(a*(2**A_BITS-1))
+        a_int = round(a * (2**A_BITS - 1))
         return a_int
 
     @staticmethod
@@ -117,11 +123,13 @@ class SynthesizerServer(LabradServer):
         Returns:
             int: The 48-bit unsigned integer corresponting to t
         """
-        T_MIN = 1/153.6E6
+        T_MIN = 1 / 153.6e6
         T_BITS = 48
         T_MAX = T_MIN * (2**T_BITS - 1)
         if t < 0 or t > T_MAX:
-            raise ValueError("Time step of {} s outside valid range of 0 to {} s".format(t, T_MAX))
+            raise ValueError(
+                "Time step of {} s outside valid range of 0 to {} s".format(t, T_MAX)
+            )
         t_int = round(t / T_MIN)
         return t_int
 
@@ -139,11 +147,21 @@ class SynthesizerServer(LabradServer):
             int: The 12-bit unsigned integer corresponting to phi
         """
         P_BITS = 12
-        a_int = round((phi % (2*pi))/(2*pi)*(2**P_BITS-1))
+        a_int = round((phi % (2 * pi)) / (2 * pi) * (2**P_BITS - 1))
         return a_int
 
     @staticmethod
-    def compile_timestamp(channel, address, timestamp, phase_update, phase, amplitude, frequency, wait_for_trigger=False, digital_out=[False]*7):
+    def compile_timestamp(
+        channel,
+        address,
+        timestamp,
+        phase_update,
+        phase,
+        amplitude,
+        frequency,
+        wait_for_trigger=False,
+        digital_out=[False] * 7,
+    ):
         """
         compile_timestamp(self, channel, address, timestamp, phase_update, ptw, atw, ftw)
 
@@ -169,10 +187,18 @@ class SynthesizerServer(LabradServer):
         N_DIGITAL = 7
 
         if channel >= N_CHANNELS or channel < 0 or not isinstance(channel, int):
-            raise ValueError("Channel number {} must be an integer between 0 and {}.".format(channel, N_CHANNELS - 1))
+            raise ValueError(
+                "Channel number {} must be an integer between 0 and {}.".format(
+                    channel, N_CHANNELS - 1
+                )
+            )
 
         if address >= N_ADDRESSES or address < 0 or not isinstance(address, int):
-            raise ValueError("Address {} must be an integer between 0 and {}.".format(address, N_ADDRESSES - 1))
+            raise ValueError(
+                "Address {} must be an integer between 0 and {}.".format(
+                    address, N_ADDRESSES - 1
+                )
+            )
 
         if phase_update != 0 and phase_update != 1 and phase_update != 2:
             raise ValueError("phase_update {} must be 0, 1, or 2.".format(phase_update))
@@ -180,17 +206,16 @@ class SynthesizerServer(LabradServer):
         buffers = []
         for i in range(4):
             b = bytearray(8)
-            b[0] = 0xA1 # Start bits
-            b[1] = 2**4 * i + channel # Memory, channel
+            b[0] = 0xA1  # Start bits
+            b[1] = 2**4 * i + channel  # Memory, channel
             b[2:4] = address.to_bytes(2, "big")
             buffers.append(b)
 
         # Timestamp & digital outputs
         ttw = SynthesizerServer.t_to_timestamp(timestamp)
         for i in range(N_DIGITAL):
-            ttw += digital_out[i] * 2**(56+i)
+            ttw += digital_out[i] * 2 ** (56 + i)
         ttw = ttw.to_bytes(8, "big")
-
 
         buffers[0][4:] = ttw[4:]
         buffers[1][4:] = ttw[:4]
@@ -203,9 +228,9 @@ class SynthesizerServer(LabradServer):
         # Phase
         ptw = SynthesizerServer.phase_to_ptw(phase)
         buffers[3][4:6] = ptw.to_bytes(2, "big")
-        if phase_update == 1: # Absolute phase update
+        if phase_update == 1:  # Absolute phase update
             buffers[3][4] += 2**4
-        elif phase_update == 2: # Relative phase update
+        elif phase_update == 2:  # Relative phase update
             buffers[3][4] += 2**5
 
         # Amplitude
@@ -229,9 +254,8 @@ class SynthesizerServer(LabradServer):
         yield self.sock.sendto(buffer, self.dest)
         print("Synthesizer triggered.")
 
-
     @inlineCallbacks
-    @setting(4, reset_outputs='b')
+    @setting(4, reset_outputs="b")
     def reset(self, c, reset_outputs=False):
         """
         reset(self)
@@ -275,7 +299,17 @@ class SynthesizerServer(LabradServer):
             frequency = s["frequency"]
             wait_for_trigger = bool(s["wait_for_trigger"])
             digital_out = s["digital_out"]
-            buffers += SynthesizerServer.compile_timestamp(channel, address, timestamp, phase_update, phase, amplitude, frequency, wait_for_trigger, digital_out)
+            buffers += SynthesizerServer.compile_timestamp(
+                channel,
+                address,
+                timestamp,
+                phase_update,
+                phase,
+                amplitude,
+                frequency,
+                wait_for_trigger,
+                digital_out,
+            )
         print("Writing Channel {}.".format(channel))
         for b in buffers:
             if verbose:
@@ -283,7 +317,7 @@ class SynthesizerServer(LabradServer):
             self.sock.sendto(b, self.dest)
 
     @inlineCallbacks
-    @setting(5, timestamps='s', compile='b', verbose='b')
+    @setting(5, timestamps="s", compile="b", verbose="b")
     def write_timestamps(self, c, timestamps, compile=False, verbose=False):
         """
         write_timestamps(self, c, timestamps, compile=False, verbose=False)
@@ -300,6 +334,8 @@ class SynthesizerServer(LabradServer):
         for channel, ts in timestamps.items():
             yield self._write_timestamps(ts, int(channel), verbose)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from labrad import util
+
     util.runServer(SynthesizerServer())
