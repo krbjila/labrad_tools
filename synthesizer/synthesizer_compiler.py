@@ -72,7 +72,7 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
         sequence (Sequence): Sequence to compile
 
     Returns:
-        Dict[str, List[bytearray]]: Dictionary of channel group names and lists of instructions
+        Dict[str, Dict[int, bytearray]]: Dictionary with keys channel group names and values dictionaries of addresses and instructions
     """
 
     instructions = {}
@@ -160,12 +160,6 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 )
         min_subroutine_address = address
 
-        # print(f"Subroutines:")
-        # for subroutine in subroutines:
-        #     print(
-        #         f"    {subroutine.subroutine_start} - {subroutine.subroutine_end}: {subroutine}"
-        #     )
-
         # Assign memory addresses to sequence
         address = 0
         stack = [n for n in root.children]
@@ -191,12 +185,17 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 raise Exception(
                     f"Sequence in channel group {group} too long to fit in memory"
                 )
-            # if isinstance(node, Node):
-            #     print(f"{node.start} - {node.end}: {node}")
 
-        instructions[group] = []
+        instructions[group] = {}
+        states = {}
+        for channel in channels:
+            if "RF" in channel:
+                states[channel] = ssb.DEFAULT_RF_UPDATE
+            elif "D" in channel:
+                states[channel] = ssb.DEFAULT_DIGITAL_UPDATE
 
-    return instructions
+        # Traverse the graph to generate instructions
+        # TODO: implement!
 
 
 def timestamp(timestamp: ssb.Timestamp, address: int, channel_group: str) -> bytearray:

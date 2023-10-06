@@ -58,6 +58,9 @@ class RFUpdate(NamedTuple):
             raise ValueError("Amplitude must be between 0 and 1")
 
 
+DEFAULT_RF_UPDATE = RFUpdate(0, 0, 0, 0)
+
+
 class DigitalUpdate(NamedTuple):
     """
     Attributes:
@@ -72,6 +75,9 @@ class DigitalUpdate(NamedTuple):
                 bool(self.value)
             except ValueError:
                 raise ValueError("Value must be a boolean")
+
+
+DEFAULT_DIGITAL_UPDATE = DigitalUpdate(False)
 
 
 class SequenceElement(ABC):
