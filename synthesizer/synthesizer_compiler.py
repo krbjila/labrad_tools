@@ -30,6 +30,19 @@ class Node:
     def __len__(self):
         return sum(len(c) for c in self.children)
 
+    def compile(self, state: Dict[str, ssb.RFUpdate]):
+        """
+        Generates a dictionary of synthesizer commands for the block. Modifies state to the state of the channels after the block.
+
+        Args:
+            state (Dict[str, ssb.RFUpdate]): The current state of the channels
+
+        Returns:
+            List[bytearray]: A list of synthesizer commands.
+            float: The time after the block
+        """
+        raise NotImplementedError
+
 
 @dataclass
 class BasicBlock(Node):
@@ -38,6 +51,16 @@ class BasicBlock(Node):
     def __len__(self):
         # Number of instructions
         return len(self.instructions)
+
+    def compile(self, state: Dict[str, ssb.RFUpdate]):
+        time = 0
+        instructions = []
+        for i, ts in enumerate(self.instructions):
+            state.update(ts.update)
+            address = self.start + i
+            instructions.append(timestamp(ts.update, time, address))
+            time += ts.duration
+        return instructions, time
 
 
 @dataclass
@@ -49,6 +72,10 @@ class Loop(Node):
         # Number of instructions
         return sum(len(c) for c in self.children) + 4
 
+    def compile(self, state: Dict[str, ssb.RFUpdate]):
+        length = sum(len(c) for c in self.children)
+        instructions = compile_loop(self.start, length, self.n, self.counter)
+        return instructions
 
 @dataclass
 class Subroutine(Node):
@@ -60,6 +87,13 @@ class Subroutine(Node):
     def __len__(self):
         # Number of instructions in the sequence. The subroutine itself is not counted.
         return 3
+
+    def compile(self, state: Dict[str, ssb.RFUpdate]):
+        length = sum(len(c) for c in self.children)
+        instructions = compile_subroutine(
+            self.start, self.subroutine_start, self.counter
+        )
+        return instructions
 
 
 def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
@@ -187,38 +221,31 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 )
 
         instructions[group] = {}
-        states = {}
+        state = {}
         for channel in channels:
             if "RF" in channel:
-                states[channel] = ssb.DEFAULT_RF_UPDATE
+                state[channel] = ssb.DEFAULT_RF_UPDATE
             elif "D" in channel:
-                states[channel] = ssb.DEFAULT_DIGITAL_UPDATE
+                state[channel] = ssb.DEFAULT_DIGITAL_UPDATE
 
         # Traverse the graph to generate instructions
         # TODO: implement!
 
 
-def timestamp(timestamp: ssb.Timestamp, address: int, channel_group: str) -> bytearray:
+def timestamp(update: Dict[str, Union[ssb.RFUpdate, ssb.DigitalUpdate]], time: float, address: int) -> bytearray:
     """
     timestamp(timestamp)
 
     Converts a timestamp to a list of instructions for programming the synthesizer
 
     Args:
-        timestamp (Timestamp): The timestamp to convert
+        update (Dict[str, Union[ssb.RFUpdate, ssb.DigitalUpdate]]): The state of the channels to be set
+        time (float): The timestamp's start time, in seconds
         address (int): The address of the timestamp
-        channel_group (str): The channel group for which to generate instructions
 
     Returns:
         bytearray: The corresponding instruction
     """
-
-    # find the RF channel in the channel group
-    channel = [c for c in ssb.CHANNEL_GROUPS[channel_group] if "RF" in c][0][2]
-
-    # Check whether the channel group has digital outputs
-    set_digital = "D" in channel_group
-
     raise NotImplementedError
 
     # buffers = []
@@ -392,13 +419,11 @@ def conditional_jump(counter: int) -> bytearray:
     return instruction
 
 
-def compile_loop(
-    start: int, sequence: List[bytearray], n: int, counter: int
-) -> List[bytearray]:
+def compile_loop(start: int, length: int, n: int, counter: int) -> List[bytearray]:
     """
     Args:
         start (int): First address of the loop
-        sequence (List[bytearray]): List of instructions to be repeated
+        length (int): Number of instructions in the loop
         n (int): Number of times to repeat the loop
         counter (int): Which counter to use for the loop
     """
@@ -416,8 +441,6 @@ def compile_loop(
     instructions.append(set_register(0x10 + counter, start + len(sequence) + 3))
     # Set the loop start address
     instructions.append(set_register(0x20 + counter, start))
-    # Loop
-    instructions.extend(sequence)
     # Conditional jump
     instructions.append(conditional_jump(counter))
 
@@ -431,6 +454,7 @@ def compile_subroutine(
     Args:
         start (int): Address from which the subroutine is called
         subroutine_start (int): First address of the subroutine
+        subroutine_end (int): Last address of the subroutine (which will be used for a conditional jump instruction)
         counter (int): Which counter to use for the subroutine
     """
     assert 0 <= start < 2**INSTRUCTION_ADDRESS_SIZE
@@ -445,5 +469,6 @@ def compile_subroutine(
     instructions.append(set_register(0x10 + counter, start + 3))
     # Jump to the subroutine
     instructions.append(jump(subroutine_start))
+    # Add the jump
 
     return instructions
