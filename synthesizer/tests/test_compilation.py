@@ -19,17 +19,17 @@ class TestCompilation(unittest.TestCase):
             )
         )
         sequence = ssb.Sequence(
-            # ssb.Repeat(subsubroutine, 10),
+            ssb.Repeat(subsubroutine, 10),
             subroutine,
-            subsubroutine
-            # ssb.Repeat(
-            #     ssb.Sequence(
-            #         # subroutine,
-            #         ssb.Timestamp(1, {"RF0": ssb.RFUpdate(1e6)}),
-            #         ssb.Timestamp(1, {"RF0": ssb.RFUpdate(2e6)}),
-            #     ),
-            #     3,
-            # ),
+            subsubroutine,
+            ssb.Repeat(
+                ssb.Sequence(
+                    subroutine,
+                    ssb.Timestamp(1, {"RF0": ssb.RFUpdate(1e6)}),
+                    ssb.Timestamp(1, {"RF0": ssb.RFUpdate(2e6)}),
+                ),
+                3,
+            ),
         )
         generate_instructions(sequence)
 

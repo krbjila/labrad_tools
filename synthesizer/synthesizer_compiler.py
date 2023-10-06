@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 from dataclasses import dataclass, field
 from math import pi
 
@@ -52,6 +52,7 @@ class Loop(Node):
 
 @dataclass
 class Subroutine(Node):
+    element_hash: int = 0
     counter: int = 0
     subroutine_start: int = 0
     subroutine_end: int = 0
@@ -101,15 +102,21 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 if isinstance(stack[-1], BasicBlock):
                     stack.pop()
                 node = stack.pop()
-                if isinstance(node, Subroutine):  # and node not in subroutines:
-                    subroutines.append(node)
                 if isinstance(node, Loop):
                     loops.append(node)
             if isinstance(element, ssb.Subroutine) or isinstance(element, ssb.Repeat):
                 if isinstance(stack[-1], BasicBlock):
                     stack.pop()
                 if isinstance(element, ssb.Subroutine):
-                    node = Subroutine()
+                    exists = False
+                    for subroutine in subroutines:
+                        if subroutine.element_hash == hash(element):
+                            exists = True
+                            node = subroutine
+                            break
+                    if not exists:
+                        node = Subroutine(element_hash=hash(element))
+                        subroutines.append(node)
                 else:
                     node = Loop(n=element.times)
                 stack[-1].children.append(node)
@@ -122,6 +129,8 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
         stack = [n for n in root.children]
         while len(stack):
             node = stack.pop()
+            if isinstance(node, Subroutine):
+                assert node in subroutines
             if isinstance(node, Loop) or isinstance(node, Subroutine):
                 if node.visited:
                     for child in node.children:
@@ -151,11 +160,11 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 )
         min_subroutine_address = address
 
-        print(f"Subroutines:")
-        for subroutine in subroutines:
-            print(
-                f"    {subroutine.subroutine_start} - {subroutine.subroutine_end}: {subroutine}"
-            )
+        # print(f"Subroutines:")
+        # for subroutine in subroutines:
+        #     print(
+        #         f"    {subroutine.subroutine_start} - {subroutine.subroutine_end}: {subroutine}"
+        #     )
 
         # Assign memory addresses to sequence
         address = 0
@@ -173,7 +182,6 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 stack.append("return")
                 stack.extend(reversed(node.children))
             elif isinstance(node, Subroutine):
-                assert node in subroutines
                 node.start = address
                 node.end = address + len(node) - 1
                 address += 3
@@ -183,8 +191,9 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
                 raise Exception(
                     f"Sequence in channel group {group} too long to fit in memory"
                 )
-            if isinstance(node, Node):
-                print(f"{node.start} - {node.end}: {node}")
+            # if isinstance(node, Node):
+            #     print(f"{node.start} - {node.end}: {node}")
+
         instructions[group] = []
 
     return instructions
