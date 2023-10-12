@@ -176,9 +176,9 @@ def DROID_R2D2(tx, ty=None, tz=None):
     Generates the frame matrix for the DROID-R2D2 sequence as described in PHYSICAL REVIEW LETTERS 130, 210403 (2023).
 
     Args:
-        tx (float): The time to spend in the +/-X frame.
-        ty (float): The time to spend in the +/-Y frame. Defaults to None, in which case tx is used.
-        tz (float): The time to spend in the +/-Z frame. Defaults to None, in which case tx is used.
+        tx (float): The time in seconds to spend in the +/-X frame in each instance. The total time is 16*tx.
+        ty (float): The time in seconds to spend in the +/-Y frame in each instance. The total time is 16*ty. Defaults to None, in which case tx is used.
+        tz (float): The time in seconds to spend in the +/-Z frame in each instance. The total time is 16*tz. Defaults to None, in which case tx is used.
     """
 
     if ty is None:
