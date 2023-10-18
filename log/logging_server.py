@@ -203,7 +203,7 @@ class LoggingServer(LabradServer):
     @setting(6, returns='i')
     def get_shot(self, c, name):
         """
-        get_path(self, c)
+        get_shot(self, c)
         
         Returns the current shot. If the current shot is None, return -1.
 
