@@ -74,6 +74,14 @@ class LoggingServer(LabradServer):
 
         try:
             self.labjack = yield self.client.servers["polarkrb_labjack"]
+
+            # Configure FIO2 and FIO3 the LabJack as counter inputs.
+            self.labjack.write_name("DIO2_EF_ENABLE", 0)
+            self.labjack.write_name("DIO3_EF_ENABLE", 0)
+            self.labjack.write_name("DIO2_EF_INDEX", 8)
+            self.labjack.write_name("DIO3_EF_INDEX", 8)
+            self.labjack.write_name("DIO2_EF_ENABLE", 1)
+            self.labjack.write_name("DIO3_EF_ENABLE", 1)
         except Exception as e:
             self.labjack = None
             print("Could not connect to labjack: %s" % (e))
@@ -217,7 +225,7 @@ class LoggingServer(LabradServer):
     def get_shot(self, c, name):
         """
         get_shot(self, c)
-        
+
         Returns the current shot. If the current shot is None, return -1.
 
         Args:
@@ -299,6 +307,13 @@ class LoggingServer(LabradServer):
         except Exception as e:
             print("Could not read waterPressure: %s" % (e))
             waterPressure = None
+        try:
+            leak_sensor_0 = yield self.labjack.read_name("DIO2_EF_READ_A")
+            leak_sensor_1 = yield self.labjack.read_name("DIO3_EF_READ_A")
+        except Exception as e:
+            print("Could not read leak sensors: %s" % (e))
+            leak_sensor_0 = None
+            leak_sensor_1 = None
         wavelengths = yield self.wavemeter.get_wavelengths()
         wavelens = loads(loads(wavelengths))
         try:
@@ -377,6 +392,28 @@ class LoggingServer(LabradServer):
                 self.influx_api.write(self.bucket, "krb", p)
             except Exception as e:
                 print("Could not write waterPressure data to influxdb: %s" % (e))
+        if leak_sensor_0 is not None:
+            try:
+                p = (
+                    Point("labjack")
+                    .tag("channel", "leak_sensor_0")
+                    .field("value", leak_sensor_0)
+                    .time(now, WritePrecision.S)
+                )
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write leak_sensor_0 data to influxdb: %s" % (e))
+        if leak_sensor_1 is not None:
+            try:
+                p = (
+                    Point("labjack")
+                    .tag("channel", "leak_sensor_1")
+                    .field("value", leak_sensor_1)
+                    .time(now, WritePrecision.S)
+                )
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write leak_sensor_1 data to influxdb: %s" % (e))
 
         # write wavemeter data
         if freqs is not None:
