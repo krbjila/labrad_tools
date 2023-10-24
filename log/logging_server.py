@@ -314,6 +314,18 @@ class LoggingServer(LabradServer):
             print("Could not read leak sensors: %s" % (e))
             leak_sensor_0 = None
             leak_sensor_1 = None
+        try:
+            manifold_v = yield self.labjack.read_name("AIN3")
+            manifold_temp_C = (manifold_v * 100.0 - 32.0) * 5.0 / 9.0
+        except Exception as e:
+            print("Could not read manifold temp: %s" % (e))
+            manifold_temp_C = None
+        try:
+            table_valve_ctrl = yield self.labjack.read_name("AIN4")
+        except Exception as e:
+            print("Could not read table valve control signal: %s" % (e))
+            table_valve_ctrl = None
+
         wavelengths = yield self.wavemeter.get_wavelengths()
         wavelens = loads(loads(wavelengths))
         try:
@@ -414,6 +426,30 @@ class LoggingServer(LabradServer):
                 self.influx_api.write(self.bucket, "krb", p)
             except Exception as e:
                 print("Could not write leak_sensor_1 data to influxdb: %s" % (e))
+        if manifold_temp_C is not None:
+            try:
+                p = (
+                    Point("labjack")
+                    .tag("channel", "Water Manifold")
+                    .tag("unit", "C")
+                    .field("value", manifold_temp_C)
+                    .time(now, WritePrecision.S)
+                )
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write manifold_temp data to influxdb: %s" % (e))
+        if table_valve_ctrl is not None:
+            try:
+                p = (
+                    Point("labjack")
+                    .tag("channel", "table_valve_ctrl")
+                    .tag("unit", "V")
+                    .field("value", table_valve_ctrl)
+                    .time(now, WritePrecision.S)
+                )
+                self.influx_api.write(self.bucket, "krb", p)
+            except Exception as e:
+                print("Could not write table_valve_ctrl data to influxdb: %s" % (e))
 
         # write wavemeter data
         if freqs is not None:
