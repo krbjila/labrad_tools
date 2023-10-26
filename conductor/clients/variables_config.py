@@ -93,6 +93,8 @@ variables_dict = [
     ["*Latt2Final", -0.4],
     ["*Latt1Spec", -0.4],
     ["*Latt2Spec", -0.4],
+    ["*Latt2Er", 0],
+    ["*VLattEr", 0],
     [
         "*MARIAMid",
         -3.4875,

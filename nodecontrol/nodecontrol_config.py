@@ -12,6 +12,7 @@ node_dicts = [
                 'labjack',
                 # 'pco',
                 'database',
+                'picomotor',
             ]
     },
     {
