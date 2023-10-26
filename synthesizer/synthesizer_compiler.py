@@ -196,30 +196,35 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
         min_subroutine_address = address
 
         # Assign memory addresses to sequence
-        address = 0
-        stack = [n for n in root.children]
-        while len(stack):
-            node = stack.pop()
-            if isinstance(node, BasicBlock):
-                node.start = address
-                node.end = address + len(node) - 1
-                address += len(node)
-            elif isinstance(node, Loop):
-                node.start = address
-                node.end = address + len(node) - 1
-                address += 3
-                stack.append("return")
-                stack.extend(reversed(node.children))
-            elif isinstance(node, Subroutine):
-                node.start = address
-                node.end = address + len(node) - 1
-                address += 3
-            elif node == "return":
-                address += 1
-            if address >= min_subroutine_address - 1:
-                raise Exception(
-                    f"Sequence in channel group {group} too long to fit in memory"
-                )
+        def assign_addresses(root, start_address=0):
+            address = start_address
+            stack = [n for n in root.children]
+            while len(stack):
+                node = stack.pop()
+                if isinstance(node, BasicBlock):
+                    node.start = address
+                    node.end = address + len(node) - 1
+                    address += len(node)
+                elif isinstance(node, Loop):
+                    node.start = address
+                    node.end = address + len(node) - 1
+                    address += 3
+                    stack.append("return")
+                    stack.extend(reversed(node.children))
+                elif isinstance(node, Subroutine):
+                    node.start = address
+                    node.end = address + len(node) - 1
+                    address += 3
+                elif node == "return":
+                    address += 1
+                if address >= min_subroutine_address - 1:
+                    raise Exception(
+                        f"Sequence in channel group {group} too long to fit in memory"
+                    )
+
+        assign_addresses(root)
+        for subroutine in subroutines:
+            assign_addresses(subroutine, subroutine.subroutine_start)
 
         instructions[group] = {}
         state = {}
@@ -229,8 +234,27 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
             elif "D" in channel:
                 state[channel] = ssb.DEFAULT_DIGITAL_UPDATE
 
-        # Traverse the graph to generate instructions
-        # TODO: implement!
+        def create_instructions(root):
+            # Traverse the graph to generate instructions
+            stack = [n for n in root.children]
+            while len(stack):
+                node = stack.pop()
+                if isinstance(node, BasicBlock):
+                    node_instructions, time = node.compile(state)
+                    instructions[group].extend(node_instructions)
+                elif isinstance(node, Loop):
+                    node_instructions = node.compile(state)
+                    instructions[group].extend(node_instructions)
+                    stack.extend(reversed(node.children))
+                elif isinstance(node, Subroutine):
+                    node_instructions = node.compile(state)
+                    instructions[group].extend(node_instructions)
+
+        create_instructions(root)
+        for subroutine in subroutines:
+            create_instructions(subroutine)
+
+    return instructions
 
 
 def timestamp(
