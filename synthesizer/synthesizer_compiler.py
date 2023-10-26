@@ -77,6 +77,7 @@ class Loop(Node):
         instructions = compile_loop(self.start, length, self.n, self.counter)
         return instructions
 
+
 @dataclass
 class Subroutine(Node):
     element_hash: int = 0
@@ -232,7 +233,9 @@ def generate_instructions(sequence: ssb.Sequence) -> Dict[str, List[bytearray]]:
         # TODO: implement!
 
 
-def timestamp(update: Dict[str, Union[ssb.RFUpdate, ssb.DigitalUpdate]], time: float, address: int) -> bytearray:
+def timestamp(
+    update: Dict[str, Union[ssb.RFUpdate, ssb.DigitalUpdate]], time: float, address: int
+) -> bytearray:
     """
     timestamp(timestamp)
 
@@ -428,8 +431,8 @@ def compile_loop(start: int, length: int, n: int, counter: int) -> List[bytearra
         counter (int): Which counter to use for the loop
     """
     assert 0 <= start
-    assert len(sequence) > 0
-    assert start + len(sequence) + 3 <= 2**INSTRUCTION_ADDRESS_SIZE
+    assert length > 0
+    assert start + length + 3 <= 2**INSTRUCTION_ADDRESS_SIZE
     assert 1 <= n < 2**REGISTER_SIZE
     assert 0 <= counter < N_COUNTERS
 
@@ -438,7 +441,7 @@ def compile_loop(start: int, length: int, n: int, counter: int) -> List[bytearra
     # Set the loop counter
     instructions.append(set_register(0x00 + counter, n))
     # Set the loop end address
-    instructions.append(set_register(0x10 + counter, start + len(sequence) + 3))
+    instructions.append(set_register(0x10 + counter, start + length + 3))
     # Set the loop start address
     instructions.append(set_register(0x20 + counter, start))
     # Conditional jump
