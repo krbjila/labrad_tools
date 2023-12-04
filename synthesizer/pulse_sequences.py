@@ -36,6 +36,57 @@ def validate_frame_matrix(frame_matrix):
         last_frame = frame
 
 
+def check_decoupling(frame_matrix, tp=0):
+    """Checks if the pulses decouple different kinds of disorder, as described in Table 1 of PRX 10, 031002 (2020).
+
+    Args:
+        frame_matrix (np.ndarray): The 4xN toggling frame matrix. The first three rows correspond to the orientation of the original +Sz operator along the +X, +Y, +Z axes. Each column should have +/- 1 in one entry and zero in the others. The fourth row is the duration of that frame in seconds.
+        tp (float): The duration of a pi/2 pulse in seconds. Defaults to 0.
+
+    Returns:
+        dict: A dictionary of conditions. The keys are the names of the conditions, and the values are booleans indicating whether the conditions are satisfied.
+    """
+
+    conditions = {}
+
+    # Decoupling of on-siite disorder and antisymmetric spin exchange
+    # Weighted row sum = 0
+    conditions["On-site disorder and antisymmetric spin exchange"] = np.allclose(
+        np.sum(frame_matrix[:3, :] * (frame_matrix[3, :] + (4 / np.pi) * tp), axis=1), 0
+    )
+
+    # Symmetrization of Ising interaction and symmetric spin exchange
+    # Weighted absolute row sum equal between rows
+    V = np.sum(np.abs(frame_matrix[:3, :]) * (frame_matrix[3, :] + tp), axis=1)
+    conditions["Ising interaction and symmetric spin exchange"] = (
+        np.isclose(V[0], V[1]) and np.isclose(V[1], V[2]) and np.isclose(V[2], V[0])
+    )
+
+    # Decoupling of interaction cross terms
+    # Parity sum = 0 for each pair of rows
+    satisfied = True
+    for mu in range(3):
+        for nu in range(mu):
+            sum = np.sum(
+                np.roll(frame_matrix[mu, :], -1) * frame_matrix[nu, :]
+                + np.roll(frame_matrix[nu, :], -1) * frame_matrix[mu, :]
+            )
+            satisfied = satisfied and np.isclose(sum, 0)
+    conditions["Interaction cross terms"] = satisfied
+
+    # Suppression of rotation-angle error
+    # Chirality sum = 0 for each pair of rows
+    V = np.zeros(3)
+    for k in range(frame_matrix.shape[1]):
+        V += np.cross(
+            frame_matrix[:3, (k + 1) % frame_matrix.shape[1]], frame_matrix[:3, k]
+        )
+
+    conditions["Rotation-angle error"] = np.allclose(V, np.zeros(3))
+
+    return conditions
+
+
 def frame_matrix_to_pulses(frame_matrix, pi2_pulse=PiOver2Pulse()):
     """Converts a toggling frame matrix to a list of pulses.
 
@@ -171,6 +222,36 @@ def display_pulses(pulses):
         print()
 
 
+def opt_6tau(tau):
+    """
+    Minimal pulse sequence decoupling all leading-order interactions. See PHYSICAL REVIEW X 10, 031002 (2020) for details.
+
+    Args:
+        tau (float): The time to spend in each frame in seconds.
+
+
+    Returns:
+        np.ndarray: The frame matrix.
+    """
+
+    return np.array(
+        [
+            [0, 0, 1, tau],
+            [0, 1, 0, tau],
+            [1, 0, 0, 0],
+            [0, 0, -1, 0],
+            [0, -1, 0, tau],
+            [-1, 0, 0, 0],
+            [0, 0, -1, tau],
+            [0, 1, 0, 0],
+            [-1, 0, 0, tau],
+            [0, 0, 1, 0],
+            [0, -1, 0, 0],
+            [1, 0, 0, tau],
+        ]
+    ).T
+
+
 def DROID_R2D2(tx, ty=None, tz=None):
     """
     Generates the frame matrix for the DROID-R2D2 sequence as described in PHYSICAL REVIEW LETTERS 130, 210403 (2023).
@@ -179,6 +260,9 @@ def DROID_R2D2(tx, ty=None, tz=None):
         tx (float): The time in seconds to spend in the +/-X frame in each instance. The total time is 16*tx.
         ty (float): The time in seconds to spend in the +/-Y frame in each instance. The total time is 16*ty. Defaults to None, in which case tx is used.
         tz (float): The time in seconds to spend in the +/-Z frame in each instance. The total time is 16*tz. Defaults to None, in which case tx is used.
+
+    Returns:
+        np.ndarray: The frame matrix.
     """
 
     if ty is None:
@@ -305,3 +389,14 @@ def DROID_R2D2(tx, ty=None, tz=None):
         ]
     ).T
     return frame_matrix
+
+
+if __name__ == "__main__":
+    print("Optimal 6 tau")
+    frame_matrix = opt_6tau(100e-6)
+    validate_frame_matrix(frame_matrix)
+    print(check_decoupling(frame_matrix, np.pi / 4 * 10e-6))
+    print("DROID-2D2")
+    frame_matrix = DROID_R2D2(100e-6)
+    validate_frame_matrix(frame_matrix)
+    print(check_decoupling(frame_matrix, 10e-6))
