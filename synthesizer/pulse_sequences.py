@@ -1,6 +1,8 @@
 import numpy as np
+from pandas import Timestamp
 from sympy import sequence
-from synthesizer_sequences import PiOver2Pulse, PiPulse, Wait
+from zmq import has
+from synthesizer_sequences import AreaPulse, PiOver2Pulse, PiPulse, Wait
 from copy import deepcopy
 from termcolor import colored
 from colorama import just_fix_windows_console
@@ -206,24 +208,38 @@ def display_pulses(pulses):
         pulses (list): The list of pulses.
     """
 
+    # TODO: This is kind of broken
+
+    new_pulses = []
+    for pulse in pulses:
+        if "Wait" not in str(type(pulse)) and np.isclose(pulse.pulse_area, np.pi):
+            new_pulses.append(
+                PiOver2Pulse(pulse.amplitude, pulse.phase, pulse.frequency)
+            )
+            new_pulses.append(
+                PiOver2Pulse(pulse.amplitude, pulse.phase, pulse.frequency)
+            )
+        else:
+            new_pulses.append(pulse)
+
     for row in range(2):
-        for pulse in pulses:
-            if isinstance(pulse, Wait):
-                symbol = " "
+        for pulse in new_pulses:
+            if "Wait" in str(type(pulse)):
+                print(colored(" ", "white", "on_white"), end="")
             else:
                 symbol = "█"
-            if pulse.phase == 0 or pulse.phase == np.pi:
-                color = "red"
-            else:
-                color = "blue"
-            if pulse.phase == 0 or pulse.phase == np.pi / 2:
-                pulse_row = 0
-            else:
-                pulse_row = 1
-            if row == pulse_row:
-                print(colored(symbol, color, "on_white"), end="")
-            else:
-                print(colored(" ", "white", "on_white"), end="")
+                if pulse.phase == 0 or pulse.phase == np.pi:
+                    color = "red"
+                else:
+                    color = "blue"
+                if pulse.phase == 0 or pulse.phase == np.pi / 2:
+                    pulse_row = 0
+                else:
+                    pulse_row = 1
+                if row == pulse_row:
+                    print(colored(symbol, color, "on_white"), end="")
+                else:
+                    print(colored(" ", "white", "on_white"), end="")
         print()
 
 
