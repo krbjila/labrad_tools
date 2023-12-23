@@ -772,10 +772,7 @@ class Transition:
             raise ValueError(
                 "Default amplitude {} must be > 0 and <= 1".format(default_amplitude)
             )
-        if np.abs((
-            frequency - frequency_offset) < 0
-            or np.abs(frequency - frequency_offset) > MAX_FREQUENCY
-        ):
+        if np.abs(frequency - frequency_offset) < 0 or np.abs(frequency - frequency_offset) > MAX_FREQUENCY:
             raise ValueError(
                 "The output frequency (frequency {} - frequency_offset {}) must be between 0 and {} but is {}".format(
                     frequency,
