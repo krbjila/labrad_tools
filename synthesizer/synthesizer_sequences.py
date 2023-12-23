@@ -628,8 +628,8 @@ class Transition():
                 raise ValueError("All Rabi frequencies must be positive; {} isn't.".format(f))
         if default_amplitude is not None and (default_amplitude <= 0 or default_amplitude > 1):
             raise ValueError("Default amplitude {} must be > 0 and <= 1".format(default_amplitude))
-        if frequency - frequency_offset < 0 or frequency - frequency_offset > MAX_FREQUENCY:
-            raise ValueError("The output frequency (frequency {} - frequency_offset {}) must be between 0 and {} but is {}".format(frequency, frequency_offset, MAX_FREQUENCY, frequency - frequency_offset))
+        if np.abs(frequency - frequency_offset) < 0 or np.abs(frequency - frequency_offset) > MAX_FREQUENCY:
+            raise ValueError("The output frequency (frequency {} - frequency_offset {}) must be between 0 and {} but is {}".format(frequency, frequency_offset, MAX_FREQUENCY, np.abs(frequency - frequency_offset)))
         self.frequency = frequency
         self.amplitudes = amplitudes
         self.Rabi_frequencies = Rabi_frequencies
@@ -688,7 +688,7 @@ class SetTransition(RFBlock):
 
     def compile(self, state: SequenceState) -> RFBlock:
         state.transition = self.transition
-        state.frequency = self.transition.frequency - self.transition.frequency_offset
+        state.frequency = np.abs(self.transition.frequency - self.transition.frequency_offset)
         return super().compile(state)
 
 def todB(amplitude_lin):
@@ -1051,6 +1051,49 @@ def DROID60(duration: float, pulse: RFPulse = None):
         return Wait(duration/48)
 
     seq = [w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),px(),w(),p2x(),mp2y(),w(),mpx(),w(),mpx(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),mp2y(),p2x(),w(),py(),w(),py(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpy(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpy(),w(),mpy(),w(),p2x(),p2y(),w(),py(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpx(),w(),mpx(),w(),p2y(),p2x(),w(),px(),w(),mpy()]
+    return seq
+
+def DROID_R2D2(duration: float, pulse: RFPulse = None):
+    if pulse is None:
+        pulse = PiOver2Pulse()
+    def phased_pulse(phase, area):
+        new_pulse = copy(pulse)
+        new_pulse.phase = phase
+        new_pulse.pulse_area = area
+        new_pulse.centered = False
+        return new_pulse
+    
+    def px():
+        return phased_pulse(0, np.pi)
+    def p2x():
+        return phased_pulse(0, np.pi/2)
+    def py():
+        return phased_pulse(np.pi/2, np.pi)
+    def p2y():
+        return phased_pulse(np.pi/2, np.pi/2)
+    def mpx():
+        return phased_pulse(np.pi, np.pi)
+    def mp2x():
+        return phased_pulse(np.pi, np.pi/2)
+    def mpy():
+        return phased_pulse(3*np.pi/2, np.pi)
+    def mp2y():
+        return phased_pulse(3*np.pi/2, np.pi/2)
+    def w():
+        return Wait(duration/48)
+
+    seq = [
+        w(), mpx(), w(), mp2x(), p2y(), w(), mpx(), w(), mp2x(), p2y(), w(), px(), w(), p2x(), mp2y(), # 5
+        w(), mpx(), w(), mp2x(), p2y(), w(), mpx(), w(), mp2x(), p2y(), w(), mpx(), # 10
+        w(), mp2x(), p2y(), w(), px(), w(), p2x(), mp2y(), w(), mpx(), w(), mp2x(), p2y(), # 15
+        w(), mpx(), w(), mp2x(), p2y(), w(), mpx(), w(), mp2x(), p2y(), w(), px(), # 20
+        w(), p2x(), mp2y(), w(), mpx(), w(), mpx(), w(), px(), w(), mp2y(), mp2x(), # 25
+        w(), mpx(), w(), p2y(), p2x(), w(), px(), w(), p2y(), p2x(), w(), px(), # 30
+        w(), p2y(), p2x(), w(), px(), w(), mp2y(), mp2x(), w(), mpx(), w(), p2y(), p2x(), # 35
+        w(), px(), w(), p2y(), p2x(), w(), px(), w(), p2y(), p2x(), w(), px(), # 40
+        w(), mp2y(), mp2x(), w(), mpx(), w(), p2y(), p2x(), w(), px(), w(), p2y(), p2x(), # 45
+        w(), px(), w(), py()
+    ]
     return seq
 
 def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:

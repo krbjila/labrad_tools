@@ -9,11 +9,13 @@ variables_dict = [
     ["*KMOT", 3.6],  # was 5.1
     ["*RbMOT", 1.7],  # was 3.5
     ["*RbHFOP", 5.2],
+    ["*KMOTDet", 6.99],
+    ["*RbMOTDet", 1.65],
     # QUAD shims
     ["*NWhigh", -1],  # 07/06/2023 was 0.01, pol flipped
     ["*NWlow", 0.15],  # 07/06/2023 was 0.12, pol flipped
-    ["*SWhigh", 1.14],  # 07/07/2023 was 1.08
-    ["*SWlow", 0.68],  # 07/07/2023 was 0.65
+    ["*SWhigh", 1.29],  # 07/07/2023 was 1.08
+    ["*SWlow", 0.77],  # 07/07/2023 was 0.65
     # Evaporation
     ["*MagEvapTime", 12.9],
     # Plug PZTs
@@ -29,7 +31,7 @@ variables_dict = [
     ["*QuadI3", 0.0],
     ["*QuadV3", -0.0],
     ["*QuadVcmot", -1],
-    ["*BIASI", 0.0479],  # 09/27/2023
+    ["*BIASI", 0.0491],  # 11/01/2023
     ["*BIASV", -0.395],
     ["*LowField", 0.461],  # was 0.457 (11/2/21)
     ["*LowFieldV", -0.675],
