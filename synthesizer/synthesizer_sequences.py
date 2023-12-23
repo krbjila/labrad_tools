@@ -778,8 +778,7 @@ class Transition:
                     frequency,
                     frequency_offset,
                     MAX_FREQUENCY,
-                    np.abs(frequency - frequency_offset,
-                )
+                    np.abs(frequency - frequency_offset)
             ))
         self.frequency = frequency
         self.amplitudes = amplitudes
@@ -982,7 +981,7 @@ class AreaPulse(RFPulse):
             1,
             self.amplitude,
             self.phase,
-            self.frequency - transition.frequency_offset,
+            np.abs(self.frequency - transition.frequency_offset),
             self.centered,
             self.window,
             **self.kwargs,
