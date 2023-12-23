@@ -1,7 +1,13 @@
 import numpy as np
-from synthesizer_sequences import PiOver2Pulse, PiPulse, Wait
+from pandas import Timestamp
+from sympy import sequence
+from zmq import has
+from synthesizer_sequences import AreaPulse, PiOver2Pulse, PiPulse, Wait
 from copy import deepcopy
 from termcolor import colored
+from colorama import just_fix_windows_console
+
+just_fix_windows_console()
 
 
 def validate_frame_matrix(frame_matrix):
@@ -176,9 +182,10 @@ def display_frame_matrix(frame_matrix):
         frame_matrix (np.ndarray): The frame matrix.
     """
 
-    for row in range(3):
+    nrows = frame_matrix.shape[0]
+    for row in range(nrows - 1):
         for col in range(frame_matrix.shape[1]):
-            if frame_matrix[3, col] == 0:
+            if frame_matrix[nrows - 1, col] == 0:
                 symbol = "|"
             else:
                 symbol = "█"
@@ -201,24 +208,38 @@ def display_pulses(pulses):
         pulses (list): The list of pulses.
     """
 
+    # TODO: This is kind of broken
+
+    new_pulses = []
+    for pulse in pulses:
+        if "Wait" not in str(type(pulse)) and np.isclose(pulse.pulse_area, np.pi):
+            new_pulses.append(
+                PiOver2Pulse(pulse.amplitude, pulse.phase, pulse.frequency)
+            )
+            new_pulses.append(
+                PiOver2Pulse(pulse.amplitude, pulse.phase, pulse.frequency)
+            )
+        else:
+            new_pulses.append(pulse)
+
     for row in range(2):
-        for pulse in pulses:
-            if isinstance(pulse, Wait):
-                symbol = " "
+        for pulse in new_pulses:
+            if "Wait" in str(type(pulse)):
+                print(colored(" ", "white", "on_white"), end="")
             else:
                 symbol = "█"
-            if pulse.phase == 0 or pulse.phase == np.pi:
-                color = "red"
-            else:
-                color = "blue"
-            if pulse.phase == 0 or pulse.phase == np.pi / 2:
-                pulse_row = 0
-            else:
-                pulse_row = 1
-            if row == pulse_row:
-                print(colored(symbol, color, "on_white"), end="")
-            else:
-                print(colored(" ", "white", "on_white"), end="")
+                if pulse.phase == 0 or pulse.phase == np.pi:
+                    color = "red"
+                else:
+                    color = "blue"
+                if pulse.phase == 0 or pulse.phase == np.pi / 2:
+                    pulse_row = 0
+                else:
+                    pulse_row = 1
+                if row == pulse_row:
+                    print(colored(symbol, color, "on_white"), end="")
+                else:
+                    print(colored(" ", "white", "on_white"), end="")
         print()
 
 
@@ -389,6 +410,273 @@ def DROID_R2D2(tx, ty=None, tz=None):
         ]
     ).T
     return frame_matrix
+
+
+def DROID_C3PO(t):
+    """
+    Generates the frame matrix for the DROID-C3PO sequence as described in arXiv:2305.09757v1 (2023).
+
+    Args:
+        t (float): The time in seconds to spend in each frame.
+    """
+
+    def x(t=0):
+        return np.array([1, 0, 0, 0, 0, 0, t])
+
+    def y(t=0):
+        return np.array([0, 1, 0, 0, 0, 0, t])
+
+    def z(t=0):
+        return np.array([0, 0, 1, 0, 0, 0, t])
+
+    def mx(t=0):
+        return np.array([-1, 0, 0, 0, 0, 0, t])
+
+    def my(t=0):
+        return np.array([0, -1, 0, 0, 0, 0, t])
+
+    def mz(t=0):
+        return np.array([0, 0, -1, 0, 0, 0, t])
+
+    def xt(t=0):
+        return np.array([0, 0, 0, 1, 0, 0, t])
+
+    def yt(t=0):
+        return np.array([0, 0, 0, 0, 1, 0, t])
+
+    def zt(t=0):
+        return np.array([0, 0, 0, 0, 0, 1, t])
+
+    def mxt(t=0):
+        return np.array([0, 0, 0, -1, 0, 0, t])
+
+    def myt(t=0):
+        return np.array([0, 0, 0, 0, -1, 0, t])
+
+    def mzt(t=0):
+        return np.array([0, 0, 0, 0, 0, -1, t])
+
+    frame_matrix = np.array(
+        [
+            z(t),  # 0
+            my(),
+            mz(t),
+            y(),
+            mx(t),
+            z(),
+            x(t),
+            mz(),
+            my(t),
+            x(),
+            y(t),  # 5
+            mx(),
+            zt(t),
+            myt(),
+            mzt(t),
+            yt(),
+            xt(t),
+            zt(),
+            mxt(t),
+            mzt(),
+            myt(t),  # 10
+            mxt(),
+            yt(t),
+            xt(),
+            mz(t),
+            y(),
+            z(t),
+            my(),
+            mx(t),
+            mz(),
+            x(t),  # 15
+            z(),
+            y(t),
+            mx(),
+            my(t),
+            x(),
+            mzt(t),
+            yt(),
+            zt(t),
+            myt(),
+            xt(t),  # 20
+            mzt(),
+            mxt(t),
+            zt(),
+            yt(t),
+            xt(),
+            myt(t),
+            mxt(),
+            mz(t),
+            my(),
+            z(t),  # 25
+            y(),
+            x(t),
+            z(),
+            mx(t),
+            mz(),
+            y(t),
+            x(),
+            my(t),
+            mx(),
+            mzt(t),  # 30
+            myt(),
+            zt(t),
+            yt(),
+            mxt(t),
+            zt(),
+            xt(t),
+            mzt(),
+            yt(t),
+            mxt(0),
+            myt(t),  # 35
+            xt(),
+            z(t),
+            y(),
+            mz(t),
+            my(),
+            x(t),
+            mz(),
+            mx(t),
+            z(),
+            my(t),  # 40
+            mx(),
+            y(t),
+            x(),
+            zt(t),
+            yt(),
+            mzt(t),
+            myt(),
+            mxt(t),
+            mzt(),
+            xt(t),  # 45
+            zt(),
+            myt(t),
+            xt(),
+            yt(t),
+            mxt(),
+            myt(t),
+            mxt(),
+            yt(t),
+            mzt(),
+            mxt(t),  # 50
+            zt(),
+            xt(t),
+            yt(),
+            zt(t),
+            myt(),
+            mzt(t),
+            mx(),
+            my(t),
+            x(),
+            y(t),  # 55
+            mz(),
+            x(t),
+            z(),
+            mx(t),
+            y(),
+            z(t),
+            my(),
+            mz(t),
+            mxt(),
+            yt(t),  # 60
+            xt(),
+            myt(t),
+            zt(),
+            mxt(t),
+            mzt(),
+            xt(t),
+            myt(),
+            mzt(t),
+            yt(),
+            zt(t),  # 65
+            x(),
+            y(t),
+            mx(),
+            my(t),
+            z(),
+            x(t),
+            mz(),
+            mx(t),
+            my(),
+            mz(t),  # 70
+            y(),
+            z(t),
+            xt(),
+            yt(t),
+            mxt(),
+            myt(t),
+            mzt(),
+            xt(t),
+            zt(),
+            mxt(t),  # 75
+            yt(),
+            mzt(t),
+            myt(),
+            mzt(t),
+            mx(),
+            y(t),
+            x(),
+            my(t),
+            mz(),
+            mx(t),  # 80
+            z(),
+            x(t),
+            y(),
+            mz(t),
+            my(),
+            z(t),
+            mxt(),
+            myt(t),
+            xt(),
+            yt(t),  # 85
+            zt(),
+            xt(t),
+            mzt(),
+            mxt(t),
+            myt(),
+            zt(t),
+            yt(),
+            mzt(t),
+            x(),
+            my(t),  # 90
+            mx(),
+            y(t),
+            z(),
+            mx(t),
+            mz(),
+            x(t),
+            my(),
+            z(t),
+            y(),
+            mz(t),  # 95
+            xt(),
+        ]
+    ).T
+    return frame_matrix
+
+
+if __name__ == "__main__":
+    frame_matrix = DROID_C3PO(0.1)
+    display_frame_matrix(frame_matrix)
+    # frame_matrix = DROID_R2D2(0.1)
+    # display_frame_matrix(frame_matrix)
+    # pulses = frame_matrix_to_pulses(frame_matrix)
+
+    # import synthesizer_sequences as ss
+
+    # sequence = {
+    #     0: [
+    #         ss.SetTransition(ss.Transition(1, [1], [1])),
+    #     ]
+    #     + pulses,
+    # }
+    # compiled, durations = ss.compile_sequence(sequence, True)
+
+    # # save compiled sequence to json file
+    # import json
+
+    # with open("DROID_R2D2.json", "w") as outfile:
+    #     json.dump(json.loads(compiled), outfile)
 
 
 if __name__ == "__main__":

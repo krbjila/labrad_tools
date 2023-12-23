@@ -33,6 +33,12 @@ from json import load
 import requests
 import pytz
 
+try:
+    import board
+    import adafruit_bmp3xx
+except Exception as e:
+    print("Could not import BMP390 libraries: %s" % (e))
+
 import influxdb_client
 from json import load, loads
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -85,6 +91,13 @@ class LoggingServer(LabradServer):
         except Exception as e:
             self.labjack = None
             print("Could not connect to labjack: %s" % (e))
+
+        try:
+            i2c = board.I2C()
+            self.bmp = adafruit_bmp3xx.BMP3XX_I2C(i2c)
+        except Exception as e:
+            self.bmp = None
+            print("Could not connect to BMP390: %s" % (e))
 
         with open(
             "C:\\Users\\Ye Lab\\Desktop\\labrad_tools\\log\\logging_config.json", "r"
@@ -412,6 +425,28 @@ class LoggingServer(LabradServer):
             self.influx_api.write(self.bucket, "krb", p)
         except Exception as e:
             print("Could not write bias coil flow rate data to influxdb: %s" % (e))
+
+        # write BMP390 data
+        try:
+            temp = self.bmp.temperature
+            pressure = self.bmp.pressure
+            p1 = (
+                Point("bmp390")
+                .tag("channel", "temp")
+                .tag("unit", "C")
+                .field("value", temp)
+                .time(now, WritePrecision.S)
+            )
+            p2 = (
+                Point("bmp390")
+                .tag("channel", "pressure")
+                .tag("unit", "hPa")
+                .field("value", pressure)
+                .time(now, WritePrecision.S)
+            )
+            self.influx_api.write(self.bucket, "krb", [p1, p2])
+        except Exception as e:
+            print("Could not write BMP390 data to influxdb: %s" % (e))
 
         # write wavemeter data
         try:
