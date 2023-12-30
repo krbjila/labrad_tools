@@ -66,10 +66,10 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                 "channels":
                 [
                     { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026},
-                    { "i": 1, "label": "1030", "max_freq": 1E3, "min_freq": 1},
+                    { "i": 4, "label": "Unused", "max_freq": 1E3, "min_freq": 1},
                     { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
                     { "i": 3, "label": "K Repump", "max_freq":391.01626, "min_freq": 391.01616},
-                    { "i": 4, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
+                    { "i": 1, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
                     { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},
                     { "i": 6, "label": "Rb Repump", "max_freq": 384.23482, "min_freq": 384.23472},
                     { "i": 9, "label": "K Trap", "max_freq": 1370, "min_freq": 400}
@@ -77,8 +77,8 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
             }
         }
         stirapFields={"fields":[
-                    { "i": 0,      "fUpLeg":309.60298,  "fDownLeg":434.92273},
-                    { "i": 1,      "fUpLeg":309.60303,  "fDownLeg":434.92283},
+                    { "i": 0,      "fUpLeg":309.60298,  "fDownLeg":434.92253},
+                    { "i": 1,      "fUpLeg":309.60307,  "fDownLeg":434.92264},
                     { "i": 1.5,    "fUpLeg":309.60305,  "fDownLeg":434.92284},
                     { "i": 2.7,    "fUpLeg":309.60306,  "fDownLeg":434.92293},
                     { "i": 3.5,    "fUpLeg":309.60303,  "fDownLeg":434.92296},

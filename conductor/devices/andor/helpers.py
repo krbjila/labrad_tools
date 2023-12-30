@@ -175,7 +175,7 @@ class AndorDevice(ConductorParameter):
     @inlineCallbacks
     def update(self):
         if self.value and self.value['takeImage']:
-            print("Configuring camera...")
+            print("Configuring {} camera...".format(self.__class__.__name__))
             try:
                 yield self.andor.AbortAcquisition()
                 yield self.andor.CancelWait()

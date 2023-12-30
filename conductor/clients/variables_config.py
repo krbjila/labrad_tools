@@ -9,8 +9,10 @@ variables_dict = [
     ["*KMOT", 3.6],  # was 5.1
     ["*RbMOT", 1.7],  # was 3.5
     ["*RbHFOP", 5.2],
-    ["*KMOTDet", 6.99],
+    ["*KMOTDet", 7.01],
     ["*RbMOTDet", 1.65],
+    ["*KCMOTDet", 7.23],
+    ["*RbCMOTDet", 1.96],
     # QUAD shims
     ["*NWhigh", -1],  # 07/06/2023 was 0.01, pol flipped
     ["*NWlow", 0.15],  # 07/06/2023 was 0.12, pol flipped
@@ -34,7 +36,7 @@ variables_dict = [
     ["*BIASI", 0.0491],  # 11/01/2023
     ["*BIASV", -0.395],
     ["*LowField", 0.461],  # was 0.457 (11/2/21)
-    ["*LowFieldV", -0.675],
+    ["*LowFieldV", -0.675], #checked 12/05/2023 
     ["*HighField", 8.45],
     [
         "*HighFieldV",
@@ -129,6 +131,9 @@ variables_dict = [
     ["*RFShelve", 1e-06],
     ["*SwapTime", 1e-06],
     ["*NoRFTime", 1e-06],
+    ["*tx",1e-6],
+    ["*ty",1e-6],
+    ["*tz",1e-6],
     # Digital variables
     ["*?HOT", 1],
     ["*?MARIA", 1],

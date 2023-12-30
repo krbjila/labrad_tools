@@ -91,7 +91,7 @@ class DeviceServer(LabradServer):
             self.devices[name] = device
             yield device.initialize()
         except Exception as e:
-            print(traceback(e))
+            print(e)
             print('could not initialize device {}'.format(name))
             print('removing {} from available devices'.format(name))
             self.devices.pop(name)
