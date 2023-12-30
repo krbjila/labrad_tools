@@ -772,14 +772,18 @@ class Transition:
             raise ValueError(
                 "Default amplitude {} must be > 0 and <= 1".format(default_amplitude)
             )
-        if np.abs(frequency - frequency_offset) < 0 or np.abs(frequency - frequency_offset) > MAX_FREQUENCY:
+        if (
+            np.abs(frequency - frequency_offset) < 0
+            or np.abs(frequency - frequency_offset) > MAX_FREQUENCY
+        ):
             raise ValueError(
                 "The output frequency (frequency {} - frequency_offset {}) must be between 0 and {} but is {}".format(
                     frequency,
                     frequency_offset,
                     MAX_FREQUENCY,
-                    np.abs(frequency - frequency_offset)
-            ))
+                    np.abs(frequency - frequency_offset),
+                )
+            )
         self.frequency = frequency
         self.amplitudes = amplitudes
         self.Rabi_frequencies = Rabi_frequencies
@@ -857,7 +861,9 @@ class SetTransition(RFBlock):
 
     def compile(self, state: SequenceState) -> RFBlock:
         state.transition = self.transition
-        state.frequency = np.abs(self.transition.frequency - self.transition.frequency_offset)
+        state.frequency = np.abs(
+            self.transition.frequency - self.transition.frequency_offset
+        )
         return super().compile(state)
 
 
@@ -1497,39 +1503,55 @@ def DROID60(duration: float, pulse: RFPulse = None):
     ]
     return seq
 
+
 def WAHUHA_echo(duration: float, pulse: RFPulse = None):
     if pulse is None:
         pulse = PiOver2Pulse()
+
     def phased_pulse(phase, area):
         new_pulse = copy(pulse)
         new_pulse.phase = phase
         new_pulse.pulse_area = area
         new_pulse.centered = False
         return new_pulse
-    
+
     def px():
         return phased_pulse(0, np.pi)
+
     def p2x():
-        return phased_pulse(0, np.pi/2)
+        return phased_pulse(0, np.pi / 2)
+
     def py():
-        return phased_pulse(np.pi/2, np.pi)
+        return phased_pulse(np.pi / 2, np.pi)
+
     def p2y():
-        return phased_pulse(np.pi/2, np.pi/2)
+        return phased_pulse(np.pi / 2, np.pi / 2)
+
     def mpx():
         return phased_pulse(np.pi, np.pi)
-    def mp2x():
-        return phased_pulse(np.pi, np.pi/2)
-    def mpy():
-        return phased_pulse(3*np.pi/2, np.pi)
-    def mp2y():
-        return phased_pulse(3*np.pi/2, np.pi/2)
-    def w():
-        return Wait(duration/6)
 
-    seq = [w(),p2x(),w(),mp2y(),w(),py(),w(),p2y(),w(),p2x(),w(),mpx()]
+    def mp2x():
+        return phased_pulse(np.pi, np.pi / 2)
+
+    def mpy():
+        return phased_pulse(3 * np.pi / 2, np.pi)
+
+    def mp2y():
+        return phased_pulse(3 * np.pi / 2, np.pi / 2)
+
+    def w():
+        return Wait(duration / 6)
+
+    seq = [w(), p2x(), w(), mp2y(), w(), py(), w(), p2y(), w(), p2x(), w(), mpx()]
     return seq
 
-def Ramsey(duration: float, phase: float = 0, pulse: RFPulse = None, decoupling: List[RFPulse | Wait] = None) -> List[RFBlock]:
+
+def Ramsey(
+    duration: float,
+    phase: float = 0,
+    pulse: RFPulse = None,
+    decoupling: List[RFPulse | Wait] = None,
+) -> List[RFBlock]:
     """
     Ramsey(duration, phase, pulse=None, decoupling=None)
 
@@ -1910,5 +1932,3 @@ def send_seq(seq):
     else:
         # compile_sequence(s)
         return jsonpickle.dumps(seq, keys=True)
-
-    
