@@ -1,7 +1,5 @@
 import numpy as np
 from pandas import Timestamp
-from sympy import sequence
-from zmq import has
 from synthesizer_sequences import AreaPulse, PiOver2Pulse, PiPulse, Wait
 from copy import deepcopy
 from termcolor import colored
@@ -654,10 +652,45 @@ def DROID_C3PO(t):
     ).T
     return frame_matrix
 
+def XY8(tx, ty, tz):
+    frame_matrix = np.array(
+        [
+            [0, 0, 1, tz],
+            [0, 1, 0, ty],
+            [0, 0, -1, tz],
+            [-1, 0, 0, tx],
+            [0, 0, 1, tz],
+            [0, -1, 0, ty],
+            [0, 0, -1, tz],
+            [1, 0, 0, tx],
+            [0, 0, 1, tz],
+            [-1, 0, 0, tx],
+            [0, 0, -1, tz],
+            [0, 1, 0, ty],
+            [0, 0, 1, tz],
+            [1, 0, 0, tx],
+            [0, 0, -1, tz],
+            [0, -1, 0, ty],
+        ]
+    ).T
 
-if __name__ == "__main__":
-    frame_matrix = DROID_C3PO(0.1)
-    display_frame_matrix(frame_matrix)
+    return frame_matrix
+
+def TAT_experiment(pulse_spacing, nXY8s):
+    frame_matrix = XY8(pulse_spacing, 0, pulse_spacing)
+    frame_matrix[:3, :] = np.roll(frame_matrix[:3, :], -1, axis=0)
+    
+    # append the frame matrix to itself nXY8s times
+    frame_matrix = np.hstack([frame_matrix for _ in range(nXY8s)])
+
+    # set the final frame to return to z
+    frame_matrix[:3, -1] = np.array([0, 0, 1])
+
+    return frame_matrix
+
+# if __name__ == "__main__":
+#     frame_matrix = DROID_C3PO(0.1)
+#     display_frame_matrix(frame_matrix)
     # frame_matrix = DROID_R2D2(0.1)
     # display_frame_matrix(frame_matrix)
     # pulses = frame_matrix_to_pulses(frame_matrix)
@@ -680,11 +713,27 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__":
-    print("Optimal 6 tau")
-    frame_matrix = opt_6tau(100e-6)
+    # print("Optimal 6 tau")
+    # frame_matrix = opt_6tau(100e-6)
+    # validate_frame_matrix(frame_matrix)
+    # print(check_decoupling(frame_matrix, np.pi / 4 * 10e-6))
+    # print("DROID-2D2")
+    # frame_matrix = DROID_R2D2(100e-6)
+    # validate_frame_matrix(frame_matrix)
+    # print(check_decoupling(frame_matrix, 10e-6))
+
+    print("XY8")
+    frame_matrix = TAT_experiment(0, 100e-6, 2)
+    # frame_matrix = XY8(1, 0, 1)
+    # frame_matrix[:3, :] = np.roll(frame_matrix[:3, :], -1, axis=0)
+    # frame_matrix = np.concatenate([
+    #     frame_matrix,
+    #     frame_matrix[:, :-1],
+    #     np.array([[0, 0, 1, 0]]).T
+    # ], axis=1)
     validate_frame_matrix(frame_matrix)
-    print(check_decoupling(frame_matrix, np.pi / 4 * 10e-6))
-    print("DROID-2D2")
-    frame_matrix = DROID_R2D2(100e-6)
-    validate_frame_matrix(frame_matrix)
-    print(check_decoupling(frame_matrix, 10e-6))
+    for k, v in check_decoupling(frame_matrix, 10e-6).items():
+        print(k, ":", v)
+    print(display_frame_matrix(frame_matrix))
+    pulses = frame_matrix_to_pulses(frame_matrix)
+    display_pulses(pulses)
