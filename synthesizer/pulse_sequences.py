@@ -652,6 +652,7 @@ def DROID_C3PO(t):
     ).T
     return frame_matrix
 
+
 def XY8(tx, ty, tz):
     frame_matrix = np.array(
         [
@@ -676,40 +677,63 @@ def XY8(tx, ty, tz):
 
     return frame_matrix
 
-def TAT_experiment(pulse_spacing, nXY8s):
-    frame_matrix = XY8(pulse_spacing, 0, pulse_spacing)
-    frame_matrix[:3, :] = np.roll(frame_matrix[:3, :], -1, axis=0)
-    
-    # append the frame matrix to itself nXY8s times
-    frame_matrix = np.hstack([frame_matrix for _ in range(nXY8s)])
 
-    # set the final frame to return to z
-    frame_matrix[:3, -1] = np.array([0, 0, 1])
+def TAT_experiment(tXY8, nXY8s):
+    pulses = [
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiPulse(phase=-np.pi / 2),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiPulse(phase=-np.pi / 2),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiPulse(phase=-np.pi / 2),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiOver2Pulse(phase=0),
+        Wait(tXY8 / 12),
+        PiPulse(phase=-np.pi / 2),
+    ]
+    if nXY8s == 1:
+        return pulses
+    else:
+        return pulses + sum([pulses[1:] for i in range(1, nXY8s)], [])
 
-    return frame_matrix
 
 # if __name__ == "__main__":
 #     frame_matrix = DROID_C3PO(0.1)
 #     display_frame_matrix(frame_matrix)
-    # frame_matrix = DROID_R2D2(0.1)
-    # display_frame_matrix(frame_matrix)
-    # pulses = frame_matrix_to_pulses(frame_matrix)
+# frame_matrix = DROID_R2D2(0.1)
+# display_frame_matrix(frame_matrix)
+# pulses = frame_matrix_to_pulses(frame_matrix)
 
-    # import synthesizer_sequences as ss
+# import synthesizer_sequences as ss
 
-    # sequence = {
-    #     0: [
-    #         ss.SetTransition(ss.Transition(1, [1], [1])),
-    #     ]
-    #     + pulses,
-    # }
-    # compiled, durations = ss.compile_sequence(sequence, True)
+# sequence = {
+#     0: [
+#         ss.SetTransition(ss.Transition(1, [1], [1])),
+#     ]
+#     + pulses,
+# }
+# compiled, durations = ss.compile_sequence(sequence, True)
 
-    # # save compiled sequence to json file
-    # import json
+# # save compiled sequence to json file
+# import json
 
-    # with open("DROID_R2D2.json", "w") as outfile:
-    #     json.dump(json.loads(compiled), outfile)
+# with open("DROID_R2D2.json", "w") as outfile:
+#     json.dump(json.loads(compiled), outfile)
 
 
 if __name__ == "__main__":
@@ -722,8 +746,8 @@ if __name__ == "__main__":
     # validate_frame_matrix(frame_matrix)
     # print(check_decoupling(frame_matrix, 10e-6))
 
-    print("XY8")
-    frame_matrix = TAT_experiment(0, 100e-6, 2)
+    # print("XY8")
+    # frame_matrix = TAT_experiment(0, 100e-6, 2)
     # frame_matrix = XY8(1, 0, 1)
     # frame_matrix[:3, :] = np.roll(frame_matrix[:3, :], -1, axis=0)
     # frame_matrix = np.concatenate([
@@ -731,9 +755,11 @@ if __name__ == "__main__":
     #     frame_matrix[:, :-1],
     #     np.array([[0, 0, 1, 0]]).T
     # ], axis=1)
-    validate_frame_matrix(frame_matrix)
-    for k, v in check_decoupling(frame_matrix, 10e-6).items():
-        print(k, ":", v)
-    print(display_frame_matrix(frame_matrix))
-    pulses = frame_matrix_to_pulses(frame_matrix)
-    display_pulses(pulses)
+    # validate_frame_matrix(frame_matrix)
+    # for k, v in check_decoupling(frame_matrix, 10e-6).items():
+    #     print(k, ":", v)
+    # print(display_frame_matrix(frame_matrix))
+    # pulses = frame_matrix_to_pulses(frame_matrix)
+    # display_pulses(pulses)
+
+    display_pulses(TAT_experiment(100e-6, 2))
