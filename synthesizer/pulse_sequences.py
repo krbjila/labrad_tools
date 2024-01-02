@@ -709,7 +709,7 @@ def TAT_experiment(tXY8, nXY8s):
     if nXY8s == 1:
         return pulses
     else:
-        return pulses + sum([pulses[1:] for i in range(1, nXY8s)], [])
+        return deepcopy(pulses) + sum([deepcopy(pulses[1:]) for i in range(1, nXY8s)], [])
 
 
 # if __name__ == "__main__":
