@@ -1,11 +1,12 @@
 import numpy as np
 from pandas import Timestamp
+from scipy.spatial.transform import Rotation as R
 from synthesizer_sequences import AreaPulse, PiOver2Pulse, PiPulse, Wait
 from copy import deepcopy
 from termcolor import colored
-from colorama import just_fix_windows_console
+# from colorama import just_fix_windows_console
 
-just_fix_windows_console()
+# just_fix_windows_console()
 
 
 def validate_frame_matrix(frame_matrix):
@@ -710,6 +711,77 @@ def TAT_experiment(tXY8, nXY8s):
         return pulses
     else:
         return deepcopy(pulses) + sum([deepcopy(pulses[1:]) for i in range(1, nXY8s)], [])
+    
+
+def randomized_benchmarking(l):
+    """
+    Generates a randomized benchmarking sequence of length l as described in https://journals.aps.org/pra/abstract/10.1103/PhysRevA.77.012307.
+
+    The sequence consists of alternating pi and pi/2 pulses. The pi pulses are chosen to be about the +/-X, +/-Y, and +/-Z axes and no operation with equal probability. Pulses about the Z axis are realized by changing the phase of subsequent pulses.
+    
+    The pi/2 pulses are chosen to be about the +/-X and +/-Y axes with equal probability.
+    
+    The sequence contains l pi/2 pulses, not counting the final pi/2 pulse to rotate the final state back to the +/-Z axis.
+
+    Args:
+        l (int): The length of the sequence.
+
+    Returns:
+        list: A list of pulses.
+        final_dir (int): +/-1, corresponding to the direction of the final state along the Z axis.
+    """
+
+    pi_over_2_pulses = [
+        PiOver2Pulse(phase=0),
+        PiOver2Pulse(phase=np.pi / 2),
+        PiOver2Pulse(phase=np.pi),
+        PiOver2Pulse(phase=3 * np.pi / 2),
+    ]
+
+    pulses = []
+    phase = 0
+    for i in range(l):
+        # Random pi pulse
+        pi_axis = np.random.randint(4)
+        pi_sign = np.random.randint(2)
+        if pi_axis == 2:
+            pass
+        elif pi_axis == 3:
+            phase += np.pi
+        else:
+            pulses.append(PiPulse(phase=phase + pi_axis * np.pi / 2 + pi_sign * np.pi))
+
+        pulses.append(Wait(1e-6))
+        
+        # Random pi/2 pulse
+        pulses.append(pi_over_2_pulses[np.random.randint(4)])
+
+        pulses.append(Wait(1e-6))
+
+    # Determine the state after the sequence
+    state = np.array([0, 0, 1])
+    for pulse in pulses:
+        if isinstance(pulse, AreaPulse):
+            r = R.from_rotvec(pulse.pulse_area * np.array([np.cos(float(pulse.phase)), np.sin(float(pulse.phase)), 0]))
+            state = r.apply(state)
+
+    # Check which pi/2 pulse, if any, is needed to rotate the state back to the +/-Z axis
+    final_dir = np.random.randint(2) * 2 - 1
+    final_state = [0, 0, final_dir]
+    final_pulses = pi_over_2_pulses + [PiPulse(phase=0)]
+    for pulse in final_pulses:
+        if isinstance(pulse, AreaPulse):
+            r = R.from_rotvec(pulse.pulse_area * np.array([np.cos(float(pulse.phase)), np.sin(float(pulse.phase)), 0]))
+            if np.allclose(r.apply(state), final_state):
+                pulses.append(pulse)
+                break
+    
+    return pulses, final_dir
+
+if __name__ == "__main__":
+    for i in range(100):
+        pulses, final_dir = randomized_benchmarking(20)
+        display_pulses(pulses)
 
 
 # if __name__ == "__main__":
@@ -736,7 +808,7 @@ def TAT_experiment(tXY8, nXY8s):
 #     json.dump(json.loads(compiled), outfile)
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # print("Optimal 6 tau")
     # frame_matrix = opt_6tau(100e-6)
     # validate_frame_matrix(frame_matrix)
@@ -762,4 +834,4 @@ if __name__ == "__main__":
     # pulses = frame_matrix_to_pulses(frame_matrix)
     # display_pulses(pulses)
 
-    display_pulses(TAT_experiment(100e-6, 2))
+    # display_pulses(TAT_experiment(100e-6, 2))
