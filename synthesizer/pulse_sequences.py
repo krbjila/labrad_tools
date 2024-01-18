@@ -740,7 +740,7 @@ def randomized_benchmarking(l):
 
     pulses = []
     phase = 0
-    for i in range(l):
+    for i in range(l + 1):
         # Random pi pulse
         pi_axis = np.random.randint(4)
         pi_sign = np.random.randint(2)
@@ -752,6 +752,10 @@ def randomized_benchmarking(l):
             pulses.append(PiPulse(phase=phase + pi_axis * np.pi / 2 + pi_sign * np.pi))
 
         pulses.append(Wait(1e-6))
+
+        # end with a pi pulse
+        if i == l:
+            break
         
         # Random pi/2 pulse
         pulses.append(pi_over_2_pulses[np.random.randint(4)])
@@ -779,7 +783,7 @@ def randomized_benchmarking(l):
     return pulses, final_dir
 
 if __name__ == "__main__":
-    for i in range(100):
+    for i in range(10):
         pulses, final_dir = randomized_benchmarking(20)
         display_pulses(pulses)
 
