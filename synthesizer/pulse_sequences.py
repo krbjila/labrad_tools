@@ -1,3 +1,4 @@
+from math import isclose
 import numpy as np
 from pandas import Timestamp
 from scipy.spatial.transform import Rotation as R
@@ -678,10 +679,46 @@ def XY8(tx, ty, tz):
 
     return frame_matrix
 
+def pulses_to_frame_matrix(pulses):
+    """
+    Converts a list of pulses to a toggling frame matrix.
+
+    Args:
+        pulses (list): The list of pulses.
+
+    Returns:
+        np.ndarray: The frame matrix where each column corresponds to a frame. The first three rows correspond to the orientation of the original +Sz operator along the +X, +Y, +Z axes. Each column should have +/- 1 in one entry and zero in the others. The fourth row is the duration of that frame.
+    """
+    sz = np.array([0, 0, 1])
+    frames = []
+
+    if isinstance(pulses[0], Wait):
+        frames.append([sz[0], sz[1], sz[2], pulses[0].duration])
+        pulses = pulses[1:]
+
+    # split pi pulses into two pi/2 pulses
+    for pulse in pulses:
+        if isinstance(pulse, AreaPulse) and np.isclose(pulse.pulse_area, np.pi):
+            sz = R.from_rotvec(np.pi/2 * np.array([np.cos(float(pulse.phase)), np.sin(float(pulse.phase)), 0])).apply(sz)
+            frames.append([sz[0], sz[1], sz[2], 0])
+            sz = R.from_rotvec(np.pi/2 * np.array([np.cos(float(pulse.phase)), np.sin(float(pulse.phase)), 0])).apply(sz)
+            frames.append([sz[0], sz[1], sz[2], 0])
+        elif isinstance(pulse, AreaPulse) and np.isclose(pulse.pulse_area, np.pi/2):
+            sz = R.from_rotvec(pulse.pulse_area * np.array([np.cos(float(pulse.phase)), np.sin(float(pulse.phase)), 0])).apply(sz)
+            frames.append([sz[0], sz[1], sz[2], 0])
+        elif isinstance(pulse, Wait):
+            frames[-1][-1] += pulse.duration
+
+    frames = np.array(frames).T
+
+    # round directions to +/-1
+    frames[:3] = np.round(frames[:3])
+
+    return frames
 
 def TAT_experiment(tXY8, nXY8s):
     pulses = [
-        PiOver2Pulse(phase=0),
+        # PiOver2Pulse(phase=0),
         Wait(tXY8 / 12),
         PiPulse(phase=-np.pi / 2),
         Wait(tXY8 / 12),
@@ -782,10 +819,10 @@ def randomized_benchmarking(l):
     
     return pulses, final_dir
 
-if __name__ == "__main__":
-    for i in range(10):
-        pulses, final_dir = randomized_benchmarking(20)
-        display_pulses(pulses)
+# if __name__ == "__main__":
+#     for i in range(10):
+#         pulses, final_dir = randomized_benchmarking(20)
+#         display_pulses(pulses)
 
 
 # if __name__ == "__main__":
@@ -823,7 +860,7 @@ if __name__ == "__main__":
     # print(check_decoupling(frame_matrix, 10e-6))
 
     # print("XY8")
-    # frame_matrix = TAT_experiment(0, 100e-6, 2)
+    # frame_matrix = TAT_experiment(100e-6, 1)
     # frame_matrix = XY8(1, 0, 1)
     # frame_matrix[:3, :] = np.roll(frame_matrix[:3, :], -1, axis=0)
     # frame_matrix = np.concatenate([
@@ -839,3 +876,9 @@ if __name__ == "__main__":
     # display_pulses(pulses)
 
     # display_pulses(TAT_experiment(100e-6, 2))
+
+if __name__ == "__main__":
+    pulses = TAT_experiment(100e-6, 1)
+    frame_matrix = pulses_to_frame_matrix(pulses)
+    print(frame_matrix.T)
+    display_frame_matrix(frame_matrix)
