@@ -679,6 +679,7 @@ def XY8(tx, ty, tz):
 
     return frame_matrix
 
+# TODO: This is wrong, fix referring to MACE repo
 def pulses_to_frame_matrix(pulses):
     """
     Converts a list of pulses to a toggling frame matrix.
