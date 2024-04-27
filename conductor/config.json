@@ -22,11 +22,12 @@
             }
         },
         "kd1": {
-            "frequency": {
-                "default": 1286
-            },
-            "amplitude": {
-                "default": -11
+            "setting": {
+                "default":
+                {
+                    "frequency": [1285.79],
+                    "amplitude": [-9]
+                }
             }
         },
         "arp33220A": {
@@ -66,12 +67,6 @@
                 }
             }
         },
-        "wavemeterLock": {
-            "frequency": {
-                "default_frequency": 291.417215
-            }
-        },
-
         "synthesizer": {
             "waveform": {
                 "default_waveform": ""

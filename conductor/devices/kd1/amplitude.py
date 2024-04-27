@@ -40,6 +40,19 @@ class Amplitude(ConductorParameter):
     @inlineCallbacks
     def update(self):
         if self.value:
-            a = str(self.value) # dBm
-            yield self.cxn.krbjila_gpib.write(":POW:AMPL " + a + "dBm")
-            yield self.cxn.krbjila_gpib.write(":OUTP ON")
+            # if a single number is given, set the output. Otherwise, set up a sweep.
+            if isinstance(self.value, (int, float)):
+                a = str(self.value)  # dBm
+                yield self.cxn.krbjila_gpib.write(":POW:MODE CW")
+                yield self.cxn.krbjila_gpib.write(":POW:AMPL " + a + "dBm")
+                yield self.cxn.krbjila_gpib.write(":OUTP ON")
+            else:
+                powers = [str(f) for f in self.value]
+                yield self.cxn.krbjila_gpib.write(":POW:MODE LIST")
+                yield self.cxn.krbjila_gpib.write(":LIST:TYPE LIST")
+                yield self.cxn.krbjila_gpib.write(":LIST:POW " + ','.join(powers))
+                yield self.cxn.krbjila_gpib.write(":LIST:TRIG:SOUR EXT")
+                yield self.cxn.krbjila_gpib.write(":TRIG:EXT:DEL 1e-8")
+                yield self.cxn.krbjila_gpib.write(":LIST:RETR 0")
+                yield self.cxn.krbjila_gpib.write(":LIST:MAN 1")
+                yield self.cxn.krbjila_gpib.write(":OUTP ON")

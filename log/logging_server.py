@@ -425,6 +425,18 @@ class LoggingServer(LabradServer):
             self.influx_api.write(self.bucket, "krb", p)
         except Exception as e:
             print("Could not write bias coil flow rate data to influxdb: %s" % (e))
+        try:
+            mot_fluorescence = yield self.labjack.read_name("AIN6")
+            p = (
+                Point("labjack")
+                .tag("channel", "mot_fluorescence")
+                .tag("unit", "V")
+                .field("value", mot_fluorescence)
+                .time(now, WritePrecision.S)
+            )
+            self.influx_api.write(self.bucket, "krb", p)
+        except Exception as e:
+            print("Could not write mot_fluorescence data to influxdb: %s" % (e))
 
         # write BMP390 data
         try:
