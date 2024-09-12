@@ -1,4 +1,5 @@
 import sys, os
+
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
@@ -8,9 +9,10 @@ import jsonpickle, pprint
 
 from math import pi
 
-# seq = [
-#     [ss.SetTransition(ss.Transition(10E6, [0.5], [1E5]))] + ss.XY16(0.005, pulse=ss.PiPulse(centered=True, window=ss.GaussianPulse))
-# ]
+seq = [
+    [ss.SetTransition(ss.Transition(10e6, [0.5], [1e5]))]
+    + ss.XY16(0.005, pulse=ss.PiPulse(centered=True, window=ss.GaussianPulse))
+]
 
 # seq = [
 #     [ss.Timestamp(1E-3, 1, 0, 10E6, absolute_phase=True), ss.Timestamp(3, None, None, None)],
@@ -19,10 +21,13 @@ from math import pi
 
 # seq = [[],[],[],[], []]
 
-seq = [
-    ss.Timestamp(1, (i+1)/7, None, 10E6, digital_out={i: True, (i-1) % 7:False})
-    for i in range(7)
-] + [ss.Timestamp(1, 0, None, 10E6, digital_out={i: False for i in range(7)})]
+# seq = [
+#     ss.Timestamp(1, (i + 1) / 7, None, 10e6, digital_out={i: True, (i - 1) % 7: False})
+#     for i in range(7)
+# ] + [ss.Timestamp(1, 0, None, 10e6, digital_out={i: False for i in range(7)})]
+
+seq = {0: seq}
+
 ss.plot_sequence(seq)
 
 # compiled, durations = ss.compile_sequence(seq)
