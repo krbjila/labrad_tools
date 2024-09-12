@@ -40,5 +40,18 @@ class Frequency(ConductorParameter):
     @inlineCallbacks
     def update(self):
         if self.value:
-            yield self.cxn.krbjila_gpib.write(":FREQ:CW " + str(self.value) + "MHz")
-            yield self.cxn.krbjila_gpib.write(":OUTP ON")
+            # if a single number is given, set the output. Otherwise, set up a sweep.
+            if isinstance(self.value, (int, float)):
+                yield self.cxn.krbjila_gpib.write(":FREQ:MODE CW")
+                yield self.cxn.krbjila_gpib.write(":FREQ:CW " + str(self.value) + "MHz")
+                yield self.cxn.krbjila_gpib.write(":OUTP ON")
+            else:
+                freqs = [str(f * 1e6) for f in self.value]
+                yield self.cxn.krbjila_gpib.write(":FREQ:MODE LIST")
+                yield self.cxn.krbjila_gpib.write(":LIST:TYPE LIST")
+                yield self.cxn.krbjila_gpib.write(":LIST:FREQ " + ','.join(freqs))
+                yield self.cxn.krbjila_gpib.write(":LIST:TRIG:SOUR EXT")
+                yield self.cxn.krbjila_gpib.write(":TRIG:EXT:DEL 1e-8")
+                yield self.cxn.krbjila_gpib.write(":LIST:RETR 0")
+                yield self.cxn.krbjila_gpib.write(":LIST:MAN 1")
+                yield self.cxn.krbjila_gpib.write(":OUTP ON")

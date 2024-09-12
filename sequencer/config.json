@@ -78,7 +78,7 @@
                 },
                 {
                     "loc": ["A", 10],
-                    "name": "K D1 Shutter",
+                    "name": "K D1 Molasses Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -134,14 +134,14 @@
                 },
                 {
                     "loc": ["B", 2],
-                    "name": "TTL B02",
+                    "name": "Trigger D1 RF",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
                 },
                 {
                     "loc": ["B", 3],
-                    "name": "TTL B03",
+                    "name": "K D1/D2 Shutter",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1122,7 +1122,7 @@
                 },
                 {
                     "loc": 4, 
-                    "name": "DAC28: ", 
+                    "name": "DAC28: LSL Spacing", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
@@ -1133,7 +1133,7 @@
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC30:", 
+                    "name": "DAC30: LSL Phase",
                     "mode": "auto",
                     "manual_output": 0.0
                 },

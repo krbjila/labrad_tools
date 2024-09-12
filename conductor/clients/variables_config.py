@@ -9,15 +9,15 @@ variables_dict = [
     ["*KMOT", 3.6],  # was 5.1
     ["*RbMOT", 1.7],  # was 3.5
     ["*RbHFOP", 5.2],
-    ["*KMOTDet", 7.01],
+    ["*KMOTDet", 7.0],
     ["*RbMOTDet", 1.65],
-    ["*KCMOTDet", 7.23],
+    ["*KCMOTDet", 7.21],
     ["*RbCMOTDet", 1.96],
     # QUAD shims
-    ["*NWhigh", -1],  # 07/06/2023 was 0.01, pol flipped
-    ["*NWlow", 0.15],  # 07/06/2023 was 0.12, pol flipped
-    ["*SWhigh", 1.29],  # 07/07/2023 was 1.08
-    ["*SWlow", 0.77],  # 07/07/2023 was 0.65
+    ["*NWhigh", 1.175],  # 03/04/2024
+    ["*NWlow", 1.367],  # 03/04/2024
+    ["*SWhigh", 1.630],  # 03/04/2024
+    ["*SWlow", 1.571],  # 03/04/2024
     # Evaporation
     ["*MagEvapTime", 12.9],
     # Plug PZTs
@@ -36,16 +36,14 @@ variables_dict = [
     ["*BIASI", 0.0491],  # 11/01/2023
     ["*BIASV", -0.395],
     ["*LowField", 0.461],  # was 0.457 (11/2/21)
-    ["*LowFieldV", -0.675], #checked 12/05/2023 
+    ["*LowFieldV", -0.675],  # checked 12/05/2023
     ["*HighField", 8.45],
-    [
-        "*HighFieldV",
-        -4.8,
-    ],  # was -4.64 (11/30/22) before changing DACs; was -4.725, was -3.6 before moving stuff to back corridor
+    ["*HighFieldV", -4.8,],  # was -4.64 (11/30/22) before changing DACs; was -4.725, was -3.6 before moving stuff to back corridor
     ["*BiasSub", -8.45],
     ["*StableBias", -0.1],  # was 0.45
     ["*FeshBias", -5.3],
     ["*ToeBias", -5.01],
+    ["*LowFieldGrad", 2.0],
     # RF
     ["*RFpulse", 0.001],
     ["*RFpulse2", 0.001],
@@ -86,6 +84,8 @@ variables_dict = [
     ["*HOTBottom", 0.4],
     ["*HOTRecom", 0.42],
     ["*HOTFilter", 0.4],
+    ["*HOTFilter1", 0.4],
+    ["*HOTFilter2", 0.4],
     ["*HOTQuad", 0.5],
     [
         "*MARIALoad",
@@ -108,15 +108,34 @@ variables_dict = [
     ["*MARIABottom", 0.344],
     ["*MARIARecom", 0.4],
     ["*MARIAFilter", 0.4],
+    ["*MARIAFilter1", 0.4],
+    ["*MARIAFilter2", 0.4],
     ["*MARIAQuad", 0.7],
     ["*MARIACDT", 0.7],
     ["*LSLLoad", 0],
     ["*LSLFilter", 0],
     ["*LSLFinal", 0.03],
+    ["*LSLLoadSpacing", 0.1],
+    ["*LSLFilterSpacing", 0.1],
+    ["*LSLFilterSpacing1", 0.1],
+    ["*LSLFilterSpacing2", 0.1],
+    ["*LSLSpacingRamp", 0.1],
+    ["*LSLSpacingRamp1", 0.1],
+    ["*LSLSpacingRamp2", 0.1],
+    ["*LSLUnloadTime", 0.1],
+    ["*LSLFinalSpacing", 0.1],
+    ["*LSLLoadPhase", 0],
+    ["*LSLFilterPhase", 0],
+    ["*LSLFilterPhase1", 0],
+    ["*LSLFilterPhase2", 0],
+    ["*LSLFinalPhase", 0],
     # Micellaneous
     ["*time", 0.1],
     ["*time2", 0.2],
     ["*phase", 0],
+    ["*tip", 0],
+    ["*TAT", 0],
+    ["*basis", 3],
     ["*X", 0.005],
     ["*Tau", -3],
     ["*FillTime", 5.0],
@@ -131,14 +150,15 @@ variables_dict = [
     ["*RFShelve", 1e-06],
     ["*SwapTime", 1e-06],
     ["*NoRFTime", 1e-06],
-    ["*tx",1e-6],
-    ["*ty",1e-6],
-    ["*tz",1e-6],
+    ["*tx", 1e-6],
+    ["*ty", 1e-6],
+    ["*tz", 1e-6],
     # Digital variables
     ["*?HOT", 1],
     ["*?MARIA", 1],
     ["*?VLATT", 1],
     ["*?LSL", 1],
+    ["*?LSLLoad", 1],
     ["*?Latt1", 1],
     ["*?Latt2", 1],
     ["*?Blackman", 0],
@@ -165,6 +185,7 @@ variables_dict = [
     ["*?!20Pulse", 1],
     ["*?Shelve", 0],
     ["*?ExtraTip", 0],
+    ["*?LowFieldGrad", 0],
     # Utility variables
     ["*poo", 0],
     ["*howdy", 100],

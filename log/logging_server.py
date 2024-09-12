@@ -197,6 +197,12 @@ class LoggingServer(LabradServer):
             self.next_shot = 0
         else:
             self.path = PATHBASE + "%s/shots/" % (currtime.strftime("%Y/%m/%Y%m%d"))
+            # if the directory doesn't exist, create it
+            try:
+                os.makedirs(self.path)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
             dirlist = []
             for d in os.listdir(self.path):
                 try:
@@ -425,6 +431,18 @@ class LoggingServer(LabradServer):
             self.influx_api.write(self.bucket, "krb", p)
         except Exception as e:
             print("Could not write bias coil flow rate data to influxdb: %s" % (e))
+        try:
+            mot_fluorescence = yield self.labjack.read_name("AIN6")
+            p = (
+                Point("labjack")
+                .tag("channel", "mot_fluorescence")
+                .tag("unit", "V")
+                .field("value", mot_fluorescence)
+                .time(now, WritePrecision.S)
+            )
+            self.influx_api.write(self.bucket, "krb", p)
+        except Exception as e:
+            print("Could not write mot_fluorescence data to influxdb: %s" % (e))
 
         # write BMP390 data
         try:
