@@ -35,7 +35,7 @@ class Sin(ConductorParameter):
 
     def __init__(self, config={}):
         super(Sin, self).__init__(config)
-        self.value = [self.default_sin]
+        self.value = False  # [self.default_sin]
 
     @inlineCallbacks
     def initialize(self):
@@ -44,28 +44,28 @@ class Sin(ConductorParameter):
         try:
             yield self.cxn.polarkrb_dg4000.select_device(devices[0])
             # yield self.cxn.polarkrb_dg4000.set_impedance(1, 50)
-            yield self.cxn.polarkrb_dg4000.set_impedance(2, 50)
+            # yield self.cxn.polarkrb_dg4000.set_impedance(2, 50)
 
+            # # yield self.cxn.polarkrb_dg4000.set_sin(
+            # #     1,
+            # #     self.value["freq1"],
+            # #     self.value["amplitude1"],
+            # #     self.value["offset1"],
+            # #     self.value["phase1"],
+            # # )
             # yield self.cxn.polarkrb_dg4000.set_sin(
-            #     1,
-            #     self.value["freq1"],
-            #     self.value["amplitude1"],
-            #     self.value["offset1"],
-            #     self.value["phase1"],
+            #     2,
+            #     self.value["freq2"],
+            #     self.value["amplitude2"],
+            #     self.value["offset2"],
+            #     self.value["phase2"],
             # )
-            yield self.cxn.polarkrb_dg4000.set_sin(
-                2,
-                self.value["freq2"],
-                self.value["amplitude2"],
-                self.value["offset2"],
-                self.value["phase2"],
-            )
-            # yield self.cxn.polarkrb_dg4000.set_output(1, bool(self.value["output1"]))
-            yield self.cxn.polarkrb_dg4000.set_output(2, bool(self.value["output2"]))
-            # yield self.cxn.imaging_dg800.set_ncycles(1,int(self.value['ncycles1']))
-            # yield self.cxn.imaging_dg800.set_ncycles(2,int(self.value['ncycles2']))
-            # yield self.cxn.imaging_dg800.set_gated(1,bool(self.value['gated1']))
-            # yield self.cxn.imaging_dg800.set_gated(2,bool(self.value['gated2']))
+            # # yield self.cxn.polarkrb_dg4000.set_output(1, bool(self.value["output1"]))
+            # yield self.cxn.polarkrb_dg4000.set_output(2, bool(self.value["output2"]))
+            # # yield self.cxn.imaging_dg800.set_ncycles(1,int(self.value['ncycles1']))
+            # # yield self.cxn.imaging_dg800.set_ncycles(2,int(self.value['ncycles2']))
+            # # yield self.cxn.imaging_dg800.set_gated(1,bool(self.value['gated1']))
+            # # yield self.cxn.imaging_dg800.set_gated(2,bool(self.value['gated2']))
         except Exception as e:
             print(e)
 
