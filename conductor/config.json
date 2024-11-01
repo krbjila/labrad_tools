@@ -89,6 +89,15 @@
         "database": {
             "update": {
             }
+        },
+        "dg4000": {
+            "sin": {
+                "freq2": 137e6,
+                "amplitude2": 1.5,
+                "phase2": 0,
+                "offset2": 0,
+                "output2": 1
+            }
         }
     }
 }
