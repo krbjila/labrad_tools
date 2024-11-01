@@ -35,7 +35,7 @@ class Sin(ConductorParameter):
 
     def __init__(self, config={}):
         super(Sin, self).__init__(config)
-        self.value = False  # [self.default_sin]
+        self.value = [self.default_sin]
 
     @inlineCallbacks
     def initialize(self):
