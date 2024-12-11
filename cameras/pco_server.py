@@ -133,7 +133,7 @@ class PcoServer(HardwareInterfaceServer):
         while True:
             # pco.Camera() gets next available camera
             try:
-                cam = pco.Camera()
+                cam = pco.Camera(interface="USB 2.0")
                 key = self.get_camera_identifier(cam)
                 self.interfaces[key] = cam
                 self.cam_info[key] = {
