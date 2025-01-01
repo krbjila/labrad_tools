@@ -100,12 +100,12 @@ class LoggingServer(LabradServer):
             print("Could not connect to BMP390: %s" % (e))
 
         with open(
-            "C:\\Users\\Ye Lab\\Desktop\\labrad_tools\\log\\logging_config.json", "r"
+            "C:\\Users\\KRbHyperImage\\Desktop\\labrad_tools\\log\\logging_config.json", "r"
         ) as f:
             self.lasers = load(f)["wavemeter"]["channels"]
 
         with open(
-            "C:\\Users\\Ye Lab\\Desktop\\labrad_tools\\log\\secrets.json", "r"
+            "C:\\Users\\KRbHyperImage\\Desktop\\labrad_tools\\log\\secrets.json", "r"
         ) as f:
             config = load(f)
             self.TEMPSTICK_KEY = config["TEMPSTICK_KEY"]
