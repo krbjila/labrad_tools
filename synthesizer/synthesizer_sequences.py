@@ -1068,23 +1068,25 @@ class BB1(AreaPulse):
         phi2 = 3 * phi1
         pulses = [
             PiPulse(
-                self.amplitude, self.phase + phi1, False, self.window, **self.kwargs
+                self.amplitude, self.phase + phi1, self.frequency, False, self.window, **self.kwargs
             ),
             AreaPulse(
                 2 * np.pi,
                 self.amplitude,
                 self.phase + phi2,
+                self.frequency,
                 False,
                 self.window,
                 **self.kwargs,
             ),
             PiPulse(
-                self.amplitude, self.phase + phi1, False, self.window, **self.kwargs
+                self.amplitude, self.phase + phi1, self.frequency, False, self.window, **self.kwargs
             ),
             AreaPulse(
                 self.pulse_area,
                 self.amplitude,
                 self.phase,
+                self.frequency,
                 False,
                 self.window,
                 **self.kwargs,
@@ -1125,6 +1127,7 @@ class CORPSE(AreaPulse):
                 theta1,
                 self.amplitude,
                 self.phase,
+                self.frequency,
                 self.centered,
                 self.window,
                 **self.kwargs,
@@ -1133,6 +1136,7 @@ class CORPSE(AreaPulse):
                 theta2,
                 self.amplitude,
                 self.phase + np.pi,
+                self.frequency,
                 self.centered,
                 self.window,
                 **self.kwargs,
@@ -1141,6 +1145,7 @@ class CORPSE(AreaPulse):
                 theta3,
                 self.amplitude,
                 self.phase,
+                self.frequency,
                 self.centered,
                 self.window,
                 **self.kwargs,
