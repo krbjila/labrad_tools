@@ -22,7 +22,7 @@
             "device_type": "Arduino",
             "connection_type": "Serial",
             "servername": "imaging_serial",
-            "address": "ASRL4::INSTR",
+            "address": "ASRL6::INSTR",
             "baud": 2400,
             "timeout": 100
         }
