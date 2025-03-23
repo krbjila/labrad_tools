@@ -247,6 +247,24 @@ class DG4000Server(LabradServer):
         out = "ON" in stringthing
         returnValue(out)
 
+    @setting(15, channel="i", freq="v")
+    def set_FSKfreq(self, c, channel, freq):
+        """
+        set_FSKfreq(self, c, channel, freq)
+
+        Set the frequency of the FSK modulation
+
+        Args:
+            c: A LabRAD context (not used)
+            channel (int): Which channel to set the FSK frequency for. Must be 1 or 2
+            freq (float): The frequency in Hertz (1E-6 to 200E6)
+        """
+        if channel not in [1, 2]:
+            raise ValueError(
+                "Channel {} invalid. Acceptable values are 1 or 2.".format(channel)
+            )
+        yield self.USB.write(":SOUR%d:MOD:FSK:FREQ %f" % (channel, freq))
+
 
 if __name__ == "__main__":
     from labrad import util
