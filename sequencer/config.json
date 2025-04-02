@@ -99,7 +99,7 @@
                 },
                 {
                     "loc": ["A", 13],
-                    "name": "Quad. Shim Switch",
+                    "name": "Old Quad. Shim Switch",
                     "mode": "auto",
                     "manual_output": 0,
                     "invert": 0
@@ -1075,7 +1075,7 @@
                 },
                 {
                     "loc": 6, 
-                    "name": "DAC22: ", 
+                    "name": "DAC22: K D1 Detuning", 
                     "mode": "auto",
                     "manual_output": 0.0
                 },
@@ -1264,7 +1264,7 @@
         "S": {
             "device_type": "AD5791Board",
             "connection_type": "OKFPGA",
-            "servername": "imaging_okfpga",
+            "servername": "krbjila_okfpga",
             "address": "Opal Kelly XEM6001",
             "bitfile": "ad5791.bit",
             "channels": [

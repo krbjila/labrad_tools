@@ -89,7 +89,7 @@ class Sin(ConductorParameter):
                 if "ncycles1" in self.value:
                     yield self.cxn.polarkrb_dg4000.set_ncycles(1, int(self.value["ncycles1"]))
                 if "FSKfreq1" in self.value:
-                    yield self.cxn.polarkrb_dg4000.set_FSKfreq(1, float(self.value["FSKfreq1"]))
+                    yield self.cxn.polarkrb_dg4000.set_fskfreq(1, float(self.value["FSKfreq1"]))
                 keys = ["freq2", "amplitude2", "offset2", "phase2", "output2"]
                 if all(k in self.value for k in keys):
                     yield self.cxn.polarkrb_dg4000.set_sin(

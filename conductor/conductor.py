@@ -72,7 +72,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from collections import deque
 from copy import deepcopy
-from time import time, strftime
+from time import time, strftime, sleep
 from datetime import datetime
 
 from labrad.server import LabradServer
@@ -776,13 +776,16 @@ class ConductorServer(LabradServer):
 
             if "name" in experiment and "default" not in experiment["name"]:
                 # TODO: Move save_parameters here
+                # print("failed to advance")
                 yield self._advance_logging(False)
+                # print("failed to advance and not stuck")
             else:
                 yield self._advance_logging(True)
 
             parameter_values = experiment.get("parameter_values")
             if parameter_values:
                 yield self.set_parameter_values(None, json.dumps(parameter_values))
+            
             # signal that experiment has started again
             self.experiment_started(True)
             # if this experiment should loop, append to begining of queue
@@ -831,7 +834,9 @@ class ConductorServer(LabradServer):
         # check if we need to load next experiment
         pts = remaining_points(self.parameters)
         if not pts:
+            # print("no remaining points")
             advanced = yield self.advance_experiment()
+            # print("advanced experiment")
         else:
             print("remaining points: {}".format(pts))
             # TODO: Add save_parameters here
@@ -846,7 +851,6 @@ class ConductorServer(LabradServer):
             for parameter_name, parameter in device_parameters.items()
             if parameter.priority
         ]
-
         # advance parameter values if parameter has priority
         if not advanced:
             changed_parameters = {}
@@ -1051,15 +1055,21 @@ class ConductorServer(LabradServer):
         cur_time = datetime.now()
 
         try:
+            print("Connecting to logging server")
             logging = yield self.client.servers["imaging_logging"]
+            print("Connected to logging server")
             logging.set_name("conductor")
+            print("Set name to conductor")
         except Exception as e:
             print("Could not connect to logging server: ", e)
 
         if not end:
             try:
+                print("Getting next shot")
                 self.shot = yield logging.get_next_shot()
+                # print("Got next shot: ", self.shot)
                 yield logging.set_shot(self.shot)
+                # print("Set shot to ", self.shot)
                 yield logging.log("Started shot %d" % (self.shot), cur_time)
                 print("Started logging shot %d" % (self.shot))
                 self.logging = True
@@ -1068,7 +1078,9 @@ class ConductorServer(LabradServer):
         else:
             try:
                 if self.logging:
+                    print("Stopping logging shot %d" % (self.shot))
                     yield logging.log("Finished shot %d" % (self.shot), cur_time)
+                    # print("Finished logging shot %d" % (self.shot))
                     yield logging.set_shot()
                     print("Stopped logging shot %d" % (self.shot))
                     self.logging = False

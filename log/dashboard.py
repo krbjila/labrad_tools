@@ -67,7 +67,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
                 [
                     { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026},
                     { "i": 4, "label": "Unused", "max_freq": 1E3, "min_freq": 1},
-                    { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
+                    { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.28690},
                     { "i": 3, "label": "K Repump", "max_freq":391.01626, "min_freq": 391.01616},
                     { "i": 1, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
                     { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},
@@ -142,7 +142,10 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
 
             for (i, l) in enumerate(self.lasers):
                 if l['i'] < 8:
-                    wl = 299792.458/self.data["wavelengths"][l['i']]
+                    try:
+                        wl = 299792.458/self.data["wavelengths"][l['i']]
+                    except:
+                        wl = 0.0
                     label = "%.6f THz" % (wl)
                 else:
                     wl = self.data["freq"]

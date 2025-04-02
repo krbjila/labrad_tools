@@ -22,7 +22,7 @@ node_dicts = [
     },
     {
         'node imaging' : [
-            'okfpga',
+            # 'okfpga',
             'usb',
             'serial',
             'kinesis',
@@ -40,6 +40,7 @@ node_dicts = [
     {
         'node polarkrb' : [
             'stirap',
+            'dg4000'
         ]
     },
     {

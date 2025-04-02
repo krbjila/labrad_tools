@@ -72,12 +72,6 @@
                 "default_waveform": ""
             }
         },
-        "kinesis": {
-            "latt1": {
-            },
-            "latt2": {
-            }
-        },
         "andor": {
             "vertical": {
                 "temperature": -20
@@ -93,10 +87,10 @@
         "dg4000": {
             "sin": {
                 "default_sin": {
-                    "freq2": 137e6,
+                    "freq2": 121.75e6,
                     "amplitude2": 1.5,
-                    "phase2": 0,
-                    "offset2": 0,
+                    "phase2": 0.0,
+                    "offset2": 0.0,
                     "output2": 1
                 }
             }

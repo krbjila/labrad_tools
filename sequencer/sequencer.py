@@ -116,6 +116,7 @@ class SequencerServer(DeviceServer):
             sequence (str): A JSON-dumped string containing the sequence (TODO: Add an example of a sequence.)
         """
         fixed_sequence = self._fix_sequence_keys(json.loads(sequence))
+        
         for device in self.devices.values():
             yield device.program_sequence(fixed_sequence)
 

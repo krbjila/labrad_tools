@@ -5,6 +5,7 @@ import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue
 from labrad.wrappers import connectAsync
+from time import sleep
 
 from conductor_device.conductor_parameter import ConductorParameter
 from lib.helpers import *
@@ -53,6 +54,7 @@ class Sequence(ConductorParameter):
             # fname = "/home/bialkali/labrad_tools/conductor/devices/sequencer/sequences/sequence_{}.json".format(datetime.now().strftime("%d-%m-%y_%H-%M-%S"))
             # with open(fname, "w+") as f:
             #     json.dump(sequence, f)
+            # sleep(5)
             yield self.cxn.sequencer.run_sequence(json.dumps(sequence))
             t_advance = get_duration(sequence)
             # yield self.cxn.conductor.advance_logging()

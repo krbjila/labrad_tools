@@ -35,7 +35,7 @@ class Enable(ConductorParameter):
                 }
             }
     """
-    priority = 3
+    priority = 5
 
     def __init__(self, config={}):
         super(Enable, self).__init__(config)

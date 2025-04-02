@@ -163,6 +163,7 @@ class AndorDevice(ConductorParameter):
             p = mp.Process(target=self.save_data_process, args=(path, data, metadata))
             p.start()
 
+
     def save_data_process(self, path, data, metadata):
         # Define a temporary path to avoid conflicts when writing file
         # Otherwise, fitting program autoloads the file before writing is complete
@@ -202,6 +203,7 @@ class AndorDevice(ConductorParameter):
 
                 self.parameters = yield self.conductor.get_parameter_values()
                 self.shot = yield self.logging.get_shot()
+
 
                 if 'temperature' in self.value and self.value['temperature'] != self.temperature:
                     self.temperature = self.value['temperature']

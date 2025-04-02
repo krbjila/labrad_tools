@@ -3,7 +3,7 @@
         "channels": [
             { "i": 0, "label": "Up Leg", "max_freq": 309.6028, "min_freq": 309.6026, "comment": "DO NOT (MIS)USE ME"},
             { "i": 1, "label": "New Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
-            { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286915},
+            { "i": 2, "label": "D1", "max_freq": 389.2870, "min_freq": 389.286905},
             { "i": 3, "label": "K Repump", "max_freq":391.01624, "min_freq": 391.01617},
             { "i": 4, "label": "Down Leg", "max_freq": 434.9232, "min_freq": 434.9228},
             { "i": 5, "label": "Rb Trap", "max_freq": 384.2295, "min_freq": 384.2279},

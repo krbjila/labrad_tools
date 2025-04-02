@@ -9,10 +9,10 @@ import jsonpickle, pprint
 
 from math import pi
 
-seq = [
-    [ss.SetTransition(ss.Transition(10e6, [0.5], [1e5]))]
-    + ss.XY16(0.005, pulse=ss.PiPulse(centered=True, window=ss.GaussianPulse))
-]
+# seq = [
+#     [ss.SetTransition(ss.Transition(10e6, [0.5], [1e5]))]
+#     + ss.XY16(0.005, pulse=ss.PiPulse(centered=True, window=ss.GaussianPulse))
+# ]
 
 # seq = [
 #     [ss.Timestamp(1E-3, 1, 0, 10E6, absolute_phase=True), ss.Timestamp(3, None, None, None)],
@@ -21,10 +21,10 @@ seq = [
 
 # seq = [[],[],[],[], []]
 
-# seq = [
-#     ss.Timestamp(1, (i + 1) / 7, None, 10e6, digital_out={i: True, (i - 1) % 7: False})
-#     for i in range(7)
-# ] + [ss.Timestamp(1, 0, None, 10e6, digital_out={i: False for i in range(7)})]
+seq = [
+    ss.Timestamp(1, (i + 1) / 7, None, 10e6, digital_out={i: True, (i - 1) % 7: False})
+    for i in range(7)
+] + [ss.Timestamp(1, 0, None, 10e6, digital_out={i: False for i in range(7)})]
 
 seq = {0: seq}
 
