@@ -47,7 +47,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 
 BETWEEN_SHOTS_TIME = 60  # how often to log when the experiment is idle (s)
 
-PATHBASE = "K:/data/"
+PATHBASE = "J:\\4juli1152\\data\\"#"K:/data/"
 
 
 class LoggingServer(LabradServer):

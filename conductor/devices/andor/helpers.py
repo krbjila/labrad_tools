@@ -140,7 +140,8 @@ class AndorDevice(ConductorParameter):
                 print("Could not save to MongoDB: not connected")
 
         if save_file:
-            savedir = "/dataserver/data/"+now.strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+            # savedir = "/dataserver/data/"+now.strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
+            savedir = "smb://jilau1/jila/4juli1152/data/"+now.strftime("%Y/%m/%Y%m%d/")+self.saveFolder+"/"
             file_number = 0
             if not os.path.exists(savedir):
                 os.makedirs(savedir)
