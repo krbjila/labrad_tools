@@ -306,191 +306,192 @@ class LoggingServer(LabradServer):
 
     @inlineCallbacks
     def log_stuff(self):
-        now = datetime.now(pytz.timezone("US/Mountain"))
+        returnValue(None)
+        # now = datetime.now(pytz.timezone("US/Mountain"))
 
-        # write to influxdb
-        if self.shot is not None:
-            try:
-                p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
-                self.influx_api.write(self.bucket, "krb", p)
-            except Exception as e:
-                print("Could not write shot data to influxdb: %s" % (e))
+        # # write to influxdb
+        # if self.shot is not None:
+        #     try:
+        #         p = Point("shot").field("shot", self.shot).time(now, WritePrecision.S)
+        #         self.influx_api.write(self.bucket, "krb", p)
+        #     except Exception as e:
+        #         print("Could not write shot data to influxdb: %s" % (e))
 
-        # write temperature data
-        tempstick = self.get_tempstick()
-        for sensor in tempstick:
-            try:
-                temp = float(tempstick[sensor]["temp"])
-                humidity = float(tempstick[sensor]["humidity"])
-                p = (
-                    Point("temperature")
-                    .tag("sensor", sensor)
-                    .field("temp", temp)
-                    .field("humidity", humidity)
-                    .time(now, WritePrecision.S)
-                )
-                self.influx_api.write(self.bucket, "krb", p)
-            except Exception as e:
-                print("Could not write temperature data to influxdb: %s" % (e))
+        # # write temperature data
+        # tempstick = self.get_tempstick()
+        # for sensor in tempstick:
+        #     try:
+        #         temp = float(tempstick[sensor]["temp"])
+        #         humidity = float(tempstick[sensor]["humidity"])
+        #         p = (
+        #             Point("temperature")
+        #             .tag("sensor", sensor)
+        #             .field("temp", temp)
+        #             .field("humidity", humidity)
+        #             .time(now, WritePrecision.S)
+        #         )
+        #         self.influx_api.write(self.bucket, "krb", p)
+        #     except Exception as e:
+        #         print("Could not write temperature data to influxdb: %s" % (e))
 
-        # write labjack data
-        try:
-            RbMOT = yield self.labjack.read_name("AIN0")
-            p = (
-                Point("labjack")
-                .tag("channel", "RbMOT")
-                .tag("unit", "V")
-                .field("value", RbMOT)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write RbMOT data to influxdb: %s" % (e))
-        try:
-            KMOT = yield self.labjack.read_name("AIN1")
-            p = (
-                Point("labjack")
-                .tag("channel", "KMOT")
-                .tag("unit", "V")
-                .field("value", KMOT)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write KMOT data to influxdb: %s" % (e))
-        try:
-            waterPressure = yield self.labjack.read_name("AIN2")
-            waterPressure *= 15.0  # 15 PSI/V
-            p = (
-                Point("labjack")
-                .tag("channel", "waterPressure")
-                .tag("unit", "PSI")
-                .field("value", waterPressure)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write waterPressure data to influxdb: %s" % (e))
-        try:
-            leak_sensor_0 = yield self.labjack.read_name("DIO2_EF_READ_A")
-            p = (
-                Point("labjack")
-                .tag("channel", "leak_sensor_0")
-                .field("value", leak_sensor_0)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write leak_sensor_0 data to influxdb: %s" % (e))
-        try:
-            leak_sensor_1 = yield self.labjack.read_name("DIO3_EF_READ_A")
-            p = (
-                Point("labjack")
-                .tag("channel", "leak_sensor_1")
-                .field("value", leak_sensor_1)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write leak_sensor_1 data to influxdb: %s" % (e))
-        try:
-            manifold_v = yield self.labjack.read_name("AIN3")
-            manifold_temp_C = (manifold_v * 100.0 - 32.0) * 5.0 / 9.0
-            p = (
-                Point("labjack")
-                .tag("channel", "Water Manifold")
-                .tag("unit", "C")
-                .field("value", manifold_temp_C)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write manifold_temp data to influxdb: %s" % (e))
-        try:
-            table_valve_ctrl = yield self.labjack.read_name("AIN4")
-            p = (
-                Point("labjack")
-                .tag("channel", "table_valve_ctrl")
-                .tag("unit", "V")
-                .field("value", table_valve_ctrl)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write table_valve_ctrl data to influxdb: %s" % (e))
-        try:
-            bias_flow_rate = yield self.labjack.read_name("AIN5")
-            bias_flow_rate *= 0.6 / 10.0  # 0.6 GPM/10V
-            p = (
-                Point("labjack")
-                .tag("channel", "bias_flow_rate")
-                .tag("unit", "GPM")
-                .field("value", bias_flow_rate)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write bias coil flow rate data to influxdb: %s" % (e))
-        try:
-            mot_fluorescence = yield self.labjack.read_name("AIN6")
-            p = (
-                Point("labjack")
-                .tag("channel", "mot_fluorescence")
-                .tag("unit", "V")
-                .field("value", mot_fluorescence)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write mot_fluorescence data to influxdb: %s" % (e))
+        # # write labjack data
+        # try:
+        #     RbMOT = yield self.labjack.read_name("AIN0")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "RbMOT")
+        #         .tag("unit", "V")
+        #         .field("value", RbMOT)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write RbMOT data to influxdb: %s" % (e))
+        # try:
+        #     KMOT = yield self.labjack.read_name("AIN1")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "KMOT")
+        #         .tag("unit", "V")
+        #         .field("value", KMOT)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write KMOT data to influxdb: %s" % (e))
+        # try:
+        #     waterPressure = yield self.labjack.read_name("AIN2")
+        #     waterPressure *= 15.0  # 15 PSI/V
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "waterPressure")
+        #         .tag("unit", "PSI")
+        #         .field("value", waterPressure)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write waterPressure data to influxdb: %s" % (e))
+        # try:
+        #     leak_sensor_0 = yield self.labjack.read_name("DIO2_EF_READ_A")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "leak_sensor_0")
+        #         .field("value", leak_sensor_0)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write leak_sensor_0 data to influxdb: %s" % (e))
+        # try:
+        #     leak_sensor_1 = yield self.labjack.read_name("DIO3_EF_READ_A")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "leak_sensor_1")
+        #         .field("value", leak_sensor_1)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write leak_sensor_1 data to influxdb: %s" % (e))
+        # try:
+        #     manifold_v = yield self.labjack.read_name("AIN3")
+        #     manifold_temp_C = (manifold_v * 100.0 - 32.0) * 5.0 / 9.0
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "Water Manifold")
+        #         .tag("unit", "C")
+        #         .field("value", manifold_temp_C)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write manifold_temp data to influxdb: %s" % (e))
+        # try:
+        #     table_valve_ctrl = yield self.labjack.read_name("AIN4")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "table_valve_ctrl")
+        #         .tag("unit", "V")
+        #         .field("value", table_valve_ctrl)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write table_valve_ctrl data to influxdb: %s" % (e))
+        # try:
+        #     bias_flow_rate = yield self.labjack.read_name("AIN5")
+        #     bias_flow_rate *= 0.6 / 10.0  # 0.6 GPM/10V
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "bias_flow_rate")
+        #         .tag("unit", "GPM")
+        #         .field("value", bias_flow_rate)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write bias coil flow rate data to influxdb: %s" % (e))
+        # try:
+        #     mot_fluorescence = yield self.labjack.read_name("AIN6")
+        #     p = (
+        #         Point("labjack")
+        #         .tag("channel", "mot_fluorescence")
+        #         .tag("unit", "V")
+        #         .field("value", mot_fluorescence)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write mot_fluorescence data to influxdb: %s" % (e))
 
-        # write BMP390 data
-        try:
-            temp = self.bmp.temperature
-            pressure = self.bmp.pressure
-            p1 = (
-                Point("bmp390")
-                .tag("channel", "temp")
-                .tag("unit", "C")
-                .field("value", temp)
-                .time(now, WritePrecision.S)
-            )
-            p2 = (
-                Point("bmp390")
-                .tag("channel", "pressure")
-                .tag("unit", "hPa")
-                .field("value", pressure)
-                .time(now, WritePrecision.S)
-            )
-            self.influx_api.write(self.bucket, "krb", [p1, p2])
-        except Exception as e:
-            print("Could not write BMP390 data to influxdb: %s" % (e))
+        # # write BMP390 data
+        # try:
+        #     temp = self.bmp.temperature
+        #     pressure = self.bmp.pressure
+        #     p1 = (
+        #         Point("bmp390")
+        #         .tag("channel", "temp")
+        #         .tag("unit", "C")
+        #         .field("value", temp)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     p2 = (
+        #         Point("bmp390")
+        #         .tag("channel", "pressure")
+        #         .tag("unit", "hPa")
+        #         .field("value", pressure)
+        #         .time(now, WritePrecision.S)
+        #     )
+        #     self.influx_api.write(self.bucket, "krb", [p1, p2])
+        # except Exception as e:
+        #     print("Could not write BMP390 data to influxdb: %s" % (e))
 
-        # write wavemeter data
-        try:
-            wavelengths = yield self.wavemeter.get_wavelengths()
-            wavelens = loads(loads(wavelengths))
-            freqs = {}
-            for i, l in enumerate(self.lasers):
-                if l["i"] < 8:
-                    wl = 299792.458 / wavelens["wavelengths"][l["i"]]
-                    freqs[l["label"]] = {"freq": wl, "unit": "THz"}
-                else:
-                    wl = wavelens["freq"]
-                    freqs[l["label"]] = {"freq": wl, "unit": "MHz"}
-            for laser in freqs:
-                freq = freqs[laser]["freq"]
-                p = (
-                    Point("wavemeter")
-                    .tag("laser", laser)
-                    .field("freq", freq)
-                    .time(now, WritePrecision.S)
-                )
-                self.influx_api.write(self.bucket, "krb", p)
-        except Exception as e:
-            print("Could not write wavemeter data to influxdb: %s" % (e))
+        # # write wavemeter data
+        # try:
+        #     wavelengths = yield self.wavemeter.get_wavelengths()
+        #     wavelens = loads(loads(wavelengths))
+        #     freqs = {}
+        #     for i, l in enumerate(self.lasers):
+        #         if l["i"] < 8:
+        #             wl = 299792.458 / wavelens["wavelengths"][l["i"]]
+        #             freqs[l["label"]] = {"freq": wl, "unit": "THz"}
+        #         else:
+        #             wl = wavelens["freq"]
+        #             freqs[l["label"]] = {"freq": wl, "unit": "MHz"}
+        #     for laser in freqs:
+        #         freq = freqs[laser]["freq"]
+        #         p = (
+        #             Point("wavemeter")
+        #             .tag("laser", laser)
+        #             .field("freq", freq)
+        #             .time(now, WritePrecision.S)
+        #         )
+        #         self.influx_api.write(self.bucket, "krb", p)
+        # except Exception as e:
+        #     print("Could not write wavemeter data to influxdb: %s" % (e))
 
-        print("Logged at %s" % (now.strftime("%Y-%m-%d %H:%M:%S.%f")))
+        # print("Logged at %s" % (now.strftime("%Y-%m-%d %H:%M:%S.%f")))
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ from helpers import json_load_byteified, json_loads_byteified
 from calibrations import *
 
 PRESETS_PATH = 'values.json'
-BACKUP_PATH = 'smb://jilau1/jila/4juli1152/data/'#'/dataserver/data/'
+BACKUP_PATH = '/run/user/1000/gvfs/smb-share:server=jilau1,share=jila/4juli1152/data/'#'/dataserver/data/'
 
 class ElectrodeServer(LabradServer):
     """

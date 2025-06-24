@@ -93,7 +93,7 @@ from lib.exceptions import ParameterNotInitialized
 
 from clients import variables_config
 
-FILEBASE = "smb://jilau1/jila/4juli1152/data//%Y/%m/%Y%m%d/shots"#"/dataserver/data/%Y/%m/%Y%m%d/shots"
+FILEBASE = "/run/user/1000/gvfs/smb-share:server=jilau1,share=jila/4juli1152/data//%Y/%m/%Y%m%d/shots"#"/dataserver/data/%Y/%m/%Y%m%d/shots"
 
 
 class ConductorServer(LabradServer):
