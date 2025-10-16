@@ -1,7 +1,8 @@
 """
 Allows control of Newport picomotors.
+"""
 
-..
+r"""
     ### BEGIN NODE INFO
     [info]
     name = picomotor
@@ -10,7 +11,8 @@ Allows control of Newport picomotors.
     instancename = %LABRADNODE%_picomotor
 
     [startup]
-    cmdline = %PYTHON3% %FILE%
+    cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
+
     timeout = 20
 
     [shutdown]

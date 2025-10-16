@@ -1,7 +1,7 @@
 """
 Provides access to PCO cameras.
-
-..
+"""
+r"""
     ### BEGIN NODE INFO
     [info]
     name = pco
@@ -10,7 +10,7 @@ Provides access to PCO cameras.
     instancename = %LABRADNODE%_pco
 
     [startup]
-    cmdline = %PYTHON3% %FILE%
+    cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
     timeout = 20
 
     [shutdown]

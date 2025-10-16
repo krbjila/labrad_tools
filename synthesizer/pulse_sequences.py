@@ -9,7 +9,7 @@ from termcolor import colored
 
 # just_fix_windows_console()
 
-
+ 
 def validate_frame_matrix(frame_matrix):
     """Checks if a frame matrix is valid.
 

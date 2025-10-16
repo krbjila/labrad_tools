@@ -1,7 +1,8 @@
 """
 Allows the computer to talk using `pyttsx3 <https://pypi.org/project/pyttsx3/>`_ text to speech
+"""
 
-..
+r"""
     ### BEGIN NODE INFO
     [info]
     name = alerter
@@ -10,7 +11,7 @@ Allows the computer to talk using `pyttsx3 <https://pypi.org/project/pyttsx3/>`_
     instancename = %LABRADNODE%_alerter
 
     [startup]
-    cmdline = %PYTHON% %FILE%
+    cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
     timeout = 20
 
     [shutdown]
@@ -18,6 +19,7 @@ Allows the computer to talk using `pyttsx3 <https://pypi.org/project/pyttsx3/>`_
     timeout = 20
     ### END NODE INFO
 """
+
 import sys
 import pyttsx3
 from datetime import datetime

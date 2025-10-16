@@ -2,24 +2,24 @@
 Interface for talking to Arduino + AD9910 hardware.
 
 The hardware and Arduino software are described `here <https://1drv.ms/w/s!AqeccKQeGrL_wEZhytKyrRwIMO9D?e=nobSeE>`_. 
-
-..
-    ### BEGIN NODE INFO
-    [info]
-    name = ad9910
-    version = 1.1
-    description = 
-    instancename = ad9910
-
-    [startup]
-    cmdline = %PYTHON% %FILE%
-    timeout = 20
-
-    [shutdown]
-    message = 987654321
-    timeout = 20
-    ### END NODE INFO
 """
+
+r"""
+### BEGIN NODE INFO
+[info]
+name = ad9910
+version = 1
+description = ad9910
+instancename = ad9910
+[startup]
+cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
+timeout = 20
+[shutdown]
+message = 987654321
+timeout = 20
+### END NODE INFO
+"""
+
 import sys
 
 from time import sleep

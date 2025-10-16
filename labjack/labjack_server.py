@@ -1,21 +1,24 @@
 """
 Provides access to LabJack T7 DAQ.
-
-..
-    ### BEGIN NODE INFO
-    [info]
-    name = labjack
-    version = 1
-    description = server for LabJack T7 DAQ
-    instancename = %LABRADNODE%_labjack
-    [startup]
-    cmdline = %PYTHON% %FILE%
-    timeout = 20
-    [shutdown]
-    message = 987654321
-    timeout = 20
-    ### END NODE INFO
 """
+
+r"""
+### BEGIN NODE INFO
+[info]
+name = labjack
+version = 1
+description = server for LabJack T7 DAQ
+instancename = %LABRADNODE%_labjack
+[startup]
+cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
+timeout = 20
+[shutdown]
+message = 987654321
+timeout = 20
+### END NODE INFO
+"""
+
+
 import sys
 from labrad.server import LabradServer, setting
 from labrad.util import getNodeName

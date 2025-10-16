@@ -3,21 +3,22 @@ Provides low-level control of the 4-channel RF synthesizer developed by the JILA
 
 To do:
     * Finish implementing communications using sockets
+"""
 
-..
-    ### BEGIN NODE INFO
-    [info]
-    name = synthesizer
-    version = 1
-    description = server for the JILA 4-channel RF synthesizer
-    instancename = %LABRADNODE%_synthesizer
-    [startup]
-    cmdline = %ANACONDA3% %FILE%
-    timeout = 20
-    [shutdown]
-    message = 987654321
-    timeout = 20
-    ### END NODE INFO
+r"""
+### BEGIN NODE INFO
+[info]
+name = synthesizer
+version = 1
+description = server for the JILA 4-channel RF synthesizer
+instancename = %LABRADNODE%_synthesizer
+[startup]
+cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
+timeout = 20
+[shutdown]
+message = 987654321
+timeout = 20
+### END NODE INFO
 """
 
 from math import pi
@@ -29,7 +30,7 @@ from twisted.internet import reactor
 from labrad.util import getNodeName
 from jsonpickle import loads
 import socket
-
+ 
 import sys, os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
@@ -43,18 +44,30 @@ class SynthesizerServer(LabradServer):
         self.name = '{}_synthesizer'.format(getNodeName())
         super(SynthesizerServer, self).__init__()
 
+    import socket
+
     def initServer(self):
         """
         initServer(self)
         
         Called by LabRAD when server is started. Connects to the synthesizer using the socket library.
         """
-        timeout = 1.02
-        port = 804
-        host = '192.168.7.179'
-        self.dest = (host, int(port))
+        self.timeout=1.02
+        self.port = 804
+        self.host = '192.168.7.179'
+        self.dest = (self.host, int(self.port))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        self.sock.settimeout(timeout)
+        self.sock.settimeout(self.timeout)
+        # --- Run host reachability check on startup ---
+        print("Checking synthesizer host reachability...")
+        if not self.check_host_reachable():
+            print(f"⚠️  Warning: Synthesizer host {self.host}:{self.port} not reachable at startup.")
+        else:
+            print(f"✅ Synthesizer host {self.host}:{self.port} reachable.")
+        
+
+
+        
 
     @staticmethod
     def f_to_ftw(f):
@@ -299,6 +312,32 @@ class SynthesizerServer(LabradServer):
             timestamps = loads(ss.compile_sequence(timestamps)[0], keys=True)
         for channel, ts in timestamps.items():
             yield self._write_timestamps(ts, int(channel), verbose)
+
+    def check_host_reachable(self):
+        """Check if a UDP host is reachable within a timeout."""
+        dest = (self.host, int(self.port))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        sock.settimeout(self.timeout)
+
+        try:
+            sock.sendto(b'', dest)
+            sock.recvfrom(1024)
+            print(f"Host {self.host}:{self.port} is reachable.")
+            return True
+
+        except socket.timeout:
+            errorprint = f"⚠️Host {self.host}:{self.port} is not reachable (timeout after {self.timeout}s)."
+            print(errorprint)
+            raise KeyError(f"⚠️Host {self.host}:{self.port} is not reachable (timeout after {self.timeout}s).")
+
+        except Exception as e:
+            errorprint = f"⚠️Error reaching host {self.host}:{self.port}: {e}"
+            print(errorprint)
+            raise KeyError(f"⚠️Error reaching host {self.host}:{self.port}: {e}")
+
+        finally:
+            sock.close()
+
 
 if __name__ == '__main__':
     from labrad import util

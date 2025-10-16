@@ -1,23 +1,23 @@
 """
 Server for communicating with MongoDB databases
-
-..
-    ### BEGIN NODE INFO
-    [info]
-    name = database
-    version = 1.0
-    description = 
-    instancename = database
-
-    [startup]
-    cmdline = %PYTHON3% %FILE%
-    timeout = 20
-
-    [shutdown]
-    message = 987654321
-    timeout = 20
-    ### END NODE INFO
 """
+
+r"""
+### BEGIN NODE INFO
+[info]
+name = database
+version = 1
+description = database server 
+instancename = database
+[startup]
+cmdline = "C:\\Users\\polarkrb2\\.conda\\envs\\labrad-py310\\python.exe" "%FILE%"
+timeout = 20
+[shutdown]
+message = 987654321
+timeout = 20
+### END NODE INFO
+"""
+
 
 from labrad.server import LabradServer, setting, Signal
 from twisted.internet.defer import inlineCallbacks, returnValue

@@ -6,14 +6,19 @@ node_dicts = [
     {
         'node polarkrb': [
                 # start hardware interfaces first
-                'synthesizer',
                 'usb',
                 'serial',
                 'labjack',
-                # 'pco',
-                'database',
+                'synthesizer',
+                'pco',
+                # 'database',
                 'picomotor',
+                # 'ag34410a',
+                # 'alerter',
+                'stirap',
+                'dg4000'
             ]
+
     },
     {
         'node wavemeterlaptop': [
@@ -38,12 +43,6 @@ node_dicts = [
         # ]
     },
     {
-        'node polarkrb' : [
-            'stirap',
-            'dg4000'
-        ]
-    },
-    {
         'node krbjila': [
             # start hardware interfaces first
             'gpib', 
@@ -56,10 +55,5 @@ node_dicts = [
             # start conductor last
             'conductor', 
         ],
-        'node polarkrb': [
-            # start multimeter monitoring
-            # 'ag34410a',
-            'alerter'
-        ]
     },
 ]
