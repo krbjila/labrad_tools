@@ -50,7 +50,7 @@ class laser_dashboard_gui(QtWidgets.QMainWindow):
         self.lasers[4].update({"label": "DownLeg " + str(self.stirap[i]['i'])+" kV/cm", "max_freq": self.stirap[i]["fDownLeg"]+xDet, "min_freq": self.stirap[i]["fDownLeg"]-xDet})
         self.update()
         # print(self.stirap[i]["fUpLeg"])
-
+    # testing testing
         
 
 
